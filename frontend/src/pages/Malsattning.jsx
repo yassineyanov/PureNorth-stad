@@ -38,8 +38,11 @@ export default function Malsattning() {
           {/* Feature blocks */}
           <div className="grid md:grid-cols-2 gap-6 mb-20">
             <div className="rounded-3xl bg-[#FAFAFA] border border-slate-100 p-8 flex flex-col items-start">
-              <div className="bg-white rounded-2xl p-6 border border-slate-100 mb-6 w-full flex justify-center">
-                <img src="/svanen.png" alt="Svanenmärkt – Nordic Swan Ecolabel" className="h-44 sm:h-52 w-auto object-contain" />
+              <div className="bg-white rounded-2xl p-8 border border-slate-100 mb-6 w-full flex flex-col items-center gap-4">
+                <img src="/svanen.png" alt="Svanenmärkt – Nordic Swan Ecolabel" className="h-64 sm:h-72 w-auto object-contain" />
+                <span className="font-display font-bold text-2xl tracking-wide text-[#1f7a3d] uppercase">
+                  Svanenmärkt
+                </span>
               </div>
               <h3 className="font-display font-semibold text-xl text-[#141414] mb-2">
                 Miljövänliga val är viktiga för oss
