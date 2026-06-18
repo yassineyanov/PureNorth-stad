@@ -86,6 +86,9 @@ export const Footer = () => (
         <Link to="/nojd-kundgaranti" data-testid="footer-nojdkundgaranti-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
           Nöjd kundgaranti
         </Link>
+        <Link to="/varderingar" data-testid="footer-varderingar-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
+          Värderingar
+        </Link>
         <Link to="/integritetspolicy" data-testid="footer-gdpr-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
           GDPR-Integritetspolicy
         </Link>
