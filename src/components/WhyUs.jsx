@@ -7,7 +7,7 @@ export const WhyUs = () => {
     <section id="varfor-oss" className="py-24 sm:py-32 bg-[#FAFAFA]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
         <div className="max-w-2xl mb-16">
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#166534] mb-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
             Varför välja oss?
           </p>
           <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-[#141414]">

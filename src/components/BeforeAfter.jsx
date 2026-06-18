@@ -38,7 +38,7 @@ export const BeforeAfter = () => (
   <section id="vart-arbete" className="py-24 sm:py-32 bg-[#141414] text-white">
     <div className="max-w-7xl mx-auto px-5 sm:px-8">
       <div className="max-w-2xl mb-14">
-        <p className="text-sm font-semibold uppercase tracking-widest text-[#4ade80] mb-3">
+        <p className="text-sm font-semibold uppercase tracking-widest text-white mb-3">
           Vårt arbete
         </p>
         <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight">
@@ -52,15 +52,15 @@ export const BeforeAfter = () => (
       <div className="grid md:grid-cols-2 gap-7">
         {[
           {
-            before: "https://images.pexels.com/photos/4046082/pexels-photo-4046082.jpeg?auto=compress&cs=tinysrgb&w=1000",
-            after: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?crop=entropy&cs=srgb&fm=jpg&q=85&w=1000",
-            alt: "Rum",
+            before: "/before-1.png",
+            after: "/after-1.png",
+            alt: "Sovrum",
             testid: "before-after-1",
           },
           {
-            before: "https://images.pexels.com/photos/6248900/pexels-photo-6248900.jpeg?auto=compress&cs=tinysrgb&w=1000",
-            after: "https://images.pexels.com/photos/19836790/pexels-photo-19836790/free-photo-of-view-of-a-kitchen-with-white-cabinets-and-a-silver-sink.jpeg?auto=compress&cs=tinysrgb&w=1000",
-            alt: "Kök",
+            before: "/before-2.png",
+            after: "/after-2.png",
+            alt: "Kontor",
             testid: "before-after-2",
           },
         ].map((s, i) => (
