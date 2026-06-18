@@ -34,7 +34,7 @@ function LoginScreen({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F1E8] px-5">
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5] px-5">
       <form onSubmit={submit} data-testid="admin-login-form" className="w-full max-w-sm bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center gap-3 mb-7">
           <Logo className="h-10 w-10" />
@@ -101,7 +101,7 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F1E8]">
+    <div className="min-h-screen bg-[#F5F5F5]">
       <header className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-18 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">

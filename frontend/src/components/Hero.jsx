@@ -12,7 +12,7 @@ export const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#E8E0D2] text-[#141414] px-4 py-1.5 text-sm font-semibold mb-6">
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#166534]/10 text-[#166534] px-4 py-1.5 text-sm font-semibold mb-6">
             <Leaf size={15} /> Svanenmärkt & miljöcertifierat
           </span>
           <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4rem] leading-[1.05] tracking-tight text-[#141414]">
@@ -42,10 +42,10 @@ export const Hero = () => {
 
           <div className="mt-10 flex items-center gap-6 text-sm text-slate-500">
             <span className="inline-flex items-center gap-2">
-              <ShieldCheck size={16} className="text-[#141414]" /> SRY-kvalifikation
+              <ShieldCheck size={16} className="text-[#166534]" /> SRY-kvalifikation
             </span>
             <span className="inline-flex items-center gap-2">
-              <Leaf size={16} className="text-[#141414]" /> Pur-Eco produkter
+              <Leaf size={16} className="text-[#166534]" /> Pur-Eco produkter
             </span>
           </div>
         </motion.div>

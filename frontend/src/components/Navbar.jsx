@@ -5,7 +5,8 @@ import { Logo } from "@/components/Logo";
 
 const links = [
   { label: "Tjänster", href: "#tjanster" },
-  { label: "Varför oss", href: "#varfor-oss" },
+  { label: "Vårt arbete", href: "#vart-arbete" },
+  { label: "Omdömen", href: "#omdomen" },
   { label: "Kontakt", href: "#kontakt" },
 ];
 

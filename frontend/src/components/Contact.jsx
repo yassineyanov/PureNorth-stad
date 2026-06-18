@@ -3,10 +3,10 @@ import { Phone, MapPin, Clock } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 export const Contact = () => (
-  <section id="kontakt" className="py-24 sm:py-28 bg-[#F5F1E8]">
+  <section id="kontakt" className="py-24 sm:py-28 bg-white">
     <div className="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 items-center">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
+        <p className="text-sm font-semibold uppercase tracking-widest text-[#166534] mb-3">
           Kontakt
         </p>
         <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-[#141414]">
@@ -18,7 +18,7 @@ export const Contact = () => (
 
         <div className="mt-9 space-y-4">
           <a href="tel:0706240403" data-testid="contact-phone" className="flex items-center gap-4 group">
-            <span className="h-12 w-12 rounded-2xl bg-[#141414]/8 flex items-center justify-center text-[#141414] group-hover:bg-[#141414] group-hover:text-white transition-colors">
+            <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition-colors">
               <Phone size={20} />
             </span>
             <div>
@@ -27,7 +27,7 @@ export const Contact = () => (
             </div>
           </a>
           <div className="flex items-center gap-4">
-            <span className="h-12 w-12 rounded-2xl bg-[#141414]/8 flex items-center justify-center text-[#141414]">
+            <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534]">
               <MapPin size={20} />
             </span>
             <div>
@@ -36,7 +36,7 @@ export const Contact = () => (
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <span className="h-12 w-12 rounded-2xl bg-[#141414]/8 flex items-center justify-center text-[#141414]">
+            <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534]">
               <Clock size={20} />
             </span>
             <div>
@@ -47,20 +47,20 @@ export const Contact = () => (
         </div>
       </div>
 
-      <div className="rounded-3xl bg-[#E8E0D2] text-[#141414] p-10 sm:p-12 relative overflow-hidden">
-        <Logo className="h-14 w-14 mb-6" />
+      <div className="rounded-3xl bg-[#141414] text-white p-10 sm:p-12 relative overflow-hidden">
+        <Logo className="h-14 w-14 mb-6 !bg-white" />
         <h3 className="font-display font-bold text-3xl mb-3">PureNorth Städ</h3>
-        <p className="text-slate-700 leading-relaxed max-w-md">
+        <p className="text-white/75 leading-relaxed max-w-md">
           Miljövänlig städning med SRY-utbildad personal och Svanenmärkta Pur-Eco
           produkter. För ett renare hem och en renare natur.
         </p>
         <a
           href="#boka"
-          className="mt-8 inline-flex items-center justify-center rounded-full bg-[#141414] text-white px-8 py-4 font-semibold hover:bg-black transition-colors"
+          className="mt-8 inline-flex items-center justify-center rounded-full bg-white text-[#141414] px-8 py-4 font-semibold hover:bg-white/90 transition-colors"
         >
           Boka tid nu
         </a>
-        <div className="absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-[#141414]/5" />
+        <div className="absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-white/[0.04]" />
       </div>
     </div>
   </section>
