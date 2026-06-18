@@ -8,6 +8,7 @@ import FAQ from "@/pages/FAQ";
 import Kundavtal from "@/pages/Kundavtal";
 import NojdKundgaranti from "@/pages/NojdKundgaranti";
 import Integritetspolicy from "@/pages/Integritetspolicy";
+import Varderingar from "@/pages/Varderingar";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/kundavtal" element={<Kundavtal />} />
             <Route path="/nojd-kundgaranti" element={<NojdKundgaranti />} />
             <Route path="/integritetspolicy" element={<Integritetspolicy />} />
+            <Route path="/varderingar" element={<Varderingar />} />
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </BrowserRouter>
