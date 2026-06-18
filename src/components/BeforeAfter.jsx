@@ -2,15 +2,15 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { MoveHorizontal } from "lucide-react";
 
-const BeforeAfterSlider = ({ image, alt, testid }) => {
+const BeforeAfterSlider = ({ before, after, alt, testid }) => {
   const [pos, setPos] = useState(50);
   return (
-    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden select-none border border-slate-200">
+    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden select-none border border-white/10">
       {/* After (clean, full color) */}
-      <img src={image} alt={`${alt} efter`} draggable="false" className="absolute inset-0 w-full h-full object-cover" />
-      {/* Before (dull/filtered) clipped from left */}
+      <img src={after} alt={`${alt} efter`} draggable="false" className="absolute inset-0 w-full h-full object-cover" />
+      {/* Before (messy) clipped from left */}
       <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
-        <img src={image} alt={`${alt} före`} draggable="false" className="absolute inset-0 w-full h-full object-cover grayscale brightness-[.6] contrast-75" />
+        <img src={before} alt={`${alt} före`} draggable="false" className="absolute inset-0 w-full h-full object-cover" />
       </div>
       <span className="absolute top-3 left-3 text-xs font-semibold bg-[#141414] text-white px-3 py-1 rounded-full">Före</span>
       <span className="absolute top-3 right-3 text-xs font-semibold bg-[#166534] text-white px-3 py-1 rounded-full">Efter</span>
@@ -51,8 +51,18 @@ export const BeforeAfter = () => (
 
       <div className="grid md:grid-cols-2 gap-7">
         {[
-          { image: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?crop=entropy&cs=srgb&fm=jpg&q=85&w=1000", alt: "Sovrum", testid: "before-after-1" },
-          { image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?crop=entropy&cs=srgb&fm=jpg&q=85&w=1000", alt: "Kontor", testid: "before-after-2" },
+          {
+            before: "https://images.pexels.com/photos/4046082/pexels-photo-4046082.jpeg?auto=compress&cs=tinysrgb&w=1000",
+            after: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?crop=entropy&cs=srgb&fm=jpg&q=85&w=1000",
+            alt: "Rum",
+            testid: "before-after-1",
+          },
+          {
+            before: "https://images.pexels.com/photos/6248900/pexels-photo-6248900.jpeg?auto=compress&cs=tinysrgb&w=1000",
+            after: "https://images.pexels.com/photos/19836790/pexels-photo-19836790/free-photo-of-view-of-a-kitchen-with-white-cabinets-and-a-silver-sink.jpeg?auto=compress&cs=tinysrgb&w=1000",
+            alt: "Kök",
+            testid: "before-after-2",
+          },
         ].map((s, i) => (
           <motion.div
             key={s.testid}
