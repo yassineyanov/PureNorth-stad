@@ -63,8 +63,8 @@ export const Services = () => {
                   />
                 </div>
                 <div className="p-6">
-                  <div className="h-11 w-11 rounded-xl bg-[#141414]/10 flex items-center justify-center mb-4 -mt-10 relative bg-white border border-slate-100">
-                    <Icon size={20} className="text-[#141414]" />
+                  <div className="h-11 w-11 rounded-xl flex items-center justify-center mb-4 -mt-10 relative bg-white border border-slate-100">
+                    <Icon size={20} className="text-[#166534]" />
                   </div>
                   <h3 className="font-display font-semibold text-xl text-slate-900 mb-2">
                     {s.title}

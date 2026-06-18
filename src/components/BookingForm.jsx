@@ -87,9 +87,9 @@ export const BookingForm = () => {
           <a
             href="tel:0706240403"
             data-testid="booking-call-btn"
-            className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-slate-100 bg-[#F5F1E8] px-6 py-4 hover:border-[#141414] transition-colors"
+            className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-[#FAFAFA] px-6 py-4 hover:border-[#141414] transition-colors"
           >
-            <span className="h-11 w-11 rounded-full bg-[#141414] text-white flex items-center justify-center">
+            <span className="h-11 w-11 rounded-full bg-[#166534] text-white flex items-center justify-center">
               <Phone size={18} />
             </span>
             <span>
@@ -106,9 +106,9 @@ export const BookingForm = () => {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               data-testid="booking-success"
-              className="rounded-3xl border border-[#141414]/20 bg-[#F5F1E8] p-10 text-center"
+              className="rounded-3xl border border-[#166534]/20 bg-[#FAFAFA] p-10 text-center"
             >
-              <CheckCircle2 size={48} className="text-[#141414] mx-auto mb-4" />
+              <CheckCircle2 size={48} className="text-[#166534] mx-auto mb-4" />
               <h3 className="font-display font-bold text-2xl text-slate-900 mb-2">
                 Tack för din förfrågan!
               </h3>
