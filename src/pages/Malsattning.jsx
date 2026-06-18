@@ -41,7 +41,7 @@ export default function Malsattning() {
               <div className="h-64 w-full bg-white flex items-center justify-center">
                 <img
                   src="/svanen-new.png"
-                  alt="Svanenmärkt – Nordic Swan Ecolabel"
+                  alt="Svanenmärkt, Nordic Swan Ecolabel"
                   className="h-56 w-auto object-contain"
                 />
               </div>

@@ -23,7 +23,7 @@ const services = [
   },
   {
     title: "Storstädning",
-    desc: "Djuprengöring av hela bostaden — perfekt inför högtider och säsong.",
+    desc: "Djuprengöring av hela bostaden, perfekt inför högtider och säsong.",
     icon: Sparkles,
     img: "https://images.pexels.com/photos/4239146/pexels-photo-4239146.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
   },

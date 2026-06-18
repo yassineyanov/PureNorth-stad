@@ -11,7 +11,7 @@ export const WhyUs = () => {
             Varför välja oss?
           </p>
           <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-[#141414]">
-            Kvalitet du känner — och naturen tackar för
+            Kvalitet du känner och naturen tackar för
           </h2>
         </div>
 
@@ -67,7 +67,7 @@ export const WhyUs = () => {
             </h3>
             <p className="text-[15px] text-slate-600 leading-relaxed">
               Vi skyddar både din hälsa och vår natur genom att använda Svanenmärkta,
-              miljöcertifierade <strong>Pur-Eco</strong> produkter — en ledande ekologisk
+              miljöcertifierade <strong>Pur-Eco</strong> produkter, en ledande ekologisk
               produktserie som ger effektiv och skonsam städning utan att kompromissa med
               resultatet.
             </p>
@@ -90,7 +90,7 @@ export const WhyUs = () => {
             </h3>
             <p className="text-[15px] text-slate-600 leading-relaxed">
               Som privatperson drar vi automatiskt av halva arbetskostnaden direkt på
-              fakturan — du betalar bara resten.
+              fakturan, du betalar bara resten.
             </p>
           </motion.div>
         </div>
