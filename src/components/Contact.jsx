@@ -76,9 +76,18 @@ export const Footer = () => (
           PureNorth Städ
         </span>
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
         <Link to="/faq" data-testid="footer-faq-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
           Vanliga frågor
+        </Link>
+        <Link to="/kundavtal" data-testid="footer-kundavtal-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
+          Kundavtal
+        </Link>
+        <Link to="/nojd-kundgaranti" data-testid="footer-nojdkundgaranti-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
+          Nöjd kundgaranti
+        </Link>
+        <Link to="/integritetspolicy" data-testid="footer-gdpr-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
+          GDPR-Integritetspolicy
         </Link>
         <Link to="/admin" data-testid="footer-admin-link" className="text-sm font-medium text-slate-400 hover:text-[#141414] transition-colors">
           Admin
