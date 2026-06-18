@@ -25,6 +25,9 @@ const initialForm = {
   other_description: "",
 };
 
+const darkInput =
+  "mt-1.5 bg-white/[0.06] border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30";
+
 export const BookingForm = () => {
   const [form, setForm] = useState(initialForm);
   const [services, setServices] = useState([]);
@@ -70,31 +73,31 @@ export const BookingForm = () => {
   };
 
   return (
-    <section id="boka" className="py-24 sm:py-32 bg-white">
+    <section id="boka" className="py-24 sm:py-32 bg-[#141414] text-white">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-5 gap-12">
         {/* Left intro */}
         <div className="lg:col-span-2">
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-3">
             Boka tid
           </p>
-          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-slate-900 leading-tight">
+          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-white leading-tight">
             Boka online — eller ring oss
           </h2>
-          <p className="mt-5 text-lg text-slate-600 leading-relaxed">
+          <p className="mt-5 text-lg text-white/70 leading-relaxed">
             Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata
             med oss direkt? Slå en signal.
           </p>
           <a
             href="tel:0706240403"
             data-testid="booking-call-btn"
-            className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-[#FAFAFA] px-6 py-4 hover:border-[#141414] transition-colors"
+            className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.06] px-6 py-4 hover:border-white/40 transition-colors"
           >
-            <span className="h-11 w-11 rounded-full bg-[#141414] text-white flex items-center justify-center">
+            <span className="h-11 w-11 rounded-full bg-white text-[#141414] flex items-center justify-center">
               <Phone size={18} />
             </span>
             <span>
-              <span className="block text-xs text-slate-500">Ring oss</span>
-              <span className="block font-semibold text-slate-900">070-624 04 03</span>
+              <span className="block text-xs text-white/50">Ring oss</span>
+              <span className="block font-semibold text-white">070-624 04 03</span>
             </span>
           </a>
         </div>
@@ -106,19 +109,19 @@ export const BookingForm = () => {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               data-testid="booking-success"
-              className="rounded-3xl border border-[#166534]/20 bg-[#FAFAFA] p-10 text-center"
+              className="rounded-3xl border border-white/10 bg-white/[0.06] p-10 text-center"
             >
-              <CheckCircle2 size={48} className="text-[#166534] mx-auto mb-4" />
-              <h3 className="font-display font-bold text-2xl text-slate-900 mb-2">
+              <CheckCircle2 size={48} className="text-[#4ade80] mx-auto mb-4" />
+              <h3 className="font-display font-bold text-2xl text-white mb-2">
                 Tack för din förfrågan!
               </h3>
-              <p className="text-slate-600">
+              <p className="text-white/70">
                 Vi har tagit emot din bokning och återkommer så snart vi kan.
               </p>
               <button
                 onClick={() => setDone(false)}
                 data-testid="booking-new-btn"
-                className="mt-6 rounded-full bg-[#141414] hover:bg-[#000000] text-white px-7 py-3 font-semibold transition-colors"
+                className="mt-6 rounded-full bg-white hover:bg-white/90 text-[#141414] px-7 py-3 font-semibold transition-colors"
               >
                 Gör en ny bokning
               </button>
@@ -127,29 +130,29 @@ export const BookingForm = () => {
             <form
               onSubmit={submit}
               data-testid="booking-form"
-              className="rounded-3xl border border-slate-100 shadow-sm p-7 sm:p-9 space-y-5"
+              className="rounded-3xl border border-white/10 bg-white/[0.04] p-7 sm:p-9 space-y-5"
             >
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
-                  <Label htmlFor="name" className="text-slate-700">Namn eller företagsnamn *</Label>
-                  <Input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className="mt-1.5" />
+                  <Label htmlFor="name" className="text-white/70">Namn eller företagsnamn *</Label>
+                  <Input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className={darkInput} />
                 </div>
                 <div>
-                  <Label htmlFor="email" className="text-slate-700">E-post *</Label>
-                  <Input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className="mt-1.5" />
+                  <Label htmlFor="email" className="text-white/70">E-post *</Label>
+                  <Input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className={darkInput} />
                 </div>
                 <div>
-                  <Label htmlFor="phone" className="text-slate-700">Telefonnummer *</Label>
-                  <Input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className="mt-1.5" />
+                  <Label htmlFor="phone" className="text-white/70">Telefonnummer *</Label>
+                  <Input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} />
                 </div>
                 <div>
-                  <Label htmlFor="kvm" className="text-slate-700">Yta (kvm)</Label>
-                  <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder="t.ex. 75" className="mt-1.5" />
+                  <Label htmlFor="kvm" className="text-white/70">Yta (kvm)</Label>
+                  <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder="t.ex. 75" className={darkInput} />
                 </div>
               </div>
 
               <div>
-                <Label className="text-slate-700">Vilka tjänster? *</Label>
+                <Label className="text-white/70">Vilka tjänster? *</Label>
                 <div className="mt-2 grid sm:grid-cols-2 gap-2.5">
                   {SERVICE_OPTIONS.map((s) => (
                     <label
@@ -157,16 +160,16 @@ export const BookingForm = () => {
                       data-testid={`booking-service-${s}`}
                       className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-colors ${
                         services.includes(s)
-                          ? "border-[#141414] bg-[#141414]/5"
-                          : "border-slate-200 hover:border-slate-300"
+                          ? "border-white/60 bg-white/10"
+                          : "border-white/15 hover:border-white/30"
                       }`}
                     >
                       <Checkbox
                         checked={services.includes(s)}
                         onCheckedChange={() => toggleService(s)}
-                        className="data-[state=checked]:bg-[#141414] data-[state=checked]:border-[#141414]"
+                        className="border-white/40 data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-[#141414]"
                       />
-                      <span className="text-[15px] text-slate-800">{s}</span>
+                      <span className="text-[15px] text-white/90">{s}</span>
                     </label>
                   ))}
                 </div>
@@ -177,7 +180,7 @@ export const BookingForm = () => {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                 >
-                  <Label htmlFor="other" className="text-slate-700">
+                  <Label htmlFor="other" className="text-white/70">
                     Beskriv vilken tjänst du önskar *
                   </Label>
                   <Textarea
@@ -186,21 +189,21 @@ export const BookingForm = () => {
                     value={form.other_description}
                     onChange={update("other_description")}
                     placeholder="Berätta vad du behöver hjälp med..."
-                    className="mt-1.5 min-h-[100px]"
+                    className={`${darkInput} min-h-[100px]`}
                   />
                 </motion.div>
               )}
 
               <div>
-                <Label htmlFor="date" className="text-slate-700">Önskat datum för bokning</Label>
-                <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className="mt-1.5" />
+                <Label htmlFor="date" className="text-white/70">Önskat datum för bokning</Label>
+                <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
                 data-testid="booking-submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#141414] hover:bg-[#000000] disabled:opacity-60 text-white px-8 py-4 text-base font-semibold transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white hover:bg-white/90 disabled:opacity-60 text-[#141414] px-8 py-4 text-base font-semibold transition-colors"
               >
                 {submitting ? "Skickar..." : <>Skicka bokningsförfrågan <Send size={17} /></>}
               </button>
