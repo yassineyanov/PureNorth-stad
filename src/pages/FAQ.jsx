@@ -81,7 +81,7 @@ export default function FAQ() {
             transition={{ duration: 0.5 }}
             className="mb-12"
           >
-            <p className="text-sm font-semibold uppercase tracking-widest text-[#166534] mb-3">
+            <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
               Vanliga frågor & svar
             </p>
             <h1 className="font-display font-extrabold text-4xl sm:text-5xl tracking-tight text-[#141414]">

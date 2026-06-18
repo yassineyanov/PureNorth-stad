@@ -38,27 +38,12 @@ export default function Malsattning() {
           {/* Feature blocks */}
           <div className="grid md:grid-cols-2 gap-6 mb-20">
             <div className="rounded-3xl overflow-hidden border border-slate-100 flex flex-col">
-              <div className="h-64 w-full bg-[#FAFAFA] flex items-center justify-center">
-                <div className="h-52 w-52 rounded-full bg-[#1f7a3d] flex flex-col items-center justify-center text-white shadow-lg">
-                  <span
-                    className="block h-24 w-24 bg-white"
-                    style={{
-                      WebkitMaskImage: "url(/svanen.png)",
-                      maskImage: "url(/svanen.png)",
-                      WebkitMaskSize: "contain",
-                      maskSize: "contain",
-                      WebkitMaskRepeat: "no-repeat",
-                      maskRepeat: "no-repeat",
-                      WebkitMaskPosition: "center",
-                      maskPosition: "center",
-                    }}
-                    aria-label="Svanenmärkt logotyp"
-                    role="img"
-                  />
-                  <span className="font-display font-bold text-sm tracking-[0.2em] uppercase mt-2">
-                    Svanenmärkt
-                  </span>
-                </div>
+              <div className="h-64 w-full bg-white flex items-center justify-center">
+                <img
+                  src="/svanen-new.png"
+                  alt="Svanenmärkt – Nordic Swan Ecolabel"
+                  className="h-56 w-auto object-contain"
+                />
               </div>
               <div className="p-8">
                 <h3 className="font-display font-semibold text-xl text-[#141414] mb-2">
