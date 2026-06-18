@@ -1,0 +1,71 @@
+{
+  "theme": "Light",
+  "archetype": "1 (Organic & Earthy, tailored for clean Scandinavian)",
+  "global_styles": {
+    "background_color": "#FFFFFF",
+    "text_color": "#0F172A",
+    "primary_accent": "#166534",
+    "secondary_accent": "#4ADE80",
+    "surface_color": "#FDFDFD",
+    "border_radius": "rounded-2xl",
+    "spacing_scale": "Generous spacing. Sections use py-24 or py-32. Components use p-8 or p-12. Large negative space to give a 'vit bara' (white only) feeling."
+  },
+  "typography": {
+    "heading_font": "Outfit",
+    "body_font": "Manrope",
+    "scale": {
+      "h1": "text-5xl sm:text-6xl tracking-tight leading-tight",
+      "h2": "text-4xl sm:text-5xl tracking-tight leading-tight",
+      "h3": "text-2xl sm:text-3xl font-medium",
+      "body": "text-lg text-slate-600 leading-relaxed",
+      "small": "text-sm text-slate-500 uppercase tracking-widest"
+    }
+  },
+  "layout_grids": {
+    "marketing_page": "Bento Grid (Mode A) for the 'Varf\u00f6r v\u00e4lja oss?' section. Use large asymmetrical cards.",
+    "services_section": "4-column grid (grid-cols-1 md:grid-cols-2 lg:grid-cols-4) with gap-8.",
+    "admin_dashboard": "Control Room Grid (Mode B). Dense but breathable (gap-6)."
+  },
+  "components": {
+    "navigation": "Sticky, Glassmorphism (backdrop-blur-xl bg-white/70) to let white backgrounds subtly shine through. 1px border-b border-slate-100.",
+    "hero_section": "Custom HTML/Tailwind. Two-column layout on desktop: Left = Typography + Booking CTA, Right = Hero Image with slight rounded corners and subtle shadow. OR center-aligned text over a very subtle light background.",
+    "buttons": "Shadcn Button heavily customized. Primary: bg-[#166534] hover:bg-[#14532D] text-white rounded-full px-8 py-6. Minimal shadow.",
+    "booking_form": "Shadcn Form/Card. Solid white background, 1px border border-slate-200. Clean inputs, green accent focus rings. Includes conditional rendering for 'Annat' option.",
+    "services_cards": "Flat rectangular cards. No heavy shadows. Light border (border-slate-100), gentle hover translation (-translate-y-1) and shadow-sm.",
+    "admin_table": "Shadcn Table component inside a white card for bookings list. Status badges using soft pastel backgrounds with darker text."
+  },
+  "motion": {
+    "hover": "Subtle -translate-y-1 and shadow-md for interactive cards.",
+    "entrance": "Framer Motion staggered fade-in up for grids (initial opacity 0, y 20).",
+    "scroll": "Lenis smooth scrolling recommended for the marketing page."
+  },
+  "media": {
+    "images": [
+      {
+        "category": "hero",
+        "url": "https://images.unsplash.com/photo-1614628079765-6c164f4bd970?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwyfHxzY2FuZGluYXZpYW4lMjBsaXZpbmclMjByb29tJTIwc3VubGl0JTIwY2xlYW58ZW58MHx8fHwxNzgxNzgyOTM4fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Bright Scandinavian living room, sunlight, very clean (Hero background or primary image)"
+      },
+      {
+        "category": "services_kontorsstadning",
+        "url": "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBtaW5pbWFsJTIwb2ZmaWNlJTIwc3BhY2UlMjBjbGVhbnxlbnwwfHx8fDE3ODE3ODI5Mzh8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Minimal clean office space for Kontorsst\u00e4dning service card"
+      },
+      {
+        "category": "services_hemstadning",
+        "url": "https://images.pexels.com/photos/36777855/pexels-photo-36777855.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Chic Scandinavian living room for Hemst\u00e4dning service card"
+      },
+      {
+        "category": "eco_products",
+        "url": "https://images.pexels.com/photos/7796595/pexels-photo-7796595.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Flat lay of brown glass bottle and green leaf representing Pur-Eco Svanenm\u00e4rkt products"
+      }
+    ],
+    "icons_strategy": "Use 'lucide-react' for all functional icons (leaf, water, checkmarks). For the logo, if a specific image asset exists in the repo, use it. Otherwise, construct it using lucide-react (<Leaf /> + <Droplets />) + text 'PureNorth St\u00e4d' to match the user's logo description."
+  },
+  "testing": {
+    "attributes": "Add data-testid='...' to all interactive elements like booking form inputs, submit buttons, and navigation links."
+  },
+  "instructions_to_main_agent": "Ensure the app contains a seamless marketing-to-booking flow on the home page. All content MUST be in Swedish. The booking form MUST conditionally show a text area if 'Annat' (Other) is selected in the services dropdown. Admin dashboard should have a simple view of bookings submitted. Strictly stick to a white-dominant (#FFFFFF and #F9FAFB) color palette. Use Forest Green (#166534) for primary CTAs to evoke the 'nature' vibe. Don't use heavy shadows, keep the UI flat and minimal. Text should be high contrast. Execute these instructions directly in Javascript/JSX."
+}
