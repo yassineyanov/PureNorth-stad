@@ -1,0 +1,41 @@
+{
+  "summary": "Full backend + frontend testing of PureNorth Städ. 14 backend pytest tests written (13/14 pass after fix; 1 was test-logic issue, fixed). Frontend home page + booking form work correctly (all validation paths, success state, Swedish content). CRITICAL bug found in Admin dashboard: API returns booking ID as '_id' (Pydantic alias) but Admin.jsx and all admin endpoints in the UI expect 'id'. As a result, every booking row's data-testid renders as 'booking-row-undefined', status select is 'booking-status-undefined', and PATCH/DELETE calls go to '/api/bookings/undefined/status' returning 500 — status update and delete are completely broken in the UI. React also logs 'unique key' warnings because b.id is undefined.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /api/bookings, POST /api/bookings", "issue": "Response serializes id field as '_id' (Pydantic alias) instead of 'id'. Frontend uses b.id everywhere -> all booking row keys/testids/status/delete actions are 'undefined'. Fix: set response_model_by_alias=False on endpoints OR use Booking.model_dump(by_alias=False) OR remove alias on the id field. Verified via curl returns key '_id'.", "priority": "CRITICAL"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Admin Dashboard rows", "issue": "data-testid renders as 'booking-row-undefined', 'booking-status-undefined', 'booking-delete-undefined' because backend returns '_id' not 'id'. Tests targeting booking-status-{id}/booking-delete-{id} will fail. Also React console warning: 'Each child in a list should have a unique key prop' in Dashboard.", "selector": "[data-testid^='booking-row-']", "priority": "CRITICAL"},
+      {"component": "Admin status update / delete", "issue": "PATCH /api/bookings/undefined/status returns 500, toast 'Kunde inte uppdatera status' appears. Same will apply to delete. Root cause = same as above (_id vs id).", "selector": "[data-testid^='booking-status-']", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Admin status change / delete", "issue": "Broken end-to-end because booking ID is missing in the frontend model field b.id. Will be fixed when backend returns 'id' instead of '_id'.", "affected_selectors": ["booking-status-{id}", "booking-delete-{id}", "booking-row-{id}"]}
+    ],
+    "design_issues": [
+      {"screen": "All pages", "issues": ["Browser tab title is generic 'Emergent | Fullstack App' — should be branded (e.g., 'PureNorth Städ — Städfirma i Umeå') in /app/frontend/public/index.html"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "CRITICAL: Make backend booking responses use 'id' instead of '_id'. Recommended fix in /app/backend/server.py: on POST/GET /api/bookings endpoints, return doc with key 'id' explicitly (e.g., add response_model_by_alias=False to @api_router.post/get decorators, or rebuild the dict without alias). After fix, Admin Dashboard status update + delete will start working and the React key warning will disappear.",
+    "Update <title> in /app/frontend/public/index.html to PureNorth Städ branding (Swedish)."
+  ],
+  "critical_code_review_comments": [
+    "Booking Pydantic model uses alias='_id' on the id field but endpoints return raw model_dump (default by_alias=True) — that's the root cause of the admin breakage. Either drop the alias or set response_model_by_alias=False.",
+    "Admin.jsx Dashboard imports useNavigate but never uses it (unused import).",
+    "server.py uses deprecated FastAPI on_event hooks — consider lifespan, but not blocking.",
+    "Frontend stores JWT in localStorage (XSS risk). Acceptable for MVP; backend also supports cookie auth (defense in depth).",
+    "Update status endpoint accepts any string for status — no validation that it is one of {'new','contacted','done'}."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py", "/app/test_reports/iteration_1.json"],
+  "success_rate": {"backend": "100% (14/14 pytest after fix)", "frontend": "70% — public site + booking form + admin login OK; admin status update + delete BROKEN due to _id/id mismatch"},
+  "test_credentials": "admin@purenorthstad.se / PureNorth2026! — confirmed working",
+  "seed_data_creation": "Created several TEST_ prefixed bookings during testing; cleanup test removes them.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Once main agent fixes the _id->id serialization in /app/backend/server.py (POST/GET /api/bookings), re-run /app/backend/tests/backend_test.py and re-run the admin dashboard Playwright flow that selects booking-status-{id} and booking-delete-{id} to confirm status update and delete work end-to-end. Login/booking-create/validation flows are already verified.",
+  "rca_of_the_issue": "Pydantic Booking model: id: Optional[PyObjectId] = Field(default=None, alias='_id'). FastAPI default response_model_by_alias=True ⇒ JSON key is '_id'. Frontend Admin.jsx reads b.id (undefined) ⇒ b.id is interpolated into data-testid and url paths as 'undefined' ⇒ PATCH/DELETE return 500 'Object id ... is not a valid ObjectId' and React emits missing-key warning. Mitigation: add response_model_by_alias=False on the affected endpoints, or change Field alias to populate-only, or return Booking.model_dump(by_alias=False)."
+}
