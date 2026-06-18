@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -152,6 +153,9 @@ export const Testimonials = () => {
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle className="font-display text-2xl">Lämna ett omdöme</DialogTitle>
+                <DialogDescription>
+                  Ditt omdöme granskas av oss och publiceras efter godkännande.
+                </DialogDescription>
               </DialogHeader>
               <ReviewForm onDone={() => setOpen(false)} />
             </DialogContent>
