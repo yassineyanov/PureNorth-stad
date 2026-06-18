@@ -154,6 +154,96 @@ def test_update_status_invalid_id(auth_headers):
     assert r.status_code == 404
 
 
+# ---- Reviews: create (public), approval gating, admin approve/delete ----
+def test_create_review_public_not_approved():
+    payload = {"name": "TEST_Reviewer", "rating": 5, "text": "TEST_Awesome service"}
+    r = requests.post(f"{API}/reviews", json=payload)
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["name"] == payload["name"]
+    assert data["rating"] == 5
+    assert data["approved"] is False
+    rid = data.get("id") or data.get("_id")
+    assert rid
+
+    # Should NOT appear in approved list yet
+    approved = requests.get(f"{API}/reviews/approved").json()
+    assert not any((x.get("id") == rid or x.get("_id") == rid) for x in approved)
+
+
+def test_create_review_validation_invalid_rating():
+    r = requests.post(f"{API}/reviews", json={"name": "x", "rating": 6, "text": "no"})
+    assert r.status_code == 422
+
+
+def test_create_review_missing_fields():
+    r = requests.post(f"{API}/reviews", json={"name": "only-name"})
+    assert r.status_code == 422
+
+
+def test_approved_reviews_public_no_auth():
+    r = requests.get(f"{API}/reviews/approved")
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
+
+
+def test_list_all_reviews_requires_auth():
+    r = requests.get(f"{API}/reviews")
+    assert r.status_code == 401
+
+
+def test_review_full_lifecycle(auth_headers):
+    # Create
+    create = requests.post(f"{API}/reviews", json={
+        "name": "TEST_Lifecycle_Rev",
+        "rating": 4,
+        "text": "TEST_lifecycle review text"
+    })
+    assert create.status_code == 200
+    rid = create.json().get("id") or create.json().get("_id")
+    assert rid
+
+    # Admin list contains it as pending
+    all_list = requests.get(f"{API}/reviews", headers=auth_headers).json()
+    match = [x for x in all_list if (x.get("id") == rid or x.get("_id") == rid)]
+    assert match and match[0]["approved"] is False
+
+    # Approve
+    appr = requests.patch(f"{API}/reviews/{rid}/approve",
+                          json={"approved": True}, headers=auth_headers)
+    assert appr.status_code == 200
+    assert appr.json().get("success") is True
+
+    # Now appears in public approved list
+    approved = requests.get(f"{API}/reviews/approved").json()
+    assert any((x.get("id") == rid or x.get("_id") == rid) for x in approved)
+
+    # Unapprove (toggle off)
+    unappr = requests.patch(f"{API}/reviews/{rid}/approve",
+                            json={"approved": False}, headers=auth_headers)
+    assert unappr.status_code == 200
+    approved2 = requests.get(f"{API}/reviews/approved").json()
+    assert not any((x.get("id") == rid or x.get("_id") == rid) for x in approved2)
+
+    # Approve without auth -> 401
+    no_auth = requests.patch(f"{API}/reviews/{rid}/approve", json={"approved": True})
+    assert no_auth.status_code == 401
+
+    # Delete
+    delr = requests.delete(f"{API}/reviews/{rid}", headers=auth_headers)
+    assert delr.status_code == 200
+
+    # Already-deleted -> 404
+    delr2 = requests.delete(f"{API}/reviews/{rid}", headers=auth_headers)
+    assert delr2.status_code == 404
+
+
+def test_approve_nonexistent_review(auth_headers):
+    r = requests.patch(f"{API}/reviews/507f1f77bcf86cd799439011/approve",
+                       json={"approved": True}, headers=auth_headers)
+    assert r.status_code == 404
+
+
 # ---- Cleanup ----
 def test_cleanup_test_bookings(auth_headers):
     lst = requests.get(f"{API}/bookings", headers=auth_headers).json()
@@ -162,3 +252,12 @@ def test_cleanup_test_bookings(auth_headers):
             bid = b.get("id")
             if bid:
                 requests.delete(f"{API}/bookings/{bid}", headers=auth_headers)
+
+
+def test_cleanup_test_reviews(auth_headers):
+    lst = requests.get(f"{API}/reviews", headers=auth_headers).json()
+    for r in lst:
+        if r.get("name", "").startswith("TEST_"):
+            rid = r.get("id")
+            if rid:
+                requests.delete(f"{API}/reviews/{rid}", headers=auth_headers)

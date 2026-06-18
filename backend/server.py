@@ -114,6 +114,27 @@ class StatusUpdate(BaseModel):
     status: str
 
 
+class ReviewCreate(BaseModel):
+    name: str = Field(..., min_length=1)
+    rating: int = Field(..., ge=1, le=5)
+    text: str = Field(..., min_length=1)
+
+
+class Review(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    name: str
+    rating: int
+    text: str
+    approved: bool = False
+    created_at: str
+
+
+class ApproveUpdate(BaseModel):
+    approved: bool
+
+
 # ---------------------------------------------------------------------------
 # App / Router
 # ---------------------------------------------------------------------------
@@ -177,6 +198,47 @@ async def delete_booking(booking_id: str, current=Depends(get_current_user)):
     result = await db.bookings.delete_one({"_id": ObjectId(booking_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Bokning hittades inte")
+    return {"success": True}
+
+
+# ---- Reviews ----
+@api_router.post("/reviews", response_model=Review, response_model_by_alias=False)
+async def create_review(payload: ReviewCreate):
+    doc = payload.model_dump()
+    doc["approved"] = False
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.reviews.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return Review(**doc)
+
+
+@api_router.get("/reviews/approved", response_model=List[Review], response_model_by_alias=False)
+async def list_approved_reviews():
+    docs = await db.reviews.find({"approved": True}).sort("created_at", -1).to_list(1000)
+    return [Review(**{**d, "_id": str(d["_id"])}) for d in docs]
+
+
+@api_router.get("/reviews", response_model=List[Review], response_model_by_alias=False)
+async def list_reviews(current=Depends(get_current_user)):
+    docs = await db.reviews.find().sort("created_at", -1).to_list(1000)
+    return [Review(**{**d, "_id": str(d["_id"])}) for d in docs]
+
+
+@api_router.patch("/reviews/{review_id}/approve")
+async def approve_review(review_id: str, payload: ApproveUpdate, current=Depends(get_current_user)):
+    result = await db.reviews.update_one(
+        {"_id": ObjectId(review_id)}, {"$set": {"approved": payload.approved}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Omdöme hittades inte")
+    return {"success": True}
+
+
+@api_router.delete("/reviews/{review_id}")
+async def delete_review(review_id: str, current=Depends(get_current_user)):
+    result = await db.reviews.delete_one({"_id": ObjectId(review_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Omdöme hittades inte")
     return {"success": True}
 
 

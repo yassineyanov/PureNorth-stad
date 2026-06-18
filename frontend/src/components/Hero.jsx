@@ -65,7 +65,7 @@ export const Hero = () => {
             />
           </div>
           <div className="absolute -bottom-6 -left-4 sm:left-6 bg-white rounded-2xl border border-slate-100 shadow-lg px-6 py-4 flex items-center gap-4">
-            <div className="h-11 w-11 rounded-full bg-[#141414] flex items-center justify-center">
+            <div className="h-11 w-11 rounded-full bg-[#166534] flex items-center justify-center">
               <span className="font-display font-bold text-white text-sm">50%</span>
             </div>
             <div>

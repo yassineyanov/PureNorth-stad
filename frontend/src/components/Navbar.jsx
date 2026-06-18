@@ -4,10 +4,10 @@ import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 const links = [
-  { label: "Tjänster", href: "#tjanster" },
-  { label: "Vårt arbete", href: "#vart-arbete" },
-  { label: "Omdömen", href: "#omdomen" },
-  { label: "Kontakt", href: "#kontakt" },
+  { label: "Tjänster", href: "/#tjanster" },
+  { label: "Vårt arbete", href: "/#vart-arbete" },
+  { label: "Omdömen", href: "/#omdomen" },
+  { label: "Kontakt", href: "/#kontakt" },
 ];
 
 export const Navbar = () => {
@@ -28,26 +28,33 @@ export const Navbar = () => {
       }`}
     >
       <nav className="max-w-7xl mx-auto px-5 sm:px-8 h-20 flex items-center justify-between">
-        <a href="#hem" data-testid="nav-logo" className="flex items-center gap-3">
+        <Link to="/" data-testid="nav-logo" className="flex items-center gap-3">
           <Logo className="h-10 w-10" />
           <span className="font-display font-bold text-xl tracking-tight text-slate-900">
             PureNorth <span className="text-[#141414]">Städ</span>
           </span>
-        </a>
+        </Link>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-7">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              data-testid={`nav-link-${l.href.replace("#", "")}`}
+              data-testid={`nav-link-${l.href.replace("/#", "")}`}
               className="text-[15px] font-medium text-slate-600 hover:text-[#141414] transition-colors"
             >
               {l.label}
             </a>
           ))}
+          <Link
+            to="/faq"
+            data-testid="nav-link-faq"
+            className="text-[15px] font-medium text-slate-600 hover:text-[#141414] transition-colors"
+          >
+            Vanliga frågor
+          </Link>
           <a
-            href="#boka"
+            href="/#boka"
             data-testid="nav-boka-btn"
             className="rounded-full bg-[#141414] hover:bg-[#000000] text-white px-6 py-3 text-[15px] font-semibold transition-colors"
           >
@@ -77,8 +84,15 @@ export const Navbar = () => {
               {l.label}
             </a>
           ))}
+          <Link
+            to="/faq"
+            onClick={() => setOpen(false)}
+            className="block py-2 text-slate-700 font-medium"
+          >
+            Vanliga frågor
+          </Link>
           <a
-            href="#boka"
+            href="/#boka"
             onClick={() => setOpen(false)}
             className="block text-center rounded-full bg-[#141414] text-white px-6 py-3 font-semibold"
           >

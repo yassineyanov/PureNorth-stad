@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 3 — Reviews + Approval gating + FAQ page + Before/After + Star ratings tested end-to-end. Backend: 22/22 pytest pass (added 9 review tests: public create defaults to approved=false and is excluded from /reviews/approved, 422 on rating>5, 422 on missing fields, GET /reviews requires auth, full review lifecycle create→admin list→approve→appears in approved→unapprove→removed→delete→404, 401 on unauthenticated approve, cleanup). Frontend: home loads, no console errors; #omdomen renders 3 featured cards (testimonial-0 has 7 star SVGs consistent with 4.5 half-star, testimonial-1 & testimonial-2 have 6 each consistent with 5 full); both before-after sliders accept value changes (50→25) and all 4 before/after images load with non-zero natural dimensions; /faq is a separate page reached via nav-link-faq, faq-accordion contains exactly 13 faq-item-* entries and expanding faq-item-0 reveals the 'bokning' answer; review submission dialog opens via open-review-form, accepts review-name+review-star-4+review-text+review-submit, success toast 'Tack! Ditt omdöme väntar på godkännande innan det publiceras.' shown, and the new review does NOT appear on the public home until approved; admin login OK, admin-tab-reviews shows admin-reviews-list with the pending TEST_AutoReviewer row marked 'Väntar', clicking review-approve-{id} flips badge to 'Publicerad' and reloading the public home now shows 4 testimonial cards (3 featured + 1 approved) including TEST_AutoReviewer; review-delete-{id} removes it (toast 'Omdömet borttaget.'); admin-tab-bookings still selectable as regression.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Review dialog", "issues": ["Radix Dialog warning: 'Missing Description or aria-describedby={undefined} for DialogContent' — accessibility nit, add DialogDescription."]},
+      {"screen": "All pages (carryover)", "issues": ["Browser tab <title> in /app/frontend/public/index.html still defaults to 'Emergent | Fullstack App' instead of PureNorth Städ branding."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Optional/cosmetic: add <DialogDescription> inside the 'Lämna ett omdöme' DialogContent (Testimonials.jsx) to silence Radix a11y warning.",
+    "Optional/cosmetic: update <title> in /app/frontend/public/index.html to PureNorth Städ branding."
+  ],
+  "critical_code_review_comments": [
+    "PATCH /api/bookings/{id}/status and PATCH /api/reviews/{id}/approve do not validate ObjectId format — passing a non-hex id raises bson.errors.InvalidId -> 500. Wrap ObjectId(...) in try/except and return 400/404 cleanly (applies to delete endpoints too).",
+    "ReviewCreate text/name have no upper length bound — recommend max_length to avoid abuse on a public POST endpoint.",
+    "No rate-limit on public POST /api/reviews and /api/bookings — abuse vector. Consider per-IP throttling.",
+    "Backend still uses deprecated FastAPI on_event hooks — migrate to lifespan (non-blocking, carryover).",
+    "Admin.jsx imports useNavigate but does not use it (carryover, dead import)."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (22/22)", "frontend": "100% — FAQ page, Before/After sliders, half-star testimonials, review create+approve+publish+delete flow, admin tabs all OK"},
+  "test_credentials": "admin@purenorthstad.se / PureNorth2026! — verified working",
+  "seed_data_creation": "Created 1 TEST_AutoReviewer review via UI; approved, verified on public, then deleted via UI. Pytest also creates+cleans TEST_* bookings and reviews (final cleanup tests delete any leftover TEST_-prefixed entries via API).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All iteration 3 features pass. Backend test suite at /app/backend/tests/backend_test.py now covers 22 cases including review approval gating. For future iterations: re-run pytest first; for review/booking UI just re-exercise the dialog → admin tab → approve → public reload pattern. data-testids used: nav-link-faq, faq-accordion, faq-item-{0..12}, before-after-1/2, testimonial-{0..n}, open-review-form, review-form, review-name, review-star-{1..5}, review-text, review-submit, admin-tab-reviews, admin-tab-bookings, admin-reviews-list, review-row-{id}, review-approve-{id}, review-delete-{id}.",
+  "rca_of_the_issue": "N/A — no bugs found in this iteration."
+}
