@@ -81,7 +81,7 @@ export const BookingForm = () => {
             Boka tid
           </p>
           <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-white leading-tight">
-            Boka online — eller ring oss
+            Boka online eller ring oss
           </h2>
           <p className="mt-5 text-lg text-white/70 leading-relaxed">
             Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata
