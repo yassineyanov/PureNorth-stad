@@ -146,7 +146,7 @@ async def me(current=Depends(get_current_user)):
 
 
 # ---- Bookings ----
-@api_router.post("/bookings", response_model=Booking)
+@api_router.post("/bookings", response_model=Booking, response_model_by_alias=False)
 async def create_booking(payload: BookingCreate):
     doc = payload.model_dump()
     doc["status"] = "new"
@@ -156,7 +156,7 @@ async def create_booking(payload: BookingCreate):
     return Booking(**doc)
 
 
-@api_router.get("/bookings", response_model=List[Booking])
+@api_router.get("/bookings", response_model=List[Booking], response_model_by_alias=False)
 async def list_bookings(current=Depends(get_current_user)):
     docs = await db.bookings.find().sort("created_at", -1).to_list(1000)
     return [Booking(**{**d, "_id": str(d["_id"])}) for d in docs]

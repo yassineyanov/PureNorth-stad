@@ -25,7 +25,7 @@ html {
 }
 
 ::selection {
-    background: #166534;
+    background: #141414;
     color: #fff;
 }
 
@@ -37,19 +37,19 @@ html {
         --card-foreground: 222 47% 11%;
         --popover: 0 0% 100%;
         --popover-foreground: 222 47% 11%;
-        --primary: 142 72% 22%;
+        --primary: 0 0% 8%;
         --primary-foreground: 0 0% 100%;
-        --secondary: 210 40% 96.1%;
-        --secondary-foreground: 222 47% 11%;
+        --secondary: 40 25% 94%;
+        --secondary-foreground: 0 0% 8%;
         --muted: 210 40% 96.1%;
         --muted-foreground: 215 16% 47%;
-        --accent: 142 60% 94%;
-        --accent-foreground: 142 72% 22%;
+        --accent: 40 33% 86%;
+        --accent-foreground: 0 0% 8%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
         --border: 214 32% 91%;
         --input: 214 32% 91%;
-        --ring: 142 72% 22%;
+        --ring: 0 0% 20%;
         --radius: 0.75rem;
     }
 }
@@ -65,6 +65,6 @@ html {
 
 /* subtle leaf-grain background utility */
 .bg-soft-grid {
-    background-image: radial-gradient(circle at 1px 1px, rgba(22, 101, 52, 0.06) 1px, transparent 0);
+    background-image: radial-gradient(circle at 1px 1px, rgba(20, 20, 20, 0.05) 1px, transparent 0);
     background-size: 28px 28px;
 }

@@ -34,7 +34,7 @@ export const Services = () => {
     <section id="tjanster" className="py-24 sm:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
         <div className="max-w-2xl mb-16">
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#166534] mb-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
             Våra tjänster
           </p>
           <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-slate-900">
@@ -63,8 +63,8 @@ export const Services = () => {
                   />
                 </div>
                 <div className="p-6">
-                  <div className="h-11 w-11 rounded-xl bg-[#166534]/10 flex items-center justify-center mb-4 -mt-10 relative bg-white border border-slate-100">
-                    <Icon size={20} className="text-[#166534]" />
+                  <div className="h-11 w-11 rounded-xl bg-[#141414]/10 flex items-center justify-center mb-4 -mt-10 relative bg-white border border-slate-100">
+                    <Icon size={20} className="text-[#141414]" />
                   </div>
                   <h3 className="font-display font-semibold text-xl text-slate-900 mb-2">
                     {s.title}
@@ -72,7 +72,7 @@ export const Services = () => {
                   <p className="text-[15px] text-slate-600 leading-relaxed">{s.desc}</p>
                   <a
                     href="#boka"
-                    className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#166534] group-hover:gap-2.5 transition-all"
+                    className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#141414] group-hover:gap-2.5 transition-all"
                   >
                     Boka <ArrowRight size={15} />
                   </a>

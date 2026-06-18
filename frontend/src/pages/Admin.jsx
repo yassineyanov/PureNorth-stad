@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { LogOut, Trash2, Phone, Mail, Calendar, Maximize, RefreshCw } from "lucide-react";
@@ -35,7 +34,7 @@ function LoginScreen({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F7FAF8] px-5">
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F1E8] px-5">
       <form onSubmit={submit} data-testid="admin-login-form" className="w-full max-w-sm bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center gap-3 mb-7">
           <Logo className="h-10 w-10" />
@@ -53,7 +52,7 @@ function LoginScreen({ onLogin }) {
             <Input id="a-pass" type="password" data-testid="admin-password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1.5" />
           </div>
           {error && <p data-testid="admin-login-error" className="text-sm text-red-600">{error}</p>}
-          <button type="submit" disabled={loading} data-testid="admin-login-submit" className="w-full rounded-full bg-[#166534] hover:bg-[#14532d] disabled:opacity-60 text-white py-3 font-semibold transition-colors">
+          <button type="submit" disabled={loading} data-testid="admin-login-submit" className="w-full rounded-full bg-[#141414] hover:bg-[#000000] disabled:opacity-60 text-white py-3 font-semibold transition-colors">
             {loading ? "Loggar in..." : "Logga in"}
           </button>
         </div>
@@ -102,7 +101,7 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7FAF8]">
+    <div className="min-h-screen bg-[#F5F1E8]">
       <header className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-18 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -113,10 +112,10 @@ function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={load} data-testid="admin-refresh" className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-[#166534] px-3 py-2">
+            <button onClick={load} data-testid="admin-refresh" className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-[#141414] px-3 py-2">
               <RefreshCw size={15} /> Uppdatera
             </button>
-            <button onClick={logout} data-testid="admin-logout" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-[#166534] hover:text-[#166534] transition-colors">
+            <button onClick={logout} data-testid="admin-logout" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-[#141414] hover:text-[#141414] transition-colors">
               <LogOut size={15} /> Logga ut
             </button>
           </div>
@@ -162,14 +161,14 @@ function Dashboard() {
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-slate-600">
-                    <a href={`tel:${b.phone}`} className="inline-flex items-center gap-1.5 hover:text-[#166534]"><Phone size={14} /> {b.phone}</a>
-                    <a href={`mailto:${b.email}`} className="inline-flex items-center gap-1.5 hover:text-[#166534]"><Mail size={14} /> {b.email}</a>
+                    <a href={`tel:${b.phone}`} className="inline-flex items-center gap-1.5 hover:text-[#141414]"><Phone size={14} /> {b.phone}</a>
+                    <a href={`mailto:${b.email}`} className="inline-flex items-center gap-1.5 hover:text-[#141414]"><Mail size={14} /> {b.email}</a>
                     {b.kvm && <span className="inline-flex items-center gap-1.5"><Maximize size={14} /> {b.kvm} kvm</span>}
                     {b.preferred_date && <span className="inline-flex items-center gap-1.5"><Calendar size={14} /> {b.preferred_date}</span>}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {b.services.map((s) => (
-                      <span key={s} className="text-xs bg-[#166534]/8 text-[#166534] px-2.5 py-1 rounded-full font-medium">{s}</span>
+                      <span key={s} className="text-xs bg-[#141414]/8 text-[#141414] px-2.5 py-1 rounded-full font-medium">{s}</span>
                     ))}
                   </div>
                   {b.other_description && (
@@ -181,7 +180,7 @@ function Dashboard() {
                     value={b.status}
                     onChange={(e) => setStatus(b.id, e.target.value)}
                     data-testid={`booking-status-${b.id}`}
-                    className="rounded-full border border-slate-200 text-sm px-4 py-2 outline-none focus:border-[#166534]"
+                    className="rounded-full border border-slate-200 text-sm px-4 py-2 outline-none focus:border-[#141414]"
                   >
                     <option value="new">Ny</option>
                     <option value="contacted">Kontaktad</option>
@@ -202,7 +201,6 @@ function Dashboard() {
 
 export default function Admin() {
   const { user, loading, login } = useAuth();
-  const navigate = useNavigate();
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-slate-500">Laddar...</div>;
