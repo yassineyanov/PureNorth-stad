@@ -74,7 +74,7 @@ export const BookingForm = () => {
       <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-5 gap-12">
         {/* Left intro */}
         <div className="lg:col-span-2">
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#166534] mb-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
             Boka tid
           </p>
           <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-slate-900 leading-tight">
@@ -87,9 +87,9 @@ export const BookingForm = () => {
           <a
             href="tel:0706240403"
             data-testid="booking-call-btn"
-            className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-slate-100 bg-[#F7FAF8] px-6 py-4 hover:border-[#166534] transition-colors"
+            className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-slate-100 bg-[#F5F1E8] px-6 py-4 hover:border-[#141414] transition-colors"
           >
-            <span className="h-11 w-11 rounded-full bg-[#166534] text-white flex items-center justify-center">
+            <span className="h-11 w-11 rounded-full bg-[#141414] text-white flex items-center justify-center">
               <Phone size={18} />
             </span>
             <span>
@@ -106,9 +106,9 @@ export const BookingForm = () => {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               data-testid="booking-success"
-              className="rounded-3xl border border-[#166534]/20 bg-[#F7FAF8] p-10 text-center"
+              className="rounded-3xl border border-[#141414]/20 bg-[#F5F1E8] p-10 text-center"
             >
-              <CheckCircle2 size={48} className="text-[#166534] mx-auto mb-4" />
+              <CheckCircle2 size={48} className="text-[#141414] mx-auto mb-4" />
               <h3 className="font-display font-bold text-2xl text-slate-900 mb-2">
                 Tack för din förfrågan!
               </h3>
@@ -118,7 +118,7 @@ export const BookingForm = () => {
               <button
                 onClick={() => setDone(false)}
                 data-testid="booking-new-btn"
-                className="mt-6 rounded-full bg-[#166534] hover:bg-[#14532d] text-white px-7 py-3 font-semibold transition-colors"
+                className="mt-6 rounded-full bg-[#141414] hover:bg-[#000000] text-white px-7 py-3 font-semibold transition-colors"
               >
                 Gör en ny bokning
               </button>
@@ -157,14 +157,14 @@ export const BookingForm = () => {
                       data-testid={`booking-service-${s}`}
                       className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-colors ${
                         services.includes(s)
-                          ? "border-[#166534] bg-[#166534]/5"
+                          ? "border-[#141414] bg-[#141414]/5"
                           : "border-slate-200 hover:border-slate-300"
                       }`}
                     >
                       <Checkbox
                         checked={services.includes(s)}
                         onCheckedChange={() => toggleService(s)}
-                        className="data-[state=checked]:bg-[#166534] data-[state=checked]:border-[#166534]"
+                        className="data-[state=checked]:bg-[#141414] data-[state=checked]:border-[#141414]"
                       />
                       <span className="text-[15px] text-slate-800">{s}</span>
                     </label>
@@ -200,7 +200,7 @@ export const BookingForm = () => {
                 type="submit"
                 disabled={submitting}
                 data-testid="booking-submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#166534] hover:bg-[#14532d] disabled:opacity-60 text-white px-8 py-4 text-base font-semibold transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#141414] hover:bg-[#000000] disabled:opacity-60 text-white px-8 py-4 text-base font-semibold transition-colors"
               >
                 {submitting ? "Skickar..." : <>Skicka bokningsförfrågan <Send size={17} /></>}
               </button>

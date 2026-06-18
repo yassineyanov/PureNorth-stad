@@ -30,7 +30,7 @@ export const Navbar = () => {
         <a href="#hem" data-testid="nav-logo" className="flex items-center gap-3">
           <Logo className="h-10 w-10" />
           <span className="font-display font-bold text-xl tracking-tight text-slate-900">
-            PureNorth <span className="text-[#166534]">Städ</span>
+            PureNorth <span className="text-[#141414]">Städ</span>
           </span>
         </a>
 
@@ -40,7 +40,7 @@ export const Navbar = () => {
               key={l.href}
               href={l.href}
               data-testid={`nav-link-${l.href.replace("#", "")}`}
-              className="text-[15px] font-medium text-slate-600 hover:text-[#166534] transition-colors"
+              className="text-[15px] font-medium text-slate-600 hover:text-[#141414] transition-colors"
             >
               {l.label}
             </a>
@@ -48,7 +48,7 @@ export const Navbar = () => {
           <a
             href="#boka"
             data-testid="nav-boka-btn"
-            className="rounded-full bg-[#166534] hover:bg-[#14532d] text-white px-6 py-3 text-[15px] font-semibold transition-colors"
+            className="rounded-full bg-[#141414] hover:bg-[#000000] text-white px-6 py-3 text-[15px] font-semibold transition-colors"
           >
             Boka tid
           </a>
@@ -79,7 +79,7 @@ export const Navbar = () => {
           <a
             href="#boka"
             onClick={() => setOpen(false)}
-            className="block text-center rounded-full bg-[#166534] text-white px-6 py-3 font-semibold"
+            className="block text-center rounded-full bg-[#141414] text-white px-6 py-3 font-semibold"
           >
             Boka tid
           </a>
