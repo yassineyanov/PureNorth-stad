@@ -7,7 +7,7 @@ export const Contact = () => (
   <section id="kontakt" className="py-24 sm:py-28 bg-white">
     <div className="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 items-center">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-widest text-[#166534] mb-3">
+        <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
           Kontakt
         </p>
         <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-[#141414]">
@@ -77,9 +77,6 @@ export const Footer = () => (
         </span>
       </div>
       <div className="flex items-center gap-6">
-        <a href="/#omdomen" data-testid="footer-omdomen-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
-          Omdömen
-        </a>
         <Link to="/faq" data-testid="footer-faq-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
           Vanliga frågor
         </Link>
