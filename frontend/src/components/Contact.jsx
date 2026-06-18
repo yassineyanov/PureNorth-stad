@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Phone, MapPin, Clock } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
@@ -75,12 +76,20 @@ export const Footer = () => (
           PureNorth Städ
         </span>
       </div>
-      <p className="text-sm text-slate-500">
-        © {new Date().getFullYear()} PureNorth Städ · Umeå · 070-624 04 03
-      </p>
-      <a href="/admin" data-testid="footer-admin-link" className="text-sm text-slate-400 hover:text-[#141414] transition-colors">
-        Admin
-      </a>
+      <div className="flex items-center gap-6">
+        <a href="/#omdomen" data-testid="footer-omdomen-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
+          Omdömen
+        </a>
+        <Link to="/faq" data-testid="footer-faq-link" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">
+          Vanliga frågor
+        </Link>
+        <Link to="/admin" data-testid="footer-admin-link" className="text-sm font-medium text-slate-400 hover:text-[#141414] transition-colors">
+          Admin
+        </Link>
+      </div>
     </div>
+    <p className="text-sm text-slate-500 text-center mt-8">
+      © {new Date().getFullYear()} PureNorth Städ · Umeå
+    </p>
   </footer>
 );

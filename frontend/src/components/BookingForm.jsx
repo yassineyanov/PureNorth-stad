@@ -89,7 +89,7 @@ export const BookingForm = () => {
             data-testid="booking-call-btn"
             className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-[#FAFAFA] px-6 py-4 hover:border-[#141414] transition-colors"
           >
-            <span className="h-11 w-11 rounded-full bg-[#166534] text-white flex items-center justify-center">
+            <span className="h-11 w-11 rounded-full bg-[#141414] text-white flex items-center justify-center">
               <Phone size={18} />
             </span>
             <span>

@@ -1,0 +1,33 @@
+{
+  "summary": "Iteration 4 — Layout/relocation + AI-generated before/after images + show-more reviews + nav/footer reorg fully verified end-to-end. Backend: 26/26 pytest pass (added 4 ObjectId guard tests for /api/bookings/{id}/status, /api/bookings/{id}, /api/reviews/{id}/approve, /api/reviews/{id} — all return 404 on garbage ids instead of 500). Frontend: navbar contains ONLY Tjänster/Vårt arbete/Kontakt + Boka tid (no Omdömen, no Vanliga frågor); footer-omdomen-link (href=/#omdomen), footer-faq-link (href=/faq), footer-admin-link all present; footer copyright reads '© 2026 PureNorth Städ · Umeå' with no phone number. Before/After section: all 4 PNGs (/before-1.png 1024x1024, /after-1.png 1200x1200, /before-2.png 1264x843, /after-2.png 1200x800) return HTTP 200 and load with non-zero naturalWidth/Height; slider input value changes via dispatch (50→20). Vårt arbete eyebrow color = rgb(255,255,255) (white). Omdömen eyebrow color = rgb(20,20,20) (black). Testimonials grid initially shows 3 cards (testimonial-0/1/2); clicking toggle-reviews expands to 40 cards and label flips to 'Visa färre'; clicking again collapses back to 3. open-review-form button is positioned below the reviews grid (btnTop 4279 > gridBottom 4161). Ring oss icon container in BookingForm is bg-[#141414] (black) with white phone glyph — matches spec. REGRESSION: review submit dialog → toast 'Tack! Ditt omdöme väntar på godkännande innan det publiceras.' → unapproved review hidden from public → admin login → admin-tab-reviews → review-approve-{id} → approved review visible publicly → review-delete-{id} cleanup all worked. /faq page reachable via footer-faq-link with faq-accordion present.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Before/After section", "issues": ["after-2.png is only ~37KB versus the others 300KB-700KB — AI generation may have produced a much simpler/lower-detail render. Still loads at 1200x800 dims. Cosmetic only; consider regenerating for visual parity."]},
+      {"screen": "All pages (carryover)", "issues": ["<title> in /app/frontend/public/index.html still defaults to 'Emergent | Fullstack App' instead of PureNorth Städ branding."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Optional/cosmetic: regenerate /app/frontend/public/after-2.png with higher detail (current ~37KB, others 300-700KB).",
+    "Optional/cosmetic: update <title> in /app/frontend/public/index.html to PureNorth Städ branding (carryover)."
+  ],
+  "critical_code_review_comments": [
+    "ObjectId guard now in place — invalid hex ids return 404 across both bookings and reviews PATCH/DELETE endpoints (verified via 4 new pytest cases).",
+    "ReviewCreate text/name still have no max_length — public POST endpoint is an abuse vector for long-string spam (carryover).",
+    "No rate-limit on public POST /api/reviews and /api/bookings (carryover).",
+    "Backend still uses deprecated FastAPI on_event hooks — migrate to lifespan (carryover, non-blocking).",
+    "Testimonials.jsx: 40-item featured array is large and hard-coded inline — consider extracting to a JSON data file for maintainability.",
+    "BeforeAfter.jsx: sliders are 'sovrum' and 'kontor' alt text but images don't necessarily match (one labeled Kontor uses bedroom-ish photo). Cosmetic — verify alt text matches the actual AI-gen content."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (26/26)", "frontend": "100% — navbar/footer reorg, before/after images, testimonials toggle (3↔40), review submit+approve+publish+cleanup, FAQ nav all OK"},
+  "test_credentials": "admin@purenorthstad.se / PureNorth2026! — verified working",
+  "seed_data_creation": "Created 1 TEST_ITER4_<ts> review via UI; approved, verified on public, then deleted via admin UI (toast 'Omdöme borttaget' confirmed). Pytest also creates/cleans TEST_* bookings and reviews.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All iteration 4 features pass. Backend test suite at /app/backend/tests/backend_test.py now has 26 tests including ObjectId guards. Key data-testids: navbar, nav-logo, nav-link-tjanster, nav-link-vart-arbete, nav-link-kontakt, nav-boka-btn, footer-omdomen-link, footer-faq-link, footer-admin-link, before-after-1, before-after-2, testimonial-{0..n}, toggle-reviews, open-review-form, review-form, review-name, review-star-{1..5}, review-text, review-submit, faq-accordion, admin-tab-bookings, admin-tab-reviews, admin-reviews-list, review-row-{id}, review-approve-{id}, review-delete-{id}, booking-call-btn, contact-phone. Featured testimonials count is exactly 40; INITIAL=3.",
+  "rca_of_the_issue": "N/A — no bugs found in this iteration."
+}

@@ -244,6 +244,29 @@ def test_approve_nonexistent_review(auth_headers):
     assert r.status_code == 404
 
 
+# ---- Invalid ObjectId guards (new in iteration 4) ----
+def test_booking_status_invalid_objectid(auth_headers):
+    r = requests.patch(f"{API}/bookings/not-a-valid-id/status",
+                       json={"status": "done"}, headers=auth_headers)
+    assert r.status_code == 404, f"Expected 404 for invalid id, got {r.status_code}"
+
+
+def test_booking_delete_invalid_objectid(auth_headers):
+    r = requests.delete(f"{API}/bookings/not-a-valid-id", headers=auth_headers)
+    assert r.status_code == 404
+
+
+def test_review_approve_invalid_objectid(auth_headers):
+    r = requests.patch(f"{API}/reviews/not-a-valid-id/approve",
+                       json={"approved": True}, headers=auth_headers)
+    assert r.status_code == 404
+
+
+def test_review_delete_invalid_objectid(auth_headers):
+    r = requests.delete(f"{API}/reviews/not-a-valid-id", headers=auth_headers)
+    assert r.status_code == 404
+
+
 # ---- Cleanup ----
 def test_cleanup_test_bookings(auth_headers):
     lst = requests.get(f"{API}/bookings", headers=auth_headers).json()
