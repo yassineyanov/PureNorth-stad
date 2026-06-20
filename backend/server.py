@@ -5,16 +5,19 @@ import os
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, Response
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import logging
 from pydantic import BaseModel, Field, EmailStr, ConfigDict, BeforeValidator
 from typing import List, Optional, Annotated
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date as DateClass
 from bson import ObjectId
+from io import BytesIO
+from xml.sax.saxutils import quoteattr
 import bcrypt
 import jwt
+from openpyxl import Workbook
 
 # ---------------------------------------------------------------------------
 # Database
@@ -209,7 +212,7 @@ class Shift(BaseModel):
 # ---- Frånvaro (Absence) ----
 class AbsenceCreate(BaseModel):
     employee_id: str
-    type: str = Field(..., min_length=1)  # "Sjuk", "Semester", "VAB", "Annat"
+    type: str = Field(..., min_length=1)
     start_date: str
     end_date: str
     note: Optional[str] = None
@@ -250,7 +253,7 @@ class ExpenseUpdate(BaseModel):
     amount: Optional[float] = None
     category: Optional[str] = None
     description: Optional[str] = None
-    status: Optional[str] = None  # "pending", "approved", "paid"
+    status: Optional[str] = None
 
 
 class Expense(BaseModel):
@@ -269,13 +272,13 @@ class Expense(BaseModel):
 # ---- Payroll settings (OB-tillägg + salary codes for PAXML) ----
 class PayrollSettings(BaseModel):
     ob1_label: str = "Kväll/Lördag"
-    ob1_extra: float = 0  # kr/h extra
-    ob1_days: List[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4, 5])  # 0=Mon ... 5=Sat
+    ob1_extra: float = 0
+    ob1_days: List[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4, 5])
     ob1_start: str = "18:00"
     ob1_end: str = "24:00"
     ob2_label: str = "Söndag/Helg"
     ob2_extra: float = 0
-    ob2_days: List[int] = Field(default_factory=lambda: [6])  # 6=Sun
+    ob2_days: List[int] = Field(default_factory=lambda: [6])
     ob2_start: str = "00:00"
     ob2_end: str = "24:00"
     code_normal: str = "100"
@@ -283,6 +286,169 @@ class PayrollSettings(BaseModel):
     code_ob2: str = "220"
     code_expense: str = "710"
     company_orgnr: Optional[str] = None
+
+
+async def get_payroll_settings_obj() -> PayrollSettings:
+    doc = await db.settings.find_one({"_key": "payroll"})
+    if not doc:
+        return PayrollSettings()
+    doc.pop("_id", None)
+    doc.pop("_key", None)
+    return PayrollSettings(**doc)
+
+
+# ---------------------------------------------------------------------------
+# Payroll calculation helpers
+# ---------------------------------------------------------------------------
+def _time_to_minutes(t: str) -> int:
+    h, m = t.split(":")
+    h = int(h)
+    m = int(m)
+    if h >= 24:
+        return 24 * 60
+    return h * 60 + m
+
+
+def _overlap_minutes(s1, e1, s2, e2) -> int:
+    return max(0, min(e1, e2) - max(s1, s2))
+
+
+def split_shift_hours(date_str: str, start_str: str, end_str: str, settings: PayrollSettings):
+    y, m, d = map(int, date_str.split("-"))
+    weekday = DateClass(y, m, d).weekday()  # 0=Mon ... 6=Sun
+
+    start_m = _time_to_minutes(start_str)
+    end_m = _time_to_minutes(end_str)
+    if end_m <= start_m:
+        end_m += 24 * 60
+    total_minutes = end_m - start_m
+
+    ob1_minutes = 0
+    ob2_minutes = 0
+    if weekday in settings.ob1_days:
+        ob1_minutes = _overlap_minutes(start_m, end_m, _time_to_minutes(settings.ob1_start), _time_to_minutes(settings.ob1_end))
+    if weekday in settings.ob2_days:
+        ob2_minutes = _overlap_minutes(start_m, end_m, _time_to_minutes(settings.ob2_start), _time_to_minutes(settings.ob2_end))
+
+    combined = ob1_minutes + ob2_minutes
+    if combined > total_minutes:
+        excess = combined - total_minutes
+        reduce1 = min(ob1_minutes, excess)
+        ob1_minutes -= reduce1
+
+    normal_minutes = max(0, total_minutes - ob1_minutes - ob2_minutes)
+    return normal_minutes / 60.0, ob1_minutes / 60.0, ob2_minutes / 60.0
+
+
+async def build_payroll_summary(start: str, end: str):
+    settings = await get_payroll_settings_obj()
+    employees = await db.employees.find().to_list(1000)
+    shifts = await db.shifts.find({"date": {"$gte": start, "$lte": end}}).to_list(5000)
+    absences = await db.absences.find({"start_date": {"$lte": end}, "end_date": {"$gte": start}}).to_list(2000)
+    expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(2000)
+
+    summary = {}
+    for emp in employees:
+        eid = str(emp["_id"])
+        summary[eid] = {
+            "name": emp["name"],
+            "personnummer": emp.get("personnummer") or "",
+            "hourly_rate": emp.get("hourly_rate", 0) or 0,
+            "normal_h": 0.0,
+            "ob1_h": 0.0,
+            "ob2_h": 0.0,
+            "expense_total": 0.0,
+            "absence_days": 0,
+        }
+
+    for s in shifts:
+        eid = s["employee_id"]
+        if eid not in summary:
+            continue
+        n, o1, o2 = split_shift_hours(s["date"], s["start_time"], s["end_time"], settings)
+        summary[eid]["normal_h"] += n
+        summary[eid]["ob1_h"] += o1
+        summary[eid]["ob2_h"] += o2
+
+    for e in expenses:
+        eid = e["employee_id"]
+        if eid in summary:
+            summary[eid]["expense_total"] += e["amount"]
+
+    range_start = DateClass(*map(int, start.split("-")))
+    range_end = DateClass(*map(int, end.split("-")))
+    for a in absences:
+        eid = a["employee_id"]
+        if eid in summary:
+            sd = DateClass(*map(int, a["start_date"].split("-")))
+            ed = DateClass(*map(int, a["end_date"].split("-")))
+            clip_s = max(sd, range_start)
+            clip_e = min(ed, range_end)
+            if clip_e >= clip_s:
+                summary[eid]["absence_days"] += (clip_e - clip_s).days + 1
+
+    for eid, row in summary.items():
+        rate = row["hourly_rate"]
+        base_pay = row["normal_h"] * rate
+        ob1_pay = row["ob1_h"] * settings.ob1_extra
+        ob2_pay = row["ob2_h"] * settings.ob2_extra
+        row["base_pay"] = base_pay
+        row["ob1_pay"] = ob1_pay
+        row["ob2_pay"] = ob2_pay
+        row["total_pay"] = base_pay + ob1_pay + ob2_pay + row["expense_total"]
+
+    return summary, settings
+
+
+def build_xlsx_bytes(summary: dict) -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Löneunderlag"
+    headers = [
+        "Anställd", "Personnummer", "Normaltid (h)", "OB1 (h)", "OB2 (h)",
+        "Grundlön (kr)", "OB1-tillägg (kr)", "OB2-tillägg (kr)",
+        "Utlägg (kr)", "Frånvarodagar", "Summa (kr)",
+    ]
+    ws.append(headers)
+    for row in summary.values():
+        ws.append([
+            row["name"], row["personnummer"],
+            round(row["normal_h"], 2), round(row["ob1_h"], 2), round(row["ob2_h"], 2),
+            round(row["base_pay"], 2), round(row["ob1_pay"], 2), round(row["ob2_pay"], 2),
+            round(row["expense_total"], 2), row["absence_days"], round(row["total_pay"], 2),
+        ])
+    for col in ws.columns:
+        max_len = max(len(str(c.value)) if c.value is not None else 0 for c in col)
+        ws.column_dimensions[col[0].column_letter].width = max(12, max_len + 2)
+    buf = BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def build_paxml_str(summary: dict, settings: PayrollSettings, start: str, end: str) -> str:
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+    lines.append('<paxml version="2.0" xmlns="http://www.paxml.se/2.0">')
+    lines.append('  <header>')
+    lines.append('    <format>LONETRANS</format>')
+    if settings.company_orgnr:
+        lines.append(f'    <orgnr>{quoteattr(settings.company_orgnr)[1:-1]}</orgnr>')
+    lines.append(f'    <skapad>{datetime.now(timezone.utc).isoformat()}</skapad>')
+    lines.append(f'    <period start="{start}" slut="{end}"/>')
+    lines.append('  </header>')
+    lines.append('  <lonetransaktioner>')
+    for eid, row in summary.items():
+        persnr = quoteattr(row["personnummer"] or "")
+        if row["normal_h"]:
+            lines.append(f'    <lonetrans anstid={quoteattr(eid)} persnr={persnr} kod="{settings.code_normal}" antal="{round(row["normal_h"], 2)}" enhet="TIM"/>')
+        if row["ob1_h"]:
+            lines.append(f'    <lonetrans anstid={quoteattr(eid)} persnr={persnr} kod="{settings.code_ob1}" antal="{round(row["ob1_h"], 2)}" enhet="TIM"/>')
+        if row["ob2_h"]:
+            lines.append(f'    <lonetrans anstid={quoteattr(eid)} persnr={persnr} kod="{settings.code_ob2}" antal="{round(row["ob2_h"], 2)}" enhet="TIM"/>')
+        if row["expense_total"]:
+            lines.append(f'    <lonetrans anstid={quoteattr(eid)} persnr={persnr} kod="{settings.code_expense}" belopp="{round(row["expense_total"], 2)}" enhet="KR"/>')
+    lines.append('  </lonetransaktioner>')
+    lines.append('</paxml>')
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -559,12 +725,7 @@ async def delete_expense(expense_id: str, current=Depends(get_current_user)):
 # ---- Payroll settings ----
 @api_router.get("/settings/payroll", response_model=PayrollSettings)
 async def get_payroll_settings(current=Depends(get_current_user)):
-    doc = await db.settings.find_one({"_key": "payroll"})
-    if not doc:
-        return PayrollSettings()
-    doc.pop("_id", None)
-    doc.pop("_key", None)
-    return PayrollSettings(**doc)
+    return await get_payroll_settings_obj()
 
 
 @api_router.put("/settings/payroll", response_model=PayrollSettings)
@@ -573,6 +734,34 @@ async def set_payroll_settings(payload: PayrollSettings, current=Depends(get_cur
     doc["_key"] = "payroll"
     await db.settings.update_one({"_key": "payroll"}, {"$set": doc}, upsert=True)
     return payload
+
+
+# ---- Payroll summary + export ----
+@api_router.get("/payroll/summary")
+async def payroll_summary(start: str, end: str, current=Depends(get_current_user)):
+    summary, settings = await build_payroll_summary(start, end)
+    return {
+        "settings": settings.model_dump(),
+        "rows": [{"employee_id": eid, **row} for eid, row in summary.items()],
+    }
+
+
+@api_router.get("/payroll/export")
+async def payroll_export(start: str, end: str, format: str = "xlsx", current=Depends(get_current_user)):
+    summary, settings = await build_payroll_summary(start, end)
+    if format == "paxml":
+        xml_str = build_paxml_str(summary, settings, start, end)
+        return Response(
+            content=xml_str,
+            media_type="application/xml",
+            headers={"Content-Disposition": f'attachment; filename="lon_{start}_{end}.paxml.xml"'},
+        )
+    xlsx_bytes = build_xlsx_bytes(summary)
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="lon_{start}_{end}.xlsx"'},
+    )
 
 
 app.include_router(api_router)
