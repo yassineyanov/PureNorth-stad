@@ -142,6 +142,58 @@ class ApproveUpdate(BaseModel):
     approved: bool
 
 
+# ---- Employees ----
+class EmployeeCreate(BaseModel):
+    name: str = Field(..., min_length=1)
+    phone: Optional[str] = None
+    color: str = "#166534"
+
+
+class Employee(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    name: str
+    phone: Optional[str] = None
+    color: str = "#166534"
+    created_at: str
+
+
+# ---- Shifts (Schema) ----
+class ShiftCreate(BaseModel):
+    employee_id: str
+    date: str  # "YYYY-MM-DD"
+    start_time: str  # "HH:MM"
+    end_time: str  # "HH:MM"
+    title: str = Field(..., min_length=1)
+    note: Optional[str] = None
+    booking_id: Optional[str] = None
+
+
+class ShiftUpdate(BaseModel):
+    employee_id: Optional[str] = None
+    date: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    title: Optional[str] = None
+    note: Optional[str] = None
+    booking_id: Optional[str] = None
+
+
+class Shift(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    employee_id: str
+    date: str
+    start_time: str
+    end_time: str
+    title: str
+    note: Optional[str] = None
+    booking_id: Optional[str] = None
+    created_at: str
+
+
 # ---------------------------------------------------------------------------
 # App / Router
 # ---------------------------------------------------------------------------
@@ -246,6 +298,72 @@ async def delete_review(review_id: str, current=Depends(get_current_user)):
     result = await db.reviews.delete_one({"_id": to_object_id(review_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Omdöme hittades inte")
+    return {"success": True}
+
+
+# ---- Employees ----
+@api_router.post("/employees", response_model=Employee, response_model_by_alias=False)
+async def create_employee(payload: EmployeeCreate, current=Depends(get_current_user)):
+    doc = payload.model_dump()
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.employees.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return Employee(**doc)
+
+
+@api_router.get("/employees", response_model=List[Employee], response_model_by_alias=False)
+async def list_employees(current=Depends(get_current_user)):
+    docs = await db.employees.find().sort("created_at", 1).to_list(1000)
+    return [Employee(**{**d, "_id": str(d["_id"])}) for d in docs]
+
+
+@api_router.delete("/employees/{employee_id}")
+async def delete_employee(employee_id: str, current=Depends(get_current_user)):
+    result = await db.employees.delete_one({"_id": to_object_id(employee_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Anställd hittades inte")
+    await db.shifts.delete_many({"employee_id": employee_id})
+    return {"success": True}
+
+
+# ---- Shifts (Schema) ----
+@api_router.post("/shifts", response_model=Shift, response_model_by_alias=False)
+async def create_shift(payload: ShiftCreate, current=Depends(get_current_user)):
+    doc = payload.model_dump()
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.shifts.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return Shift(**doc)
+
+
+@api_router.get("/shifts", response_model=List[Shift], response_model_by_alias=False)
+async def list_shifts(start: Optional[str] = None, end: Optional[str] = None, current=Depends(get_current_user)):
+    query = {}
+    if start and end:
+        query["date"] = {"$gte": start, "$lte": end}
+    docs = await db.shifts.find(query).sort("date", 1).to_list(2000)
+    return [Shift(**{**d, "_id": str(d["_id"])}) for d in docs]
+
+
+@api_router.patch("/shifts/{shift_id}", response_model=Shift, response_model_by_alias=False)
+async def update_shift(shift_id: str, payload: ShiftUpdate, current=Depends(get_current_user)):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if updates:
+        result = await db.shifts.update_one({"_id": to_object_id(shift_id)}, {"$set": updates})
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Pass hittades inte")
+    doc = await db.shifts.find_one({"_id": to_object_id(shift_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Pass hittades inte")
+    doc["_id"] = str(doc["_id"])
+    return Shift(**doc)
+
+
+@api_router.delete("/shifts/{shift_id}")
+async def delete_shift(shift_id: str, current=Depends(get_current_user)):
+    result = await db.shifts.delete_one({"_id": to_object_id(shift_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Pass hittades inte")
     return {"success": True}
 
 
