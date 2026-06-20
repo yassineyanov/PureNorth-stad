@@ -147,6 +147,8 @@ class EmployeeCreate(BaseModel):
     name: str = Field(..., min_length=1)
     phone: Optional[str] = None
     color: str = "#166534"
+    hourly_rate: float = 0
+    personnummer: Optional[str] = None
 
 
 class Employee(BaseModel):
@@ -156,7 +158,17 @@ class Employee(BaseModel):
     name: str
     phone: Optional[str] = None
     color: str = "#166534"
+    hourly_rate: float = 0
+    personnummer: Optional[str] = None
     created_at: str
+
+
+class EmployeeUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    color: Optional[str] = None
+    hourly_rate: Optional[float] = None
+    personnummer: Optional[str] = None
 
 
 # ---- Shifts (Schema) ----
@@ -192,6 +204,85 @@ class Shift(BaseModel):
     note: Optional[str] = None
     booking_id: Optional[str] = None
     created_at: str
+
+
+# ---- Frånvaro (Absence) ----
+class AbsenceCreate(BaseModel):
+    employee_id: str
+    type: str = Field(..., min_length=1)  # "Sjuk", "Semester", "VAB", "Annat"
+    start_date: str
+    end_date: str
+    note: Optional[str] = None
+
+
+class AbsenceUpdate(BaseModel):
+    employee_id: Optional[str] = None
+    type: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    note: Optional[str] = None
+
+
+class Absence(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    employee_id: str
+    type: str
+    start_date: str
+    end_date: str
+    note: Optional[str] = None
+    created_at: str
+
+
+# ---- Utlägg (Expenses) ----
+class ExpenseCreate(BaseModel):
+    employee_id: str
+    date: str
+    amount: float = Field(..., ge=0)
+    category: str = "Övrigt"
+    description: Optional[str] = None
+
+
+class ExpenseUpdate(BaseModel):
+    employee_id: Optional[str] = None
+    date: Optional[str] = None
+    amount: Optional[float] = None
+    category: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None  # "pending", "approved", "paid"
+
+
+class Expense(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    employee_id: str
+    date: str
+    amount: float
+    category: str = "Övrigt"
+    description: Optional[str] = None
+    status: str = "pending"
+    created_at: str
+
+
+# ---- Payroll settings (OB-tillägg + salary codes for PAXML) ----
+class PayrollSettings(BaseModel):
+    ob1_label: str = "Kväll/Lördag"
+    ob1_extra: float = 0  # kr/h extra
+    ob1_days: List[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4, 5])  # 0=Mon ... 5=Sat
+    ob1_start: str = "18:00"
+    ob1_end: str = "24:00"
+    ob2_label: str = "Söndag/Helg"
+    ob2_extra: float = 0
+    ob2_days: List[int] = Field(default_factory=lambda: [6])  # 6=Sun
+    ob2_start: str = "00:00"
+    ob2_end: str = "24:00"
+    code_normal: str = "100"
+    code_ob1: str = "210"
+    code_ob2: str = "220"
+    code_expense: str = "710"
+    company_orgnr: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -317,6 +408,20 @@ async def list_employees(current=Depends(get_current_user)):
     return [Employee(**{**d, "_id": str(d["_id"])}) for d in docs]
 
 
+@api_router.patch("/employees/{employee_id}", response_model=Employee, response_model_by_alias=False)
+async def update_employee(employee_id: str, payload: EmployeeUpdate, current=Depends(get_current_user)):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if updates:
+        result = await db.employees.update_one({"_id": to_object_id(employee_id)}, {"$set": updates})
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Anställd hittades inte")
+    doc = await db.employees.find_one({"_id": to_object_id(employee_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Anställd hittades inte")
+    doc["_id"] = str(doc["_id"])
+    return Employee(**doc)
+
+
 @api_router.delete("/employees/{employee_id}")
 async def delete_employee(employee_id: str, current=Depends(get_current_user)):
     result = await db.employees.delete_one({"_id": to_object_id(employee_id)})
@@ -365,6 +470,109 @@ async def delete_shift(shift_id: str, current=Depends(get_current_user)):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Pass hittades inte")
     return {"success": True}
+
+
+# ---- Frånvaro (Absence) ----
+@api_router.post("/absences", response_model=Absence, response_model_by_alias=False)
+async def create_absence(payload: AbsenceCreate, current=Depends(get_current_user)):
+    doc = payload.model_dump()
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.absences.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return Absence(**doc)
+
+
+@api_router.get("/absences", response_model=List[Absence], response_model_by_alias=False)
+async def list_absences(start: Optional[str] = None, end: Optional[str] = None, current=Depends(get_current_user)):
+    query = {}
+    if start and end:
+        query["start_date"] = {"$lte": end}
+        query["end_date"] = {"$gte": start}
+    docs = await db.absences.find(query).sort("start_date", -1).to_list(2000)
+    return [Absence(**{**d, "_id": str(d["_id"])}) for d in docs]
+
+
+@api_router.patch("/absences/{absence_id}", response_model=Absence, response_model_by_alias=False)
+async def update_absence(absence_id: str, payload: AbsenceUpdate, current=Depends(get_current_user)):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if updates:
+        result = await db.absences.update_one({"_id": to_object_id(absence_id)}, {"$set": updates})
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Frånvaro hittades inte")
+    doc = await db.absences.find_one({"_id": to_object_id(absence_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Frånvaro hittades inte")
+    doc["_id"] = str(doc["_id"])
+    return Absence(**doc)
+
+
+@api_router.delete("/absences/{absence_id}")
+async def delete_absence(absence_id: str, current=Depends(get_current_user)):
+    result = await db.absences.delete_one({"_id": to_object_id(absence_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Frånvaro hittades inte")
+    return {"success": True}
+
+
+# ---- Utlägg (Expenses) ----
+@api_router.post("/expenses", response_model=Expense, response_model_by_alias=False)
+async def create_expense(payload: ExpenseCreate, current=Depends(get_current_user)):
+    doc = payload.model_dump()
+    doc["status"] = "pending"
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.expenses.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return Expense(**doc)
+
+
+@api_router.get("/expenses", response_model=List[Expense], response_model_by_alias=False)
+async def list_expenses(start: Optional[str] = None, end: Optional[str] = None, current=Depends(get_current_user)):
+    query = {}
+    if start and end:
+        query["date"] = {"$gte": start, "$lte": end}
+    docs = await db.expenses.find(query).sort("date", -1).to_list(2000)
+    return [Expense(**{**d, "_id": str(d["_id"])}) for d in docs]
+
+
+@api_router.patch("/expenses/{expense_id}", response_model=Expense, response_model_by_alias=False)
+async def update_expense(expense_id: str, payload: ExpenseUpdate, current=Depends(get_current_user)):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if updates:
+        result = await db.expenses.update_one({"_id": to_object_id(expense_id)}, {"$set": updates})
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Utlägg hittades inte")
+    doc = await db.expenses.find_one({"_id": to_object_id(expense_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Utlägg hittades inte")
+    doc["_id"] = str(doc["_id"])
+    return Expense(**doc)
+
+
+@api_router.delete("/expenses/{expense_id}")
+async def delete_expense(expense_id: str, current=Depends(get_current_user)):
+    result = await db.expenses.delete_one({"_id": to_object_id(expense_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Utlägg hittades inte")
+    return {"success": True}
+
+
+# ---- Payroll settings ----
+@api_router.get("/settings/payroll", response_model=PayrollSettings)
+async def get_payroll_settings(current=Depends(get_current_user)):
+    doc = await db.settings.find_one({"_key": "payroll"})
+    if not doc:
+        return PayrollSettings()
+    doc.pop("_id", None)
+    doc.pop("_key", None)
+    return PayrollSettings(**doc)
+
+
+@api_router.put("/settings/payroll", response_model=PayrollSettings)
+async def set_payroll_settings(payload: PayrollSettings, current=Depends(get_current_user)):
+    doc = payload.model_dump()
+    doc["_key"] = "payroll"
+    await db.settings.update_one({"_key": "payroll"}, {"$set": doc}, upsert=True)
+    return payload
 
 
 app.include_router(api_router)
