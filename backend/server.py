@@ -157,6 +157,7 @@ class EmployeeCreate(BaseModel):
     color: str = "#166534"
     hourly_rate: float = 0
     personnummer: Optional[str] = None
+    employment_type: str = "fastanstalld"  # "fastanstalld" or "vikarie"
 
 
 class Employee(BaseModel):
@@ -168,6 +169,7 @@ class Employee(BaseModel):
     color: str = "#166534"
     hourly_rate: float = 0
     personnummer: Optional[str] = None
+    employment_type: str = "fastanstalld"
     created_at: str
 
 
@@ -177,6 +179,7 @@ class EmployeeUpdate(BaseModel):
     color: Optional[str] = None
     hourly_rate: Optional[float] = None
     personnummer: Optional[str] = None
+    employment_type: Optional[str] = None
 
 
 # ---- Shifts (Schema) ----
@@ -353,7 +356,7 @@ class InvoiceCreate(BaseModel):
     customer_phone: Optional[str] = None
     customer_address: Optional[str] = None
     customer_personnummer: Optional[str] = None
-    customer_type: str = "private"  # "private" or "company"
+    customer_type: str = "private"
     rut_eligible: bool = True
     items: List[InvoiceItemModel]
     note: Optional[str] = None
@@ -361,7 +364,7 @@ class InvoiceCreate(BaseModel):
 
 
 class InvoiceStatusUpdate(BaseModel):
-    status: str  # draft, sent, paid, overdue
+    status: str
 
 
 class Invoice(BaseModel):
@@ -559,45 +562,67 @@ async def build_payroll_summary(start: str, end: str):
     absences = await db.absences.find({"start_date": {"$lte": end}, "end_date": {"$gte": start}}).to_list(2000)
     expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(2000)
 
+    range_start = DateClass(*map(int, start.split("-")))
+    range_end = DateClass(*map(int, end.split("-")))
+
     summary = {}
+    absence_dates_by_employee = {}
     for emp in employees:
         eid = str(emp["_id"])
         summary[eid] = {
             "name": emp["name"],
             "personnummer": emp.get("personnummer") or "",
             "hourly_rate": emp.get("hourly_rate", 0) or 0,
+            "employment_type": emp.get("employment_type", "fastanstalld"),
             "normal_h": 0.0,
             "ob1_h": 0.0,
             "ob2_h": 0.0,
             "expense_total": 0.0,
             "absence_days": 0,
+            "absence_scheduled_days": 0,
+            "absence_lost_amount": 0.0,
         }
+        absence_dates_by_employee[eid] = set()
+
+    for a in absences:
+        eid = a["employee_id"]
+        if eid not in summary:
+            continue
+        sd = DateClass(*map(int, a["start_date"].split("-")))
+        ed = DateClass(*map(int, a["end_date"].split("-")))
+        clip_s = max(sd, range_start)
+        clip_e = min(ed, range_end)
+        if clip_e >= clip_s:
+            summary[eid]["absence_days"] += (clip_e - clip_s).days + 1
+            d = clip_s
+            while d <= clip_e:
+                absence_dates_by_employee[eid].add(d.isoformat())
+                d += timedelta(days=1)
+
+    overlap_dates_by_employee = {eid: set() for eid in summary}
 
     for s in shifts:
         eid = s["employee_id"]
         if eid not in summary:
             continue
         n, o1, o2 = split_shift_hours(s["date"], s["start_time"], s["end_time"], settings)
-        summary[eid]["normal_h"] += n
-        summary[eid]["ob1_h"] += o1
-        summary[eid]["ob2_h"] += o2
+        row = summary[eid]
+        if s["date"] in absence_dates_by_employee.get(eid, set()):
+            rate = row["hourly_rate"]
+            row["absence_lost_amount"] += n * rate + o1 * settings.ob1_extra + o2 * settings.ob2_extra
+            overlap_dates_by_employee[eid].add(s["date"])
+        else:
+            row["normal_h"] += n
+            row["ob1_h"] += o1
+            row["ob2_h"] += o2
+
+    for eid, dates in overlap_dates_by_employee.items():
+        summary[eid]["absence_scheduled_days"] = len(dates)
 
     for e in expenses:
         eid = e["employee_id"]
         if eid in summary:
             summary[eid]["expense_total"] += e["amount"]
-
-    range_start = DateClass(*map(int, start.split("-")))
-    range_end = DateClass(*map(int, end.split("-")))
-    for a in absences:
-        eid = a["employee_id"]
-        if eid in summary:
-            sd = DateClass(*map(int, a["start_date"].split("-")))
-            ed = DateClass(*map(int, a["end_date"].split("-")))
-            clip_s = max(sd, range_start)
-            clip_e = min(ed, range_end)
-            if clip_e >= clip_s:
-                summary[eid]["absence_days"] += (clip_e - clip_s).days + 1
 
     for eid, row in summary.items():
         rate = row["hourly_rate"]
@@ -617,17 +642,20 @@ def build_xlsx_bytes(summary: dict) -> bytes:
     ws = wb.active
     ws.title = "Löneunderlag"
     headers = [
-        "Anställd", "Personnummer", "Normaltid (h)", "OB1 (h)", "OB2 (h)",
+        "Anställd", "Typ", "Personnummer", "Normaltid (h)", "OB1 (h)", "OB2 (h)",
         "Grundlön (kr)", "OB1-tillägg (kr)", "OB2-tillägg (kr)",
-        "Utlägg (kr)", "Frånvarodagar", "Summa (kr)",
+        "Utlägg (kr)", "Frånvarodagar (totalt)", "Frånvarodagar (bokade pass)",
+        "Förlorad lön vid frånvaro (kr)", "Summa (kr)",
     ]
     ws.append(headers)
     for row in summary.values():
+        type_label = "Vikarie" if row.get("employment_type") == "vikarie" else "Fast anställd"
         ws.append([
-            row["name"], row["personnummer"],
+            row["name"], type_label, row["personnummer"],
             round(row["normal_h"], 2), round(row["ob1_h"], 2), round(row["ob2_h"], 2),
             round(row["base_pay"], 2), round(row["ob1_pay"], 2), round(row["ob2_pay"], 2),
-            round(row["expense_total"], 2), row["absence_days"], round(row["total_pay"], 2),
+            round(row["expense_total"], 2), row["absence_days"], row["absence_scheduled_days"],
+            round(row["absence_lost_amount"], 2), round(row["total_pay"], 2),
         ])
     for col in ws.columns:
         max_len = max(len(str(c.value)) if c.value is not None else 0 for c in col)
