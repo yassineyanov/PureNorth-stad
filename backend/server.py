@@ -1037,6 +1037,27 @@ async def delete_invoice(invoice_id: str, current=Depends(get_current_user)):
     return {"success": True}
 
 
+@api_router.put("/invoices/{invoice_id}", response_model=Invoice, response_model_by_alias=False)
+async def update_invoice(invoice_id: str, payload: InvoiceCreate, current=Depends(get_current_user)):
+    existing = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Faktura hittades inte")
+    inv_settings = await get_invoice_settings_obj()
+    items = [i.model_dump() for i in payload.items]
+    amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
+    due_date = payload.due_date or existing.get("due_date") or (DateClass.today() + timedelta(days=inv_settings.payment_terms_days)).isoformat()
+
+    updates = payload.model_dump()
+    updates["items"] = items
+    updates["due_date"] = due_date
+    updates.update(amounts)
+
+    await db.invoices.update_one({"_id": to_object_id(invoice_id)}, {"$set": updates})
+    doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    doc["_id"] = str(doc["_id"])
+    return Invoice(**doc)
+
+
 @api_router.get("/invoices/{invoice_id}/pdf")
 async def get_invoice_pdf(invoice_id: str, current=Depends(get_current_user)):
     doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
