@@ -18,6 +18,11 @@ from xml.sax.saxutils import quoteattr
 import bcrypt
 import jwt
 from openpyxl import Workbook
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 # ---------------------------------------------------------------------------
 # Database
@@ -177,9 +182,9 @@ class EmployeeUpdate(BaseModel):
 # ---- Shifts (Schema) ----
 class ShiftCreate(BaseModel):
     employee_id: str
-    date: str  # "YYYY-MM-DD"
-    start_time: str  # "HH:MM"
-    end_time: str  # "HH:MM"
+    date: str
+    start_time: str
+    end_time: str
     title: str = Field(..., min_length=1)
     note: Optional[str] = None
     booking_id: Optional[str] = None
@@ -297,6 +302,213 @@ async def get_payroll_settings_obj() -> PayrollSettings:
     return PayrollSettings(**doc)
 
 
+# ---- Invoice settings ----
+class InvoiceSettings(BaseModel):
+    company_name: str = "PureNorth Städ"
+    company_orgnr: Optional[str] = None
+    company_address: Optional[str] = None
+    company_email: Optional[str] = None
+    company_phone: Optional[str] = None
+    bankgiro: Optional[str] = None
+    plusgiro: Optional[str] = None
+    iban: Optional[str] = None
+    vat_rate: float = 25.0
+    payment_terms_days: int = 30
+    next_invoice_number: int = 1001
+
+
+async def get_invoice_settings_obj() -> InvoiceSettings:
+    doc = await db.settings.find_one({"_key": "invoice"})
+    if not doc:
+        return InvoiceSettings()
+    doc.pop("_id", None)
+    doc.pop("_key", None)
+    return InvoiceSettings(**doc)
+
+
+async def get_next_invoice_number() -> int:
+    doc = await db.settings.find_one({"_key": "invoice"})
+    if not doc:
+        defaults = InvoiceSettings().model_dump()
+        defaults["_key"] = "invoice"
+        await db.settings.insert_one(defaults)
+        doc = defaults
+    number = doc.get("next_invoice_number", 1001)
+    await db.settings.update_one({"_key": "invoice"}, {"$set": {"next_invoice_number": number + 1}})
+    return number
+
+
+# ---- Invoices (Fakturering) ----
+class InvoiceItemModel(BaseModel):
+    description: str = Field(..., min_length=1)
+    quantity: float = 1
+    unit_price: float = 0
+    is_material: bool = False
+
+
+class InvoiceCreate(BaseModel):
+    booking_id: Optional[str] = None
+    customer_name: str = Field(..., min_length=1)
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+    customer_address: Optional[str] = None
+    customer_personnummer: Optional[str] = None
+    customer_type: str = "private"  # "private" or "company"
+    rut_eligible: bool = True
+    items: List[InvoiceItemModel]
+    note: Optional[str] = None
+    due_date: Optional[str] = None
+
+
+class InvoiceStatusUpdate(BaseModel):
+    status: str  # draft, sent, paid, overdue
+
+
+class Invoice(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    invoice_number: int
+    booking_id: Optional[str] = None
+    customer_name: str
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+    customer_address: Optional[str] = None
+    customer_personnummer: Optional[str] = None
+    customer_type: str = "private"
+    rut_eligible: bool = True
+    items: List[InvoiceItemModel]
+    note: Optional[str] = None
+    due_date: str
+    status: str = "draft"
+    labor_total: float
+    material_total: float
+    subtotal: float
+    vat_amount: float
+    total_amount: float
+    rut_deduction: float
+    customer_pays: float
+    created_at: str
+    paid_at: Optional[str] = None
+
+
+def calc_invoice_amounts(items: list, rut_eligible: bool, customer_type: str, vat_rate: float):
+    labor_total = sum(i["quantity"] * i["unit_price"] for i in items if not i.get("is_material"))
+    material_total = sum(i["quantity"] * i["unit_price"] for i in items if i.get("is_material"))
+    subtotal = labor_total + material_total
+    vat_amount = subtotal * vat_rate / 100.0
+    total_amount = subtotal + vat_amount
+    rut_deduction = 0.0
+    if rut_eligible and customer_type == "private":
+        rut_deduction = round(labor_total * 0.5, 2)
+    customer_pays = total_amount - rut_deduction
+    return {
+        "labor_total": round(labor_total, 2),
+        "material_total": round(material_total, 2),
+        "subtotal": round(subtotal, 2),
+        "vat_amount": round(vat_amount, 2),
+        "total_amount": round(total_amount, 2),
+        "rut_deduction": rut_deduction,
+        "customer_pays": round(customer_pays, 2),
+    }
+
+
+def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
+    buf = BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        topMargin=20 * mm, bottomMargin=20 * mm, leftMargin=20 * mm, rightMargin=20 * mm,
+    )
+    styles = getSampleStyleSheet()
+    elements = []
+
+    title_style = ParagraphStyle("title", parent=styles["Heading1"], fontSize=18)
+    elements.append(Paragraph(settings.company_name or "Faktura", title_style))
+    elements.append(Paragraph(f"Faktura #{inv['invoice_number']}", styles["Heading2"]))
+    elements.append(Spacer(1, 6 * mm))
+
+    company_lines = []
+    if settings.company_orgnr:
+        company_lines.append(f"Org.nr: {settings.company_orgnr}")
+    if settings.company_address:
+        company_lines.append(settings.company_address)
+    if settings.company_email:
+        company_lines.append(settings.company_email)
+    if settings.company_phone:
+        company_lines.append(settings.company_phone)
+    for line in company_lines:
+        elements.append(Paragraph(line, styles["Normal"]))
+
+    elements.append(Spacer(1, 8 * mm))
+    elements.append(Paragraph("Kund", styles["Heading3"]))
+    elements.append(Paragraph(inv["customer_name"], styles["Normal"]))
+    if inv.get("customer_address"):
+        elements.append(Paragraph(inv["customer_address"], styles["Normal"]))
+    if inv.get("customer_email"):
+        elements.append(Paragraph(inv["customer_email"], styles["Normal"]))
+    if inv.get("rut_eligible") and inv.get("customer_personnummer"):
+        elements.append(Paragraph(f"Personnummer: {inv['customer_personnummer']}", styles["Normal"]))
+
+    elements.append(Spacer(1, 4 * mm))
+    elements.append(Paragraph(f"Fakturadatum: {inv['created_at'][:10]}", styles["Normal"]))
+    elements.append(Paragraph(f"Förfallodatum: {inv['due_date']}", styles["Normal"]))
+
+    elements.append(Spacer(1, 8 * mm))
+    data = [["Beskrivning", "Antal", "À-pris (kr)", "Summa (kr)"]]
+    for item in inv["items"]:
+        line_total = item["quantity"] * item["unit_price"]
+        data.append([item["description"], f'{item["quantity"]:g}', f'{item["unit_price"]:.2f}', f'{line_total:.2f}'])
+    table = Table(data, colWidths=[80 * mm, 25 * mm, 30 * mm, 30 * mm])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#141414")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTSIZE", (0, 0), (-1, -1), 9),
+        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+        ("TOPPADDING", (0, 0), (-1, 0), 8),
+    ]))
+    elements.append(table)
+
+    elements.append(Spacer(1, 6 * mm))
+    totals_data = [
+        ["Delsumma (exkl. moms)", f"{inv['subtotal']:.2f} kr"],
+        [f"Moms ({settings.vat_rate:g}%)", f"{inv['vat_amount']:.2f} kr"],
+        ["Totalt", f"{inv['total_amount']:.2f} kr"],
+    ]
+    if inv.get("rut_eligible") and inv.get("rut_deduction", 0) > 0:
+        totals_data.append(["RUT-avdrag (50% av arbetskostnad)", f"-{inv['rut_deduction']:.2f} kr"])
+        totals_data.append(["Att betala", f"{inv['customer_pays']:.2f} kr"])
+    totals_table = Table(totals_data, colWidths=[100 * mm, 35 * mm])
+    totals_table.setStyle(TableStyle([
+        ("FONTSIZE", (0, 0), (-1, -1), 9),
+        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("LINEABOVE", (0, -1), (-1, -1), 0.5, colors.HexColor("#141414")),
+    ]))
+    elements.append(totals_table)
+
+    elements.append(Spacer(1, 10 * mm))
+    pay_lines = []
+    if settings.bankgiro:
+        pay_lines.append(f"Bankgiro: {settings.bankgiro}")
+    if settings.plusgiro:
+        pay_lines.append(f"Plusgiro: {settings.plusgiro}")
+    if settings.iban:
+        pay_lines.append(f"IBAN: {settings.iban}")
+    if pay_lines:
+        elements.append(Paragraph("Betalningsinformation", styles["Heading3"]))
+        for line in pay_lines:
+            elements.append(Paragraph(line, styles["Normal"]))
+
+    if inv.get("note"):
+        elements.append(Spacer(1, 6 * mm))
+        elements.append(Paragraph(inv["note"], styles["Normal"]))
+
+    doc.build(elements)
+    return buf.getvalue()
+
+
 # ---------------------------------------------------------------------------
 # Payroll calculation helpers
 # ---------------------------------------------------------------------------
@@ -315,7 +527,7 @@ def _overlap_minutes(s1, e1, s2, e2) -> int:
 
 def split_shift_hours(date_str: str, start_str: str, end_str: str, settings: PayrollSettings):
     y, m, d = map(int, date_str.split("-"))
-    weekday = DateClass(y, m, d).weekday()  # 0=Mon ... 6=Sun
+    weekday = DateClass(y, m, d).weekday()
 
     start_m = _time_to_minutes(start_str)
     end_m = _time_to_minutes(end_str)
@@ -761,6 +973,82 @@ async def payroll_export(start: str, end: str, format: str = "xlsx", current=Dep
         content=xlsx_bytes,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="lon_{start}_{end}.xlsx"'},
+    )
+
+
+# ---- Invoices (Fakturering) ----
+@api_router.get("/settings/invoice", response_model=InvoiceSettings)
+async def get_invoice_settings(current=Depends(get_current_user)):
+    return await get_invoice_settings_obj()
+
+
+@api_router.put("/settings/invoice", response_model=InvoiceSettings)
+async def set_invoice_settings(payload: InvoiceSettings, current=Depends(get_current_user)):
+    doc = payload.model_dump()
+    doc["_key"] = "invoice"
+    await db.settings.update_one({"_key": "invoice"}, {"$set": doc}, upsert=True)
+    return payload
+
+
+@api_router.post("/invoices", response_model=Invoice, response_model_by_alias=False)
+async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_user)):
+    inv_settings = await get_invoice_settings_obj()
+    items = [i.model_dump() for i in payload.items]
+    amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
+    number = await get_next_invoice_number()
+    due_date = payload.due_date or (DateClass.today() + timedelta(days=inv_settings.payment_terms_days)).isoformat()
+
+    doc = payload.model_dump()
+    doc["items"] = items
+    doc["invoice_number"] = number
+    doc["due_date"] = due_date
+    doc["status"] = "draft"
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    doc["paid_at"] = None
+    doc.update(amounts)
+
+    result = await db.invoices.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return Invoice(**doc)
+
+
+@api_router.get("/invoices", response_model=List[Invoice], response_model_by_alias=False)
+async def list_invoices(current=Depends(get_current_user)):
+    docs = await db.invoices.find().sort("invoice_number", -1).to_list(2000)
+    return [Invoice(**{**d, "_id": str(d["_id"])}) for d in docs]
+
+
+@api_router.patch("/invoices/{invoice_id}/status")
+async def update_invoice_status(invoice_id: str, payload: InvoiceStatusUpdate, current=Depends(get_current_user)):
+    updates = {"status": payload.status}
+    if payload.status == "paid":
+        updates["paid_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.invoices.update_one({"_id": to_object_id(invoice_id)}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Faktura hittades inte")
+    return {"success": True}
+
+
+@api_router.delete("/invoices/{invoice_id}")
+async def delete_invoice(invoice_id: str, current=Depends(get_current_user)):
+    result = await db.invoices.delete_one({"_id": to_object_id(invoice_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Faktura hittades inte")
+    return {"success": True}
+
+
+@api_router.get("/invoices/{invoice_id}/pdf")
+async def get_invoice_pdf(invoice_id: str, current=Depends(get_current_user)):
+    doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Faktura hittades inte")
+    inv_settings = await get_invoice_settings_obj()
+    doc["_id"] = str(doc["_id"])
+    pdf_bytes = build_invoice_pdf(doc, inv_settings)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="faktura_{doc["invoice_number"]}.pdf"'},
     )
 
 
