@@ -15,6 +15,7 @@ from datetime import datetime, timezone, timedelta, date as DateClass
 from bson import ObjectId
 from io import BytesIO
 from xml.sax.saxutils import quoteattr
+import base64
 import bcrypt
 import jwt
 from openpyxl import Workbook
@@ -318,6 +319,7 @@ class InvoiceSettings(BaseModel):
     vat_rate: float = 25.0
     payment_terms_days: int = 30
     next_invoice_number: int = 1001
+    company_logo: Optional[str] = None  # base64 encoded image
 
 
 async def get_invoice_settings_obj() -> InvoiceSettings:
@@ -425,6 +427,17 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     styles = getSampleStyleSheet()
     elements = []
 
+    # Logo + company name header
+    if settings.company_logo:
+        try:
+            from reportlab.platypus import Image as RLImage
+            logo_data = base64.b64decode(settings.company_logo.split(",")[-1])
+            logo_buf = BytesIO(logo_data)
+            logo_img = RLImage(logo_buf, width=40*mm, height=20*mm, kind="proportional")
+            elements.append(logo_img)
+            elements.append(Spacer(1, 3 * mm))
+        except Exception:
+            pass
     title_style = ParagraphStyle("title", parent=styles["Heading1"], fontSize=18)
     elements.append(Paragraph(settings.company_name or "Faktura", title_style))
     elements.append(Paragraph(f"Faktura #{inv['invoice_number']}", styles["Heading2"]))
@@ -457,10 +470,11 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     elements.append(Paragraph(f"Förfallodatum: {inv['due_date']}", styles["Normal"]))
 
     elements.append(Spacer(1, 8 * mm))
-    data = [["Beskrivning", "Antal", "À-pris (kr)", "Summa (kr)"]]
+    data = [["Beskrivning", "Ant./Tim.", "À-pris (kr)", "Summa (kr)"]]
     for item in inv["items"]:
         line_total = item["quantity"] * item["unit_price"]
-        data.append([item["description"], f'{item["quantity"]:g}', f'{item["unit_price"]:.2f}', f'{line_total:.2f}'])
+        unit_label = f'{item["quantity"]:g} tim' if item["description"] == "Hemstädning" else f'{item["quantity"]:g}'
+        data.append([item["description"], unit_label, f'{item["unit_price"]:.2f}', f'{line_total:.2f}'])
     table = Table(data, colWidths=[80 * mm, 25 * mm, 30 * mm, 30 * mm])
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#141414")),
