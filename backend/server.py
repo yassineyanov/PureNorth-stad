@@ -427,7 +427,9 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     styles = getSampleStyleSheet()
     elements = []
 
-    # Logo + company name header
+    # Logo + company name side by side
+    title_style = ParagraphStyle("title", parent=styles["Heading1"], fontSize=20, leading=24)
+    inv_num_style = ParagraphStyle("invnum", parent=styles["Normal"], fontSize=11, textColor=colors.HexColor("#555555"))
     if settings.company_logo:
         try:
             from reportlab.platypus import Image as RLImage
@@ -436,18 +438,25 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
             logo_buf = BytesIO(logo_data)
             ir = ImageReader(logo_buf)
             iw, ih = ir.getSize()
-            max_w = 50 * mm
-            max_h = 25 * mm
-            ratio = min(max_w / iw, max_h / ih)
+            max_h = 18 * mm
+            ratio = max_h / ih
             logo_buf.seek(0)
-            logo_img = RLImage(logo_buf, width=iw * ratio, height=ih * ratio)
-            elements.append(logo_img)
-            elements.append(Spacer(1, 4 * mm))
-        except Exception as e:
-            pass
-    title_style = ParagraphStyle("title", parent=styles["Heading1"], fontSize=18)
-    elements.append(Paragraph(settings.company_name or "Faktura", title_style))
-    elements.append(Paragraph(f"Faktura #{inv['invoice_number']}", styles["Heading2"]))
+            logo_img = RLImage(logo_buf, width=iw * ratio, height=max_h)
+            header_data = [[logo_img, Paragraph(f'<b>{settings.company_name or "Faktura"}</b>', title_style)]]
+            header_table = Table(header_data, colWidths=[iw * ratio + 6 * mm, None])
+            header_table.setStyle(TableStyle([
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ]))
+            elements.append(header_table)
+        except Exception:
+            elements.append(Paragraph(settings.company_name or "Faktura", title_style))
+    else:
+        elements.append(Paragraph(settings.company_name or "Faktura", title_style))
+    elements.append(Paragraph(f"Faktura #{inv['invoice_number']}", inv_num_style))
     elements.append(Spacer(1, 6 * mm))
 
     company_lines = []
@@ -477,11 +486,13 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     elements.append(Paragraph(f"Förfallodatum: {inv['due_date']}", styles["Normal"]))
 
     elements.append(Spacer(1, 8 * mm))
-    data = [["Beskrivning", "Antal", "À-pris (kr)", "Summa (kr)"]]
+    all_hem = all(i["description"].strip().lower() in ("hemstädning", "hemstadning") for i in inv["items"])
+    qty_header = "Timmar" if all_hem else "Antal"
+    data = [["Beskrivning", qty_header, "À-pris (kr)", "Summa (kr)"]]
     for item in inv["items"]:
         line_total = item["quantity"] * item["unit_price"]
         is_hem = item["description"].strip().lower() in ("hemstädning", "hemstadning")
-        unit_label = f'{item["quantity"]:g} tim' if is_hem else f'{item["quantity"]:g}'
+        unit_label = f'{item["quantity"]:g}' if all_hem else (f'{item["quantity"]:g} tim' if is_hem else f'{item["quantity"]:g}')
         data.append([item["description"], unit_label, f'{item["unit_price"]:.2f}', f'{line_total:.2f}'])
     table = Table(data, colWidths=[80 * mm, 25 * mm, 30 * mm, 30 * mm])
     table.setStyle(TableStyle([
