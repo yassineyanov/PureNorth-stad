@@ -76,6 +76,8 @@ async def get_current_user(request: Request) -> dict:
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
     if not token:
+        token = request.query_params.get("token")
+    if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         payload = jwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
@@ -1148,7 +1150,7 @@ async def get_invoice_pdf(invoice_id: str, current=Depends(get_current_user)):
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="faktura_{doc["invoice_number"]}.pdf"'},
+        headers={"Content-Disposition": f'inline; filename="faktura_{doc["invoice_number"]}.pdf"'},
     )
 
 
@@ -1256,7 +1258,7 @@ async def payroll_slip(start: str, end: str, employee_id: str, current=Depends(g
     doc.build(elements)
     fname = f"lonebesked_{row['name'].replace(' ','_')}_{start}_{end}.pdf"
     return Response(content=buf.getvalue(), media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{fname}"'})
+        headers={"Content-Disposition": f'inline; filename="{fname}"'})
 
 app.include_router(api_router)
 
