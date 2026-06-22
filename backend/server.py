@@ -480,7 +480,8 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     data = [["Beskrivning", "Antal", "À-pris (kr)", "Summa (kr)"]]
     for item in inv["items"]:
         line_total = item["quantity"] * item["unit_price"]
-        unit_label = f'{item["quantity"]:g} tim' if item["description"] == "Hemstädning" else f'{item["quantity"]:g}'
+        is_hem = item["description"].strip().lower() in ("hemstädning", "hemstadning")
+        unit_label = f'{item["quantity"]:g} tim' if is_hem else f'{item["quantity"]:g}'
         data.append([item["description"], unit_label, f'{item["unit_price"]:.2f}', f'{line_total:.2f}'])
     table = Table(data, colWidths=[80 * mm, 25 * mm, 30 * mm, 30 * mm])
     table.setStyle(TableStyle([
@@ -1035,8 +1036,26 @@ async def get_invoice_settings(current=Depends(get_current_user)):
 async def set_invoice_settings(payload: InvoiceSettings, current=Depends(get_current_user)):
     doc = payload.model_dump()
     doc["_key"] = "invoice"
+    # preserve next_invoice_number and logo if not provided
+    existing = await db.settings.find_one({"_key": "invoice"})
+    if existing:
+        if doc.get("company_logo") is None and existing.get("company_logo"):
+            doc["company_logo"] = existing["company_logo"]
+        if doc.get("next_invoice_number", 1001) == 1001 and existing.get("next_invoice_number", 1001) > 1001:
+            doc["next_invoice_number"] = existing["next_invoice_number"]
     await db.settings.update_one({"_key": "invoice"}, {"$set": doc}, upsert=True)
-    return payload
+    result = await db.settings.find_one({"_key": "invoice"})
+    result.pop("_id", None)
+    result.pop("_key", None)
+    return InvoiceSettings(**result)
+
+
+@api_router.put("/settings/invoice/logo")
+async def set_invoice_logo(request: Request, current=Depends(get_current_user)):
+    body = await request.json()
+    logo = body.get("company_logo")
+    await db.settings.update_one({"_key": "invoice"}, {"$set": {"company_logo": logo}}, upsert=True)
+    return {"success": True}
 
 
 @api_router.post("/invoices", response_model=Invoice, response_model_by_alias=False)
