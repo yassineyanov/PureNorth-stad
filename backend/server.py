@@ -1152,6 +1152,112 @@ async def get_invoice_pdf(invoice_id: str, current=Depends(get_current_user)):
     )
 
 
+
+@api_router.get("/payroll/slip")
+async def payroll_slip(start: str, end: str, employee_id: str, current=Depends(get_current_user)):
+    summary, settings = await build_payroll_summary(start, end)
+    if employee_id not in summary:
+        raise HTTPException(status_code=404, detail="Anställd hittades inte")
+    row = summary[employee_id]
+    inv_settings = await get_invoice_settings_obj()
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=20*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    # Header: logo + company name
+    title_style = ParagraphStyle("title", parent=styles["Heading1"], fontSize=18)
+    if inv_settings.company_logo:
+        try:
+            from reportlab.platypus import Image as RLImage
+            from reportlab.lib.utils import ImageReader
+            logo_data = base64.b64decode(inv_settings.company_logo.split(",")[-1])
+            logo_buf = BytesIO(logo_data)
+            ir = ImageReader(logo_buf)
+            iw, ih = ir.getSize()
+            ratio = (15 * mm) / ih
+            logo_buf.seek(0)
+            logo_img = RLImage(logo_buf, width=iw * ratio, height=15 * mm)
+            hdr = Table([[logo_img, Paragraph(f'<b>{inv_settings.company_name or "Lönebesked"}</b>', title_style)]],
+                colWidths=[iw * ratio + 5 * mm, None])
+            hdr.setStyle(TableStyle([("VALIGN", (0,0),(-1,-1),"MIDDLE"),
+                ("LEFTPADDING",(0,0),(-1,-1),0),("RIGHTPADDING",(0,0),(-1,-1),4),
+                ("TOPPADDING",(0,0),(-1,-1),0),("BOTTOMPADDING",(0,0),(-1,-1),0)]))
+            elements.append(hdr)
+        except Exception:
+            elements.append(Paragraph(inv_settings.company_name or "Lönebesked", title_style))
+    else:
+        elements.append(Paragraph(inv_settings.company_name or "Lönebesked", title_style))
+
+    elements.append(Paragraph("Lönebesked", styles["Heading2"]))
+    elements.append(Spacer(1, 4*mm))
+
+    # Employee info
+    emp_type = "Fast anställd" if row.get("employment_type") == "fastanstalld" else "Vikarie"
+    info_data = [
+        ["Anställd:", row["name"]],
+        ["Personnummer:", row["personnummer"] or "-"],
+        ["Anställningstyp:", emp_type],
+        ["Period:", f"{start} – {end}"],
+    ]
+    info_table = Table(info_data, colWidths=[50*mm, None])
+    info_table.setStyle(TableStyle([
+        ("FONTSIZE", (0,0),(-1,-1), 10),
+        ("FONTNAME", (0,0),(0,-1), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 4),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 8*mm))
+
+    # Pay details table
+    rate = row["hourly_rate"]
+    pay_data = [
+        ["Post", "Timmar", "À-pris (kr)", "Belopp (kr)"],
+        ["Normaltid", f'{row["normal_h"]:.2f}', f'{rate:.2f}', f'{row["base_pay"]:.2f}'],
+    ]
+    if row["ob1_h"] > 0:
+        pay_data.append([f'OB1-tillägg ({settings.ob1_label})', f'{row["ob1_h"]:.2f}', f'{settings.ob1_extra:.2f}', f'{row["ob1_pay"]:.2f}'])
+    if row["ob2_h"] > 0:
+        pay_data.append([f'OB2-tillägg ({settings.ob2_label})', f'{row["ob2_h"]:.2f}', f'{settings.ob2_extra:.2f}', f'{row["ob2_pay"]:.2f}'])
+    if row["expense_total"] > 0:
+        pay_data.append(["Utlägg", "-", "-", f'{row["expense_total"]:.2f}'])
+
+    pay_table = Table(pay_data, colWidths=[75*mm, 30*mm, 35*mm, 30*mm])
+    pay_table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0),(-1,0), colors.HexColor("#141414")),
+        ("TEXTCOLOR", (0,0),(-1,0), colors.white),
+        ("FONTSIZE", (0,0),(-1,-1), 10),
+        ("ALIGN", (1,0),(-1,-1), "RIGHT"),
+        ("GRID", (0,0),(-1,-1), 0.5, colors.HexColor("#E2E8F0")),
+        ("BOTTOMPADDING", (0,0),(-1,0), 8),
+        ("TOPPADDING", (0,0),(-1,0), 8),
+    ]))
+    elements.append(pay_table)
+    elements.append(Spacer(1, 4*mm))
+
+    # Total
+    total_data = [["Totalt att betala:", f'{row["total_pay"]:.2f} kr']]
+    if row.get("absence_days", 0) > 0:
+        total_data.append(["Frånvarodagar:", str(row["absence_days"])])
+    if row.get("absence_lost_amount", 0) > 0 and row.get("employment_type") == "fastanstalld":
+        total_data.append(["Förlorad lön vid frånvaro:", f'-{row["absence_lost_amount"]:.2f} kr'])
+    total_table = Table(total_data, colWidths=[100*mm, 40*mm])
+    total_table.setStyle(TableStyle([
+        ("FONTSIZE", (0,0),(-1,-1), 11),
+        ("FONTNAME", (0,0),(-1,-1), "Helvetica-Bold"),
+        ("ALIGN", (1,0),(-1,-1), "RIGHT"),
+        ("LINEABOVE", (0,0),(-1,0), 1, colors.HexColor("#141414")),
+        ("TOPPADDING", (0,0),(-1,-1), 6),
+    ]))
+    elements.append(total_table)
+
+    doc.build(elements)
+    fname = f"lonebesked_{row['name'].replace(' ','_')}_{start}_{end}.pdf"
+    return Response(content=buf.getvalue(), media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'})
+
 app.include_router(api_router)
 
 app.add_middleware(
