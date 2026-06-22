@@ -431,12 +431,19 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     if settings.company_logo:
         try:
             from reportlab.platypus import Image as RLImage
+            from reportlab.lib.utils import ImageReader
             logo_data = base64.b64decode(settings.company_logo.split(",")[-1])
             logo_buf = BytesIO(logo_data)
-            logo_img = RLImage(logo_buf, width=40*mm, height=20*mm, kind="proportional")
+            ir = ImageReader(logo_buf)
+            iw, ih = ir.getSize()
+            max_w = 50 * mm
+            max_h = 25 * mm
+            ratio = min(max_w / iw, max_h / ih)
+            logo_buf.seek(0)
+            logo_img = RLImage(logo_buf, width=iw * ratio, height=ih * ratio)
             elements.append(logo_img)
-            elements.append(Spacer(1, 3 * mm))
-        except Exception:
+            elements.append(Spacer(1, 4 * mm))
+        except Exception as e:
             pass
     title_style = ParagraphStyle("title", parent=styles["Heading1"], fontSize=18)
     elements.append(Paragraph(settings.company_name or "Faktura", title_style))
@@ -470,7 +477,7 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     elements.append(Paragraph(f"Förfallodatum: {inv['due_date']}", styles["Normal"]))
 
     elements.append(Spacer(1, 8 * mm))
-    data = [["Beskrivning", "Ant./Tim.", "À-pris (kr)", "Summa (kr)"]]
+    data = [["Beskrivning", "Antal", "À-pris (kr)", "Summa (kr)"]]
     for item in inv["items"]:
         line_total = item["quantity"] * item["unit_price"]
         unit_label = f'{item["quantity"]:g} tim' if item["description"] == "Hemstädning" else f'{item["quantity"]:g}'
