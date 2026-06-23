@@ -2230,6 +2230,88 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
     return Response(content=buf.getvalue(), media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="{fname}"'})
 
+
+# ── User Management ───────────────────────────────────────────────────────────
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=6)
+    name: str = Field(..., min_length=1)
+    role: str = "staff"  # "admin" or "staff"
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    role: Optional[str] = None
+    password: Optional[str] = None
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    email: str
+    name: str
+    role: str
+    created_at: str
+
+
+async def require_admin(current=Depends(get_current_user)):
+    if current.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Åtkomst nekad. Kräver admin-behörighet.")
+    return current
+
+
+@api_router.get("/users", response_model=List[UserOut], response_model_by_alias=False)
+async def list_users(current=Depends(require_admin)):
+    docs = await db.users.find().sort("created_at", 1).to_list(100)
+    return [UserOut(**{**d, "_id": str(d["_id"])}) for d in docs]
+
+
+@api_router.post("/users", response_model=UserOut, response_model_by_alias=False)
+async def create_user(payload: UserCreate, current=Depends(require_admin)):
+    email = payload.email.lower()
+    existing = await db.users.find_one({"email": email})
+    if existing:
+        raise HTTPException(status_code=400, detail="E-postadressen används redan.")
+    doc = {
+        "email": email,
+        "password_hash": hash_password(payload.password),
+        "name": payload.name,
+        "role": payload.role if payload.role in ("admin", "staff") else "staff",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    result = await db.users.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return UserOut(**doc)
+
+
+@api_router.patch("/users/{user_id}", response_model=UserOut, response_model_by_alias=False)
+async def update_user(user_id: str, payload: UserUpdate, current=Depends(require_admin)):
+    updates = {}
+    if payload.name:
+        updates["name"] = payload.name
+    if payload.role and payload.role in ("admin", "staff"):
+        updates["role"] = payload.role
+    if payload.password:
+        updates["password_hash"] = hash_password(payload.password)
+    if updates:
+        await db.users.update_one({"_id": to_object_id(user_id)}, {"$set": updates})
+    doc = await db.users.find_one({"_id": to_object_id(user_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Användare hittades inte")
+    doc["_id"] = str(doc["_id"])
+    return UserOut(**doc)
+
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, current=Depends(require_admin)):
+    # Prevent deleting yourself
+    if str(current.get("_id", "")) == user_id or current.get("id") == user_id:
+        raise HTTPException(status_code=400, detail="Du kan inte ta bort ditt eget konto.")
+    result = await db.users.delete_one({"_id": to_object_id(user_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Användare hittades inte")
+    return {"success": True}
+
 app.include_router(api_router)
 
 app.add_middleware(
