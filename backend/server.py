@@ -2276,7 +2276,7 @@ async def create_user(payload: UserCreate, current=Depends(require_admin)):
         "email": email,
         "password_hash": hash_password(payload.password),
         "name": payload.name,
-        "role": payload.role if payload.role in ("admin", "staff") else "staff",
+        "role": payload.role if payload.role in ("admin", "staff", "sales") else "staff",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     result = await db.users.insert_one(doc)
@@ -2289,7 +2289,7 @@ async def update_user(user_id: str, payload: UserUpdate, current=Depends(require
     updates = {}
     if payload.name:
         updates["name"] = payload.name
-    if payload.role and payload.role in ("admin", "staff"):
+    if payload.role and payload.role in ("admin", "staff", "sales"):
         updates["role"] = payload.role
     if payload.password:
         updates["password_hash"] = hash_password(payload.password)
