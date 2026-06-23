@@ -2443,9 +2443,9 @@ async def send_booking_confirmation(booking: dict, inv_settings=None):
 
                 <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:0 0 24px;border:1px solid #e2e8f0;">
                   <h3 style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 12px;">Din bokning</h3>
-                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>Datum:</strong> " + date_str + "</p>" if date_str else ""}
-                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>Tjänst:</strong> " + services + "</p>" if services else ""}
-                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>Yta:</strong> " + str(booking.get("kvm","")) + " kvm</p>" if booking.get("kvm") else ""}
+                  {"<table style='width:100%;border-collapse:collapse;'><tr><td style='padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:13px;width:80px;'>Datum</td><td style='padding:8px 0;border-bottom:1px solid #e2e8f0;color:#141414;font-size:14px;font-weight:600;'>" + date_str + "</td></tr></table>" if date_str else ""}
+                  {"<table style='width:100%;border-collapse:collapse;'><tr><td style='padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:13px;width:80px;'>Tjänst</td><td style='padding:8px 0;border-bottom:1px solid #e2e8f0;color:#141414;font-size:14px;font-weight:600;'>" + services + "</td></tr></table>" if services else ""}
+                  {"<table style='width:100%;border-collapse:collapse;'><tr><td style='padding:8px 0;color:#64748b;font-size:13px;width:80px;'>Yta</td><td style='padding:8px 0;color:#141414;font-size:14px;font-weight:600;'>" + str(booking.get("kvm","")) + " kvm</td></tr></table>" if booking.get("kvm") else ""}
                 </div>
 
                 <p style="color:#475569;line-height:1.6;margin:0 0 24px;">
