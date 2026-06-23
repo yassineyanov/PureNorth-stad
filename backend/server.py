@@ -1954,6 +1954,113 @@ async def create_recurring_bookings(payload: RecurringBookingCreate, current=Dep
 
     return {"created": len(created), "bookings": [{"id": str(b["_id"]), "date": b["preferred_date"]} for b in created]}
 
+
+# ── Statistics / Analytics ───────────────────────────────────────────────────
+@api_router.get("/stats/overview")
+async def stats_overview(months: int = 6, current=Depends(get_current_user)):
+    from datetime import date as D
+    today = D.today()
+
+    # Build last N months
+    monthly = []
+    for i in range(months - 1, -1, -1):
+        m = today.month - i
+        y = today.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        month_start = f"{y}-{m:02d}-01"
+        import calendar
+        last_day = calendar.monthrange(y, m)[1]
+        month_end = f"{y}-{m:02d}-{last_day:02d}"
+        label = f"{['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'][m-1]} {y}"
+
+        # Revenue
+        invoices = await db.invoices.find({
+            "created_at": {"$gte": month_start, "$lte": month_end + "T23:59:59"}
+        }).to_list(500)
+        revenue = sum(i.get("subtotal", 0) for i in invoices)
+        paid = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
+
+        # Bookings
+        bookings = await db.bookings.find({
+            "created_at": {"$gte": month_start, "$lte": month_end + "T23:59:59"}
+        }).to_list(500)
+        new_b = sum(1 for b in bookings if b.get("status") == "new")
+        done_b = sum(1 for b in bookings if b.get("status") == "done")
+
+        # Shifts / hours
+        shifts = await db.shifts.find({"date": {"$gte": month_start, "$lte": month_end}}).to_list(500)
+        total_hours = 0
+        for s in shifts:
+            try:
+                sh, sm = map(int, s["start_time"].split(":"))
+                eh, em = map(int, s["end_time"].split(":"))
+                h = (eh * 60 + em - sh * 60 - sm) / 60
+                if h < 0: h += 24
+                total_hours += h
+            except:
+                pass
+
+        monthly.append({
+            "label": label,
+            "revenue": round(revenue, 2),
+            "paid": round(paid, 2),
+            "bookings": len(bookings),
+            "bookings_new": new_b,
+            "bookings_done": done_b,
+            "shifts": len(shifts),
+            "hours": round(total_hours, 1),
+        })
+
+    # Top services
+    all_bookings = await db.bookings.find().to_list(5000)
+    service_count = {}
+    for b in all_bookings:
+        for s in b.get("services", []):
+            service_count[s] = service_count.get(s, 0) + 1
+    top_services = sorted(service_count.items(), key=lambda x: -x[1])[:6]
+
+    # Booking status breakdown
+    status_count = {"new": 0, "contacted": 0, "done": 0}
+    for b in all_bookings:
+        st = b.get("status", "new")
+        if st in status_count:
+            status_count[st] += 1
+
+    # Employee hours this month
+    month_start_curr = f"{today.year}-{today.month:02d}-01"
+    import calendar as cal
+    last_day_curr = cal.monthrange(today.year, today.month)[1]
+    month_end_curr = f"{today.year}-{today.month:02d}-{last_day_curr:02d}"
+    curr_shifts = await db.shifts.find({"date": {"$gte": month_start_curr, "$lte": month_end_curr}}).to_list(500)
+    employees = await db.employees.find().to_list(100)
+    emp_hours = {}
+    emp_map = {str(e["_id"]): e["name"] for e in employees}
+    for s in curr_shifts:
+        eid = s["employee_id"]
+        try:
+            sh, sm = map(int, s["start_time"].split(":"))
+            eh, em = map(int, s["end_time"].split(":"))
+            h = (eh * 60 + em - sh * 60 - sm) / 60
+            if h < 0: h += 24
+            emp_hours[eid] = emp_hours.get(eid, 0) + h
+        except:
+            pass
+    employee_hours = [{"name": emp_map.get(eid, "Okänd"), "hours": round(h, 1)} for eid, h in sorted(emp_hours.items(), key=lambda x: -x[1])]
+
+    return {
+        "monthly": monthly,
+        "top_services": [{"service": s, "count": c} for s, c in top_services],
+        "status_breakdown": status_count,
+        "employee_hours_this_month": employee_hours,
+        "totals": {
+            "revenue": round(sum(m["revenue"] for m in monthly), 2),
+            "bookings": sum(m["bookings"] for m in monthly),
+            "hours": round(sum(m["hours"] for m in monthly), 1),
+        }
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
