@@ -2388,6 +2388,82 @@ async def global_search(q: str, current=Depends(get_current_user)):
 
     return {"results": results, "query": query, "total": len(results)}
 
+
+# ── Email Notifications ───────────────────────────────────────────────────────
+async def send_booking_confirmation(booking: dict, inv_settings=None):
+    """Send booking confirmation email to customer"""
+    email = booking.get("email", "")
+    if not email or email == "admin@purenorth.se":
+        return False
+
+    resend.api_key = os.environ.get("RESEND_API_KEY", "")
+    if not resend.api_key:
+        return False
+
+    name = booking.get("name", "")
+    services = ", ".join(booking.get("services", []))
+    date = booking.get("preferred_date", "")
+    company = inv_settings.company_name if inv_settings else "PureNorth Städ"
+    phone = inv_settings.company_phone if hasattr(inv_settings, "company_phone") and inv_settings.company_phone else "070-624 04 03"
+
+    date_str = ""
+    if date:
+        try:
+            from datetime import datetime as DT
+            d = DT.strptime(date, "%Y-%m-%d")
+            MONTHS_SV = ["januari","februari","mars","april","maj","juni","juli","augusti","september","oktober","november","december"]
+            date_str = f"{d.day} {MONTHS_SV[d.month-1]} {d.year}"
+        except:
+            date_str = date
+
+    try:
+        resend.Emails.send({
+            "from": f"{company} <onboarding@resend.dev>",
+            "to": email,
+            "subject": f"Bokningsbekräftelse – {company}",
+            "html": f"""
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+              <div style="background:#141414;padding:32px 36px;">
+                <h1 style="color:white;font-size:24px;margin:0;font-weight:700;">{company}</h1>
+                <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:14px;">Bokningsbekräftelse</p>
+              </div>
+              <div style="padding:36px;">
+                <p style="font-size:16px;color:#141414;margin:0 0 24px;">Hej <strong>{name}</strong>! 👋</p>
+                <p style="color:#475569;line-height:1.6;margin:0 0 24px;">
+                  Tack för att du kontaktade oss! Vi har tagit emot din bokningsförfrågan och återkommer inom kort för att bekräfta din tid.
+                </p>
+
+                <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:0 0 24px;border:1px solid #e2e8f0;">
+                  <h3 style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 12px;">Din bokning</h3>
+                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>📅 Datum:</strong> " + date_str + "</p>" if date_str else ""}
+                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>🧹 Tjänster:</strong> " + services + "</p>" if services else ""}
+                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>📐 Yta:</strong> " + str(booking.get("kvm","")) + " kvm</p>" if booking.get("kvm") else ""}
+                </div>
+
+                <p style="color:#475569;line-height:1.6;margin:0 0 24px;">
+                  Har du frågor? Tveka inte att höra av dig!
+                </p>
+
+                <div style="text-align:center;margin:0 0 24px;">
+                  <a href="tel:{phone.replace('-','').replace(' ','')}"
+                    style="display:inline-block;background:#141414;color:white;text-decoration:none;padding:14px 32px;border-radius:9999px;font-weight:600;font-size:15px;">
+                    📞 Ring oss: {phone}
+                  </a>
+                </div>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+                <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">
+                  {company} · Miljövänlig städning i Umeå · 50% RUT-avdrag
+                </p>
+              </div>
+            </div>
+            """
+        })
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send booking confirmation: {e}")
+        return False
+
 app.include_router(api_router)
 
 app.add_middleware(
