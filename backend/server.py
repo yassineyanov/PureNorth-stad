@@ -2312,6 +2312,82 @@ async def delete_user(user_id: str, current=Depends(require_admin)):
         raise HTTPException(status_code=404, detail="Användare hittades inte")
     return {"success": True}
 
+
+# ── Global Search ─────────────────────────────────────────────────────────────
+@api_router.get("/search")
+async def global_search(q: str, current=Depends(get_current_user)):
+    if not q or len(q.strip()) < 2:
+        return {"results": []}
+    
+    query = q.strip()
+    results = []
+    
+    # Search bookings
+    bookings = await db.bookings.find({
+        "$or": [
+            {"name": {"$regex": query, "$options": "i"}},
+            {"phone": {"$regex": query, "$options": "i"}},
+            {"email": {"$regex": query, "$options": "i"}},
+        ]
+    }).limit(5).to_list(5)
+    for b in bookings:
+        results.append({
+            "type": "booking",
+            "id": str(b["_id"]),
+            "title": b.get("name", ""),
+            "sub": f'{", ".join(b.get("services", []))} · {b.get("preferred_date", "")}',
+            "status": b.get("status", ""),
+        })
+
+    # Search customers
+    customers = await db.customers.find({
+        "$or": [
+            {"name": {"$regex": query, "$options": "i"}},
+            {"phone": {"$regex": query, "$options": "i"}},
+            {"email": {"$regex": query, "$options": "i"}},
+        ]
+    }).limit(5).to_list(5)
+    for c in customers:
+        results.append({
+            "type": "customer",
+            "id": str(c["_id"]),
+            "title": c.get("name", ""),
+            "sub": f'{c.get("phone", "")} · {c.get("email", "")}',
+            "status": "",
+        })
+
+    # Search invoices
+    invoices = await db.invoices.find({
+        "$or": [
+            {"customer_name": {"$regex": query, "$options": "i"}},
+            {"customer_email": {"$regex": query, "$options": "i"}},
+            {"invoice_number": {"$regex": query, "$options": "i"}},
+        ]
+    }).limit(5).to_list(5)
+    for inv in invoices:
+        results.append({
+            "type": "invoice",
+            "id": str(inv["_id"]),
+            "title": f'Faktura #{inv.get("invoice_number", "")}',
+            "sub": f'{inv.get("customer_name", "")} · {inv.get("customer_pays", 0):.0f} kr',
+            "status": inv.get("status", ""),
+        })
+
+    # Search employees
+    employees = await db.employees.find({
+        "name": {"$regex": query, "$options": "i"}
+    }).limit(3).to_list(3)
+    for e in employees:
+        results.append({
+            "type": "employee",
+            "id": str(e["_id"]),
+            "title": e.get("name", ""),
+            "sub": f'{e.get("employment_type", "")} · {e.get("hourly_rate", 0):.0f} kr/tim',
+            "status": "",
+        })
+
+    return {"results": results, "query": query, "total": len(results)}
+
 app.include_router(api_router)
 
 app.add_middleware(
