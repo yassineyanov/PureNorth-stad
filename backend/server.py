@@ -282,14 +282,16 @@ class Expense(BaseModel):
 
 # ---- Payroll settings (OB-tillägg + salary codes for PAXML) ----
 class PayrollSettings(BaseModel):
-    ob1_label: str = "Kväll/Lördag"
-    ob1_extra: float = 0
+    # OB1: Kväll mån-lör 18:00-24:00 (25.69 kr/tim per Serviceentreprenadavtalet 2025)
+    ob1_label: str = "Kväll (mån–lör 18–24)"
+    ob1_extra: float = 25.69
     ob1_days: List[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4, 5])
     ob1_start: str = "18:00"
     ob1_end: str = "24:00"
-    ob2_label: str = "Söndag/Helg"
-    ob2_extra: float = 0
-    ob2_days: List[int] = Field(default_factory=lambda: [6])
+    # OB2: Helg lördag-söndag hela dagen (54.08 kr/tim per Serviceentreprenadavtalet 2025)
+    ob2_label: str = "Helg (lör–sön)"
+    ob2_extra: float = 54.08
+    ob2_days: List[int] = Field(default_factory=lambda: [5, 6])
     ob2_start: str = "00:00"
     ob2_end: str = "24:00"
     code_normal: str = "100"
