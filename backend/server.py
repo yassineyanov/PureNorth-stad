@@ -665,6 +665,56 @@ async def build_payroll_summary(start: str, end: str):
         if eid in summary:
             summary[eid]["expense_total"] += e["amount"]
 
+    # ── Sjuklön calculation (only for "Sjuk" absences) ──────────────────
+    # Rules: sjuklön = 80% of scheduled shift pay
+    #        karensavdrag = 20% of one average week's sjuklön
+    for eid, row in summary.items():
+        row["sick_shifts_h"] = 0.0
+        row["sjuklon_gross"] = 0.0
+        row["karensavdrag"] = 0.0
+        row["sjuklon_net"] = 0.0
+
+    # Get sick absences only
+    sick_absences = [a for a in absences if a.get("type", "").lower() == "sjuk"]
+    sick_dates_by_employee = {}
+    for a in sick_absences:
+        eid = a["employee_id"]
+        if eid not in summary:
+            continue
+        sd = DateClass(*map(int, a["start_date"].split("-")))
+        ed = DateClass(*map(int, a["end_date"].split("-")))
+        clip_s = max(sd, range_start)
+        clip_e = min(ed, range_end)
+        if eid not in sick_dates_by_employee:
+            sick_dates_by_employee[eid] = set()
+        d = clip_s
+        while d <= clip_e:
+            sick_dates_by_employee[eid].add(d.isoformat())
+            d += timedelta(days=1)
+
+    # Calculate sjuklön for sick shifts
+    for s in shifts:
+        eid = s["employee_id"]
+        if eid not in summary:
+            continue
+        if s["date"] not in sick_dates_by_employee.get(eid, set()):
+            continue
+        n, o1, o2 = split_shift_hours(s["date"], s["start_time"], s["end_time"], settings)
+        total_h = n + o1 + o2
+        rate = summary[eid]["hourly_rate"]
+        summary[eid]["sick_shifts_h"] += total_h
+        summary[eid]["sjuklon_gross"] += total_h * rate * 0.8
+
+    for eid, row in summary.items():
+        if row["sjuklon_gross"] > 0:
+            # karensavdrag = 20% of one week's sjuklön
+            # one week avg = sjuklon_gross / sick_weeks (min 1)
+            sick_days = len(sick_dates_by_employee.get(eid, set()))
+            sick_weeks = max(1, sick_days / 5.0)
+            weekly_sjuklon = row["sjuklon_gross"] / sick_weeks
+            row["karensavdrag"] = round(weekly_sjuklon * 0.20, 2)
+            row["sjuklon_net"] = round(max(0, row["sjuklon_gross"] - row["karensavdrag"]), 2)
+
     for eid, row in summary.items():
         rate = row["hourly_rate"]
         base_pay = row["normal_h"] * rate
@@ -673,7 +723,7 @@ async def build_payroll_summary(start: str, end: str):
         row["base_pay"] = base_pay
         row["ob1_pay"] = ob1_pay
         row["ob2_pay"] = ob2_pay
-        row["total_pay"] = base_pay + ob1_pay + ob2_pay + row["expense_total"]
+        row["total_pay"] = base_pay + ob1_pay + ob2_pay + row["expense_total"] + row["sjuklon_net"]
 
     return summary, settings
 
@@ -686,7 +736,8 @@ def build_xlsx_bytes(summary: dict) -> bytes:
         "Anställd", "Typ", "Personnummer", "Normaltid (h)", "OB1 (h)", "OB2 (h)",
         "Grundlön (kr)", "OB1-tillägg (kr)", "OB2-tillägg (kr)",
         "Utlägg (kr)", "Frånvarodagar (totalt)", "Frånvarodagar (bokade pass)",
-        "Förlorad lön vid frånvaro (kr)", "Summa (kr)",
+        "Förlorad lön (kr)", "Sjuklön brutto (kr)", "Karensavdrag (kr)",
+        "Sjuklön netto (kr)", "Summa (kr)",
     ]
     ws.append(headers)
     for row in summary.values():
@@ -696,7 +747,9 @@ def build_xlsx_bytes(summary: dict) -> bytes:
             round(row["normal_h"], 2), round(row["ob1_h"], 2), round(row["ob2_h"], 2),
             round(row["base_pay"], 2), round(row["ob1_pay"], 2), round(row["ob2_pay"], 2),
             round(row["expense_total"], 2), row["absence_days"], row["absence_scheduled_days"],
-            round(row["absence_lost_amount"], 2), round(row["total_pay"], 2),
+            round(row["absence_lost_amount"], 2), round(row.get("sjuklon_gross", 0), 2),
+            round(row.get("karensavdrag", 0), 2), round(row.get("sjuklon_net", 0), 2),
+            round(row["total_pay"], 2),
         ])
     for col in ws.columns:
         max_len = max(len(str(c.value)) if c.value is not None else 0 for c in col)
