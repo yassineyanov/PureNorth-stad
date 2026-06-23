@@ -1408,6 +1408,133 @@ async def set_pricelist(payload: PriceListSettings, current=Depends(get_current_
     return payload
 
 
+
+# ── Economy / Ekonomiöversikt ────────────────────────────────────────────────
+@api_router.get("/economy/overview")
+async def economy_overview(start: str, end: str, current=Depends(get_current_user)):
+    # Constants (Swedish law 2025/2026)
+    ARBETSGIVARAVGIFT = 0.3142   # 31.42% on gross salary
+    PRELSKATT = 0.30             # ~30% source tax (approximate)
+    SEMESTERERSATTNING = 0.12    # 12% holiday pay on gross salary
+
+    # ── Revenue from invoices ──────────────────────────────────────────
+    invoices = await db.invoices.find({
+        "created_at": {"$gte": start, "$lte": end + "T23:59:59"}
+    }).to_list(2000)
+
+    revenue_excl_vat = sum(i.get("subtotal", 0) for i in invoices)
+    vat_collected = sum(i.get("vat_amount", 0) for i in invoices)
+    rut_deductions = sum(i.get("rut_deduction", 0) for i in invoices)
+    total_invoiced = sum(i.get("total_amount", 0) for i in invoices)
+    paid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
+    unpaid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") != "paid")
+
+    invoice_count = len(invoices)
+    paid_count = sum(1 for i in invoices if i.get("status") == "paid")
+
+    # ── Payroll costs ──────────────────────────────────────────────────
+    payroll_summary, payroll_settings = await build_payroll_summary(start, end)
+
+    gross_salary = sum(
+        r["normal_h"] * r["hourly_rate"] +
+        r["ob1_h"] * payroll_settings.ob1_extra +
+        r["ob2_h"] * payroll_settings.ob2_extra +
+        r.get("sjuklon_net", 0)
+        for r in payroll_summary.values()
+    )
+    arbetsgivaravgifter = round(gross_salary * ARBETSGIVARAVGIFT, 2)
+    semesterersattning = round(gross_salary * SEMESTERERSATTNING, 2)
+    prelskatt_estimate = round(gross_salary * PRELSKATT, 2)
+    total_payroll_cost = round(gross_salary + arbetsgivaravgifter + semesterersattning, 2)
+
+    # Employee expenses (utlägg - reimbursed costs)
+    utlagg_total = sum(r.get("expense_total", 0) for r in payroll_summary.values())
+
+    # ── Profit / Loss ──────────────────────────────────────────────────
+    total_costs = total_payroll_cost + utlagg_total
+    operating_profit = round(revenue_excl_vat - total_costs, 2)
+    profit_margin = round((operating_profit / revenue_excl_vat * 100) if revenue_excl_vat > 0 else 0, 1)
+
+    # ── VAT to pay ─────────────────────────────────────────────────────
+    # Ingående moms (on expenses) - estimate based on materials ~25%
+    material_total = sum(i.get("material_total", 0) for i in invoices)
+    ingoing_vat_estimate = round(material_total * 0.25, 2)
+    vat_to_pay = round(vat_collected - ingoing_vat_estimate, 2)
+
+    # ── Obligations (what to pay Skatteverket) ─────────────────────────
+    # AGI = arbetsgivardeklaration, paid monthly by the 12th
+    agi_to_pay = round(arbetsgivaravgifter + prelskatt_estimate, 2)
+
+    # ── Per employee breakdown ─────────────────────────────────────────
+    employee_costs = []
+    for eid, row in payroll_summary.items():
+        gross = (
+            row["normal_h"] * row["hourly_rate"] +
+            row["ob1_h"] * payroll_settings.ob1_extra +
+            row["ob2_h"] * payroll_settings.ob2_extra +
+            row.get("sjuklon_net", 0)
+        )
+        ag_avg = round(gross * ARBETSGIVARAVGIFT, 2)
+        sem = round(gross * SEMESTERERSATTNING, 2)
+        total_cost = round(gross + ag_avg + sem, 2)
+        employee_costs.append({
+            "name": row["name"],
+            "employment_type": row.get("employment_type", "fastanstalld"),
+            "gross_salary": round(gross, 2),
+            "arbetsgivaravgift": ag_avg,
+            "semesterersattning": sem,
+            "total_cost": total_cost,
+            "hours": round(row["normal_h"] + row["ob1_h"] + row["ob2_h"], 2),
+        })
+
+    return {
+        "period": {"start": start, "end": end},
+        "revenue": {
+            "excl_vat": round(revenue_excl_vat, 2),
+            "vat_collected": round(vat_collected, 2),
+            "rut_deductions": round(rut_deductions, 2),
+            "total_invoiced": round(total_invoiced, 2),
+            "paid": round(paid_invoices, 2),
+            "unpaid": round(unpaid_invoices, 2),
+            "invoice_count": invoice_count,
+            "paid_count": paid_count,
+        },
+        "payroll": {
+            "gross_salary": round(gross_salary, 2),
+            "arbetsgivaravgifter": arbetsgivaravgifter,
+            "arbetsgivaravgift_pct": ARBETSGIVARAVGIFT * 100,
+            "semesterersattning": semesterersattning,
+            "prelskatt_estimate": prelskatt_estimate,
+            "total_payroll_cost": total_payroll_cost,
+            "utlagg": round(utlagg_total, 2),
+            "employees": employee_costs,
+        },
+        "vat": {
+            "collected": round(vat_collected, 2),
+            "ingoing_estimate": round(ingoing_vat_estimate, 2),
+            "to_pay": round(vat_to_pay, 2),
+        },
+        "obligations": {
+            "salaries_to_pay": round(gross_salary, 2),
+            "agi_to_pay": agi_to_pay,
+            "arbetsgivaravgifter": arbetsgivaravgifter,
+            "prelskatt_estimate": prelskatt_estimate,
+            "vat_to_pay": round(vat_to_pay, 2),
+            "total_to_pay": round(gross_salary + agi_to_pay + vat_to_pay, 2),
+        },
+        "result": {
+            "revenue_excl_vat": round(revenue_excl_vat, 2),
+            "total_costs": round(total_costs, 2),
+            "operating_profit": operating_profit,
+            "profit_margin": profit_margin,
+        },
+        "constants": {
+            "arbetsgivaravgift_pct": ARBETSGIVARAVGIFT * 100,
+            "prelskatt_pct": PRELSKATT * 100,
+            "semesterersattning_pct": SEMESTERERSATTNING * 100,
+        }
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
