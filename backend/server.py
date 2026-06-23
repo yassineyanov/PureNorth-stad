@@ -2061,6 +2061,175 @@ async def stats_overview(months: int = 6, current=Depends(get_current_user)):
         }
     }
 
+
+@api_router.get("/economy/report-pdf")
+async def economy_report_pdf(start: str, end: str, current=Depends(get_current_user)):
+    # Reuse economy overview data
+    ARBETSGIVARAVGIFT = 0.3142
+    PRELSKATT = 0.30
+    SEMESTERERSATTNING = 0.12
+
+    invoices = await db.invoices.find({
+        "created_at": {"$gte": start, "$lte": end + "T23:59:59"}
+    }).to_list(2000)
+
+    revenue_excl_vat = sum(i.get("subtotal", 0) for i in invoices)
+    vat_collected = sum(i.get("vat_amount", 0) for i in invoices)
+    rut_deductions = sum(i.get("rut_deduction", 0) for i in invoices)
+    total_invoiced = sum(i.get("total_amount", 0) for i in invoices)
+    paid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
+    unpaid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") != "paid")
+
+    payroll_summary, payroll_settings = await build_payroll_summary(start, end)
+    gross_salary = sum(
+        r["normal_h"] * r["hourly_rate"] +
+        r["ob1_h"] * payroll_settings.ob1_extra +
+        r["ob2_h"] * payroll_settings.ob2_extra +
+        r.get("sjuklon_net", 0)
+        for r in payroll_summary.values()
+    )
+    arbetsgivaravgifter = round(gross_salary * ARBETSGIVARAVGIFT, 2)
+    semesterersattning = round(gross_salary * SEMESTERERSATTNING, 2)
+    prelskatt = round(gross_salary * PRELSKATT, 2)
+    total_payroll_cost = round(gross_salary + arbetsgivaravgifter + semesterersattning, 2)
+    utlagg_total = sum(r.get("expense_total", 0) for r in payroll_summary.values())
+    operating_profit = round(revenue_excl_vat - total_payroll_cost - utlagg_total, 2)
+    profit_margin = round((operating_profit / revenue_excl_vat * 100) if revenue_excl_vat > 0 else 0, 1)
+    vat_to_pay = round(vat_collected, 2)
+    agi_to_pay = round(arbetsgivaravgifter + prelskatt, 2)
+
+    inv_settings = await get_invoice_settings_obj()
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=20*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    # Header
+    title_style = ParagraphStyle("title", parent=styles["Heading1"], fontSize=20)
+    sub_style = ParagraphStyle("sub", parent=styles["Normal"], fontSize=10, textColor=colors.HexColor("#64748b"))
+    elements.append(Paragraph(inv_settings.company_name or "Ekonomirapport", title_style))
+    elements.append(Paragraph(f"Ekonomirapport · Period: {start} – {end}", sub_style))
+    elements.append(Paragraph(f"Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')} UTC", sub_style))
+    elements.append(Spacer(1, 8*mm))
+
+    def section(title):
+        elements.append(Spacer(1, 4*mm))
+        elements.append(Paragraph(title, styles["Heading2"]))
+        elements.append(Spacer(1, 2*mm))
+
+    def table2(rows, highlight_last=True):
+        t = Table(rows, colWidths=[110*mm, 50*mm])
+        style = [
+            ("FONTSIZE", (0,0),(-1,-1), 10),
+            ("ALIGN", (1,0),(-1,-1), "RIGHT"),
+            ("GRID", (0,0),(-1,-1), 0.5, colors.HexColor("#E2E8F0")),
+            ("BOTTOMPADDING", (0,0),(-1,-1), 6),
+            ("TOPPADDING", (0,0),(-1,-1), 6),
+            ("BACKGROUND", (0,0),(-1,0), colors.HexColor("#F8FAFC")),
+            ("FONTNAME", (0,0),(-1,0), "Helvetica-Bold"),
+        ]
+        if highlight_last:
+            style += [
+                ("FONTNAME", (0,-1),(-1,-1), "Helvetica-Bold"),
+                ("LINEABOVE", (0,-1),(-1,-1), 1, colors.HexColor("#141414")),
+            ]
+        t.setStyle(TableStyle(style))
+        elements.append(t)
+
+    # Revenue
+    section("💰 Intäkter")
+    table2([
+        ["Post", "Belopp"],
+        ["Fakturerat (exkl. moms)", f"{revenue_excl_vat:,.2f} kr"],
+        ["Utgående moms (25%)", f"{vat_collected:,.2f} kr"],
+        ["RUT-avdrag (betalas av Skatteverket)", f"{rut_deductions:,.2f} kr"],
+        ["Betalda fakturor", f"{paid_invoices:,.2f} kr"],
+        ["Obetalda fakturor", f"{unpaid_invoices:,.2f} kr"],
+        ["TOTALT FAKTURERAT", f"{total_invoiced:,.2f} kr"],
+    ])
+
+    # Payroll
+    section("👥 Personalkostnader")
+    table2([
+        ["Post", "Belopp"],
+        ["Bruttolöner", f"{gross_salary:,.2f} kr"],
+        [f"Arbetsgivaravgifter ({ARBETSGIVARAVGIFT*100:.2f}%)", f"{arbetsgivaravgifter:,.2f} kr"],
+        [f"Semesterersättning ({SEMESTERERSATTNING*100:.0f}%)", f"{semesterersattning:,.2f} kr"],
+        ["Utlägg", f"{utlagg_total:,.2f} kr"],
+        ["TOTAL PERSONALKOSTNAD", f"{total_payroll_cost + utlagg_total:,.2f} kr"],
+    ])
+
+    # Per employee
+    if payroll_summary:
+        section("👤 Kostnad per anställd")
+        emp_rows = [["Anställd", "Typ", "Timmar", "Bruttolön", "Arb.avg", "Total"]]
+        for row in payroll_summary.values():
+            gross = row["normal_h"]*row["hourly_rate"] + row["ob1_h"]*payroll_settings.ob1_extra + row["ob2_h"]*payroll_settings.ob2_extra
+            ag = round(gross * ARBETSGIVARAVGIFT, 2)
+            sem = round(gross * SEMESTERERSATTNING, 2)
+            total_c = round(gross + ag + sem, 2)
+            emp_type = "Vikarie" if row.get("employment_type") == "vikarie" else "Fast"
+            hours = round(row["normal_h"] + row["ob1_h"] + row["ob2_h"], 1)
+            emp_rows.append([row["name"], emp_type, f"{hours} h", f"{gross:,.0f} kr", f"{ag:,.0f} kr", f"{total_c:,.0f} kr"])
+        t = Table(emp_rows, colWidths=[45*mm, 18*mm, 18*mm, 26*mm, 22*mm, 26*mm])
+        t.setStyle(TableStyle([
+            ("FONTSIZE", (0,0),(-1,-1), 9),
+            ("ALIGN", (2,0),(-1,-1), "RIGHT"),
+            ("GRID", (0,0),(-1,-1), 0.5, colors.HexColor("#E2E8F0")),
+            ("BACKGROUND", (0,0),(-1,0), colors.HexColor("#141414")),
+            ("TEXTCOLOR", (0,0),(-1,0), colors.white),
+            ("BOTTOMPADDING", (0,0),(-1,-1), 5),
+            ("TOPPADDING", (0,0),(-1,-1), 5),
+        ]))
+        elements.append(t)
+
+    # Moms
+    section("🧾 Momsredovisning")
+    table2([
+        ["Post", "Belopp"],
+        ["Utgående moms", f"{vat_collected:,.2f} kr"],
+        ["MOMS ATT BETALA", f"{vat_to_pay:,.2f} kr"],
+    ])
+
+    # Obligations
+    section("📋 Skyldigheter till Skatteverket")
+    table2([
+        ["Post", "Belopp"],
+        ["Arbetsgivaravgifter", f"{arbetsgivaravgifter:,.2f} kr"],
+        [f"Preliminärskatt (ca {PRELSKATT*100:.0f}%)", f"{prelskatt:,.2f} kr"],
+        ["AGI totalt (senast 12:e varje månad)", f"{agi_to_pay:,.2f} kr"],
+        ["Moms (kvartalsvis)", f"{vat_to_pay:,.2f} kr"],
+        ["TOTALT TILL SKATTEVERKET", f"{agi_to_pay + vat_to_pay:,.2f} kr"],
+    ])
+
+    # Result
+    section("📊 Rörelseresultat")
+    profit_color = colors.HexColor("#166534") if operating_profit >= 0 else colors.HexColor("#be123c")
+    table2([
+        ["Post", "Belopp"],
+        ["Intäkter (exkl. moms)", f"{revenue_excl_vat:,.2f} kr"],
+        ["Personalkostnader", f"-{total_payroll_cost + utlagg_total:,.2f} kr"],
+        ["RÖRELSERESULTAT", f"{operating_profit:,.2f} kr ({profit_margin}%)"],
+    ])
+
+    # Footer note
+    elements.append(Spacer(1, 10*mm))
+    note_style = ParagraphStyle("note", parent=styles["Normal"], fontSize=8, textColor=colors.HexColor("#94a3b8"))
+    elements.append(Paragraph(
+        "⚠️ Denna rapport är ett uppskattningsverktyg. Bokföringsskatt (20,6%) ingår inte. "
+        "Kontrollera alltid med din redovisningskonsult eller revisor. "
+        f"Arbetsgivaravgifter: {ARBETSGIVARAVGIFT*100:.2f}% (Skatteverket 2026). "
+        f"Semesterersättning: {SEMESTERERSATTNING*100:.0f}% (semesterlagen).",
+        note_style
+    ))
+
+    doc.build(elements)
+    fname = f"ekonomirapport_{start}_{end}.pdf"
+    return Response(content=buf.getvalue(), media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{fname}"'})
+
 app.include_router(api_router)
 
 app.add_middleware(
