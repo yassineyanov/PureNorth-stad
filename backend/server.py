@@ -287,13 +287,13 @@ class PayrollSettings(BaseModel):
     ob1_extra: float = 25.69
     ob1_days: List[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4, 5])
     ob1_start: str = "18:00"
-    ob1_end: str = "24:00"
+    ob1_end: str = "23:59"
     # OB2: Helg lördag-söndag hela dagen (54.08 kr/tim per Serviceentreprenadavtalet 2025)
     ob2_label: str = "Helg (lör–sön)"
     ob2_extra: float = 54.08
     ob2_days: List[int] = Field(default_factory=lambda: [5, 6])
     ob2_start: str = "00:00"
-    ob2_end: str = "24:00"
+    ob2_end: str = "23:59"
     code_normal: str = "100"
     code_ob1: str = "210"
     code_ob2: str = "220"
@@ -563,6 +563,9 @@ def _time_to_minutes(t: str) -> int:
     h = int(h)
     m = int(m)
     if h >= 24:
+        return 24 * 60
+    # treat 23:59 as end of day (same as 24:00)
+    if h == 23 and m == 59:
         return 24 * 60
     return h * 60 + m
 
