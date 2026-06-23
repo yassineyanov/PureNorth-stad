@@ -1,0 +1,549 @@
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, X, Trash2, Download, Settings, ChevronDown, ChevronUp, FileText, Link2, Pencil, Eye, Upload } from "lucide-react";
+import { api } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const STATUS = {
+  draft: { label: "Utkast", cls: "bg-slate-100 text-slate-600" },
+  sent: { label: "Skickad", cls: "bg-blue-50 text-blue-700" },
+  paid: { label: "Betald", cls: "bg-green-50 text-green-700" },
+  overdue: { label: "Förfallen", cls: "bg-red-50 text-red-700" },
+};
+
+const SERVICE_TYPES = ["Hemstädning", "Flyttstädning", "Kontorsstädning", "Storstädning", "Annat"];
+
+function defaultDueDate(paymentTermsDays) {
+  const d = new Date();
+  d.setDate(d.getDate() + (paymentTermsDays || 30));
+  return d.toISOString().slice(0, 10);
+}
+
+function inferItems(initialItems) {
+  if (!initialItems || initialItems.length === 0) {
+    return [{ service: "Hemstädning", description: "Hemstädning", quantity: 1, unit_price: 0, is_material: false }];
+  }
+  return initialItems.map((it) => {
+    const isKnownService = SERVICE_TYPES.slice(0, -1).includes(it.description);
+    return {
+      service: isKnownService ? it.description : "Annat",
+      description: it.description,
+      quantity: it.quantity,
+      unit_price: it.unit_price,
+      is_material: it.is_material,
+    };
+  });
+}
+
+function InvoiceSettingsPanel({ settings, onSave }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(settings);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setForm(settings); }, [settings]);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave(form);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!form) return null;
+
+  return (
+    <div className="rounded-2xl bg-white border border-slate-100 mb-6">
+      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center justify-between px-6 py-4">
+        <span className="inline-flex items-center gap-2 font-semibold text-slate-900"><Settings size={16} /> Företagsuppgifter och betalning</span>
+        {open ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+      </button>
+      {open && (
+        <form onSubmit={submit} className="px-6 pb-6 space-y-4 border-t border-slate-100 pt-5">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Företagsnamn</Label>
+              <Input value={form.company_name} onChange={(e) => setForm((f) => ({ ...f, company_name: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Organisationsnummer</Label>
+              <Input value={form.company_orgnr || ""} onChange={(e) => setForm((f) => ({ ...f, company_orgnr: e.target.value }))} className="mt-1" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Adress</Label>
+            <Input value={form.company_address || ""} onChange={(e) => setForm((f) => ({ ...f, company_address: e.target.value }))} className="mt-1" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">E-post</Label>
+              <Input value={form.company_email || ""} onChange={(e) => setForm((f) => ({ ...f, company_email: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Telefon</Label>
+              <Input value={form.company_phone || ""} onChange={(e) => setForm((f) => ({ ...f, company_phone: e.target.value }))} className="mt-1" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label className="text-xs">Bankgiro</Label>
+              <Input value={form.bankgiro || ""} onChange={(e) => setForm((f) => ({ ...f, bankgiro: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Plusgiro</Label>
+              <Input value={form.plusgiro || ""} onChange={(e) => setForm((f) => ({ ...f, plusgiro: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">IBAN</Label>
+              <Input value={form.iban || ""} onChange={(e) => setForm((f) => ({ ...f, iban: e.target.value }))} className="mt-1" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Moms (%)</Label>
+              <Input type="number" step="0.1" value={form.vat_rate} onChange={(e) => setForm((f) => ({ ...f, vat_rate: parseFloat(e.target.value) || 0 }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Betalningsvillkor (dagar)</Label>
+              <Input type="number" value={form.payment_terms_days} onChange={(e) => setForm((f) => ({ ...f, payment_terms_days: parseInt(e.target.value) || 30 }))} className="mt-1" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Logotyp (visas i PDF)</Label>
+            <div className="mt-1.5 flex items-center gap-3">
+              {form.company_logo && (
+                <img src={form.company_logo} alt="Logo" className="h-12 w-auto rounded-lg border border-slate-200 object-contain bg-white p-1" />
+              )}
+              <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 border border-slate-200 rounded-full px-3 py-2 hover:border-[#141414] transition-colors">
+                <Upload size={13} /> {form.company_logo ? "Byt logotyp" : "Ladda upp logotyp"}
+                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = async (ev) => {
+                    const logoData = ev.target.result;
+                    setForm((f) => ({ ...f, company_logo: logoData }));
+                    try {
+                      await api.put("/settings/invoice/logo", { company_logo: logoData });
+                      toast.success("Logotyp sparad!");
+                    } catch {
+                      toast.error("Kunde inte spara logotypen.");
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                }} />
+              </label>
+              {form.company_logo && (
+                <button type="button" onClick={async () => {
+                  setForm((f) => ({ ...f, company_logo: null }));
+                  try { await api.put("/settings/invoice/logo", { company_logo: null }); } catch {}
+                }} className="text-xs text-red-500 hover:underline">Ta bort</button>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-slate-400">Nästa fakturanummer: {form.next_invoice_number}</p>
+          <button type="submit" disabled={saving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {saving ? "Sparar..." : "Spara uppgifter"}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave }) {
+  const isEdit = Boolean(initial);
+  const [customerName, setCustomerName] = useState(initial?.customer_name || "");
+  const [customerEmail, setCustomerEmail] = useState(initial?.customer_email || "");
+  const [customerPhone, setCustomerPhone] = useState(initial?.customer_phone || "");
+  const [customerAddress, setCustomerAddress] = useState(initial?.customer_address || "");
+  const [customerPersonnummer, setCustomerPersonnummer] = useState(initial?.customer_personnummer || "");
+  const [customerType, setCustomerType] = useState(initial?.customer_type || "private");
+  const [rutEligible, setRutEligible] = useState(initial ? initial.rut_eligible : true);
+  const [bookingId, setBookingId] = useState(initial?.booking_id || "");
+  const [items, setItems] = useState(() => inferItems(initial?.items));
+  const [note, setNote] = useState(initial?.note || "");
+  const [dueDate, setDueDate] = useState(initial?.due_date || defaultDueDate(settings?.payment_terms_days));
+  const [saving, setSaving] = useState(false);
+
+  const applyBooking = (id) => {
+    setBookingId(id);
+    const b = bookings.find((x) => x.id === id);
+    if (b) {
+      setCustomerName(b.name);
+      setCustomerEmail(b.email || "");
+      setCustomerPhone(b.phone || "");
+    }
+  };
+
+  const updateItem = (i, field, value) => {
+    setItems((arr) => arr.map((it, idx) => (idx === i ? { ...it, [field]: value } : it)));
+  };
+
+  const updateService = (i, service) => {
+    setItems((arr) => arr.map((it, idx) => {
+      if (idx !== i) return it;
+      const priceMatch = priceList.find((p) => p.service === service && p.is_active);
+      const newPrice = priceMatch ? priceMatch.price : it.unit_price;
+      if (service === "Annat") {
+        return { ...it, service, description: it.service === "Annat" ? it.description : "", unit_price: newPrice };
+      }
+      return { ...it, service, description: service, unit_price: newPrice };
+    }));
+  };
+
+  const addItem = () => setItems((arr) => [...arr, { service: "Hemstädning", description: "Hemstädning", quantity: 1, unit_price: 0, is_material: false }]);
+  const removeItem = (i) => setItems((arr) => arr.filter((_, idx) => idx !== i));
+
+  const laborTotal = items.filter((i) => !i.is_material).reduce((s, i) => s + (parseFloat(i.quantity) || 0) * (parseFloat(i.unit_price) || 0), 0);
+  const materialTotal = items.filter((i) => i.is_material).reduce((s, i) => s + (parseFloat(i.quantity) || 0) * (parseFloat(i.unit_price) || 0), 0);
+  const subtotal = laborTotal + materialTotal;
+  const vatAmount = subtotal * ((settings?.vat_rate ?? 25) / 100);
+  const totalAmount = subtotal + vatAmount;
+  const rutDeduction = rutEligible && customerType === "private" ? laborTotal * 0.5 : 0;
+  const customerPays = totalAmount - rutDeduction;
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!customerName.trim() || items.length === 0) return;
+    if (items.some((it) => !it.description.trim())) {
+      toast.error("Fyll i beskrivning för alla rader.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        booking_id: bookingId || null,
+        customer_name: customerName.trim(),
+        customer_email: customerEmail.trim() || null,
+        customer_phone: customerPhone.trim() || null,
+        customer_address: customerAddress.trim() || null,
+        customer_personnummer: customerPersonnummer.trim() || null,
+        customer_type: customerType,
+        rut_eligible: rutEligible,
+        items: items.map((i) => ({
+          description: i.description,
+          quantity: parseFloat(i.quantity) || 0,
+          unit_price: parseFloat(i.unit_price) || 0,
+          is_material: i.is_material,
+        })),
+        note: note.trim() || null,
+        due_date: dueDate || null,
+      };
+      await onSave(payload, initial?.id);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg bg-white rounded-3xl border border-slate-100 shadow-xl p-7 max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display font-bold text-xl text-slate-900">{isEdit ? `Redigera faktura #${initial.invoice_number}` : "Ny faktura"}</h2>
+          <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">
+            <X size={16} />
+          </button>
+        </div>
+
+        <form onSubmit={submit} className="space-y-4">
+          {!isEdit && (
+            <div>
+              <Label className="flex items-center gap-1.5 text-xs"><Link2 size={13} /> Koppla till bokning (valfritt)</Label>
+              <select value={bookingId} onChange={(e) => applyBooking(e.target.value)} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value="">Ingen bokning</option>
+                {bookings.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name} · {b.email}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <Label className="text-xs">Kundnamn</Label>
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Typ</Label>
+              <select value={customerType} onChange={(e) => { setCustomerType(e.target.value); if (e.target.value === "company") setRutEligible(false); }} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value="private">Privatperson</option>
+                <option value="company">Företag</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <Label className="text-xs">E-post</Label>
+              <Input value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Telefon</Label>
+              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="mt-1" />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">Adress</Label>
+            <Input value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="mt-1" />
+          </div>
+
+          <div>
+            <Label className="text-xs">Förfallodatum</Label>
+            <Input type="date" style={{WebkitAppearance:"none", appearance:"none"}} value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="mt-1" />
+          </div>
+
+          {customerType === "private" && (
+            <div className="rounded-xl bg-slate-50 p-3.5">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                <input type="checkbox" checked={rutEligible} onChange={(e) => setRutEligible(e.target.checked)} className="rounded" />
+                RUT-avdrag (50% av arbetskostnad)
+              </label>
+              {rutEligible && (
+                <div>
+                  <Label className="text-xs">Personnummer</Label>
+                  <Input value={customerPersonnummer} onChange={(e) => setCustomerPersonnummer(e.target.value)} className="mt-1" placeholder="ÅÅMMDD-XXXX" />
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs">Rader</Label>
+              <button type="button" onClick={addItem} className="text-xs font-semibold text-[#141414] inline-flex items-center gap-1"><Plus size={13} /> Lägg till rad</button>
+            </div>
+            <div className="space-y-2">
+              {items.map((it, i) => (
+                <div key={i} className="rounded-xl bg-slate-50 p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <select value={it.service} onChange={(e) => updateService(i, e.target.value)} className="flex-1 rounded-lg border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] bg-white">
+                      {SERVICE_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    {priceList.find((p) => p.service === it.service) && (
+                      <span className="text-xs text-slate-400 whitespace-nowrap">
+                        {priceList.find((p) => p.service === it.service)?.price} kr/{priceList.find((p) => p.service === it.service)?.unit}
+                      </span>
+                    )}
+                  </div>
+                  {it.service === "Annat" && (
+                    <Input value={it.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Beskrivning" className="text-sm" />
+                  )}
+                  <div className="grid grid-cols-4 gap-2 items-end">
+                    <div>
+                      <Label className="text-[10px] text-slate-400">{(priceList.find((p) => p.service === it.service)?.unit === "tim" || it.service === "Hemstädning" || it.service === "Kontorsstädning" || it.service === "Storstädning" || it.service === "Byggstädning") ? "Timmar" : "Antal"}</Label>
+                      <Input type="number" step="0.01" value={it.quantity} onChange={(e) => updateItem(i, "quantity", e.target.value)} className="text-sm mt-0.5" />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] text-slate-400">À-pris (kr)</Label>
+                      <Input type="number" step="0.01" value={it.unit_price} onChange={(e) => updateItem(i, "unit_price", e.target.value)} className="text-sm mt-0.5" />
+                    </div>
+                    <label className="text-xs flex items-center gap-1.5 text-slate-600 self-center">
+                      <input type="checkbox" checked={it.is_material} onChange={(e) => updateItem(i, "is_material", e.target.checked)} className="rounded" /> Material
+                    </label>
+                    {items.length > 1 && (
+                      <button type="button" onClick={() => removeItem(i)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 justify-self-end self-center">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">Anteckning (valfritt)</Label>
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
+          </div>
+
+          <div className="rounded-xl bg-slate-50 p-4 space-y-1.5 text-sm">
+            <div className="flex justify-between text-slate-600"><span>Delsumma (exkl. moms)</span><span>{subtotal.toFixed(2)} kr</span></div>
+            <div className="flex justify-between text-slate-600"><span>Moms ({(settings?.vat_rate ?? 25).toFixed(0)}%)</span><span>{vatAmount.toFixed(2)} kr</span></div>
+            <div className="flex justify-between font-semibold text-slate-900"><span>Totalt</span><span>{totalAmount.toFixed(2)} kr</span></div>
+            {rutDeduction > 0 && (
+              <>
+                <div className="flex justify-between text-green-700"><span>RUT-avdrag</span><span>-{rutDeduction.toFixed(2)} kr</span></div>
+                <div className="flex justify-between font-bold text-slate-900 pt-1.5 border-t border-slate-200"><span>Att betala</span><span>{customerPays.toFixed(2)} kr</span></div>
+              </>
+            )}
+          </div>
+
+          <button type="submit" disabled={saving || !customerName.trim()} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {saving ? "Sparar..." : isEdit ? "Spara ändringar" : "Skapa faktura"}
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+export default function InvoicePanel() {
+  const [invoices, setInvoices] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [priceList, setPriceList] = useState([]);
+  const [editingInvoice, setEditingInvoice] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [invRes, bookRes, setRes, priceRes] = await Promise.all([
+        api.get("/invoices"),
+        api.get("/bookings"),
+        api.get("/settings/invoice"),
+        api.get("/settings/pricelist"),
+      ]);
+      setInvoices(invRes.data);
+      setBookings(bookRes.data);
+      setSettings(setRes.data);
+      setPriceList(priceRes.data.items || []);
+    } catch {
+      toast.error("Kunde inte hämta fakturor.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const saveSettings = async (form) => {
+    try {
+      const res = await api.put("/settings/invoice", form);
+      setSettings(res.data);
+      toast.success("Uppgifter sparade.");
+    } catch {
+      toast.error("Kunde inte spara uppgifter.");
+    }
+  };
+
+  const openCreate = () => { setEditingInvoice(null); setModalOpen(true); };
+  const openEdit = (inv) => { setEditingInvoice(inv); setModalOpen(true); };
+  const closeModal = () => { setModalOpen(false); setEditingInvoice(null); };
+
+  const saveInvoice = async (payload, id) => {
+    try {
+      if (id) {
+        const res = await api.put(`/invoices/${id}`, payload);
+        setInvoices((inv) => inv.map((x) => (x.id === id ? res.data : x)));
+        toast.success("Faktura uppdaterad.");
+      } else {
+        const res = await api.post("/invoices", payload);
+        setInvoices((inv) => [res.data, ...inv]);
+        toast.success("Faktura skapad.");
+      }
+      closeModal();
+    } catch {
+      toast.error("Kunde inte spara fakturan.");
+    }
+  };
+
+  const setStatus = async (id, status) => {
+    try {
+      await api.patch(`/invoices/${id}/status`, { status });
+      setInvoices((inv) => inv.map((x) => (x.id === id ? { ...x, status, paid_at: status === "paid" ? new Date().toISOString() : x.paid_at } : x)));
+      toast.success("Status uppdaterad.");
+    } catch {
+      toast.error("Kunde inte uppdatera status.");
+    }
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm("Ta bort denna faktura?")) return;
+    try {
+      await api.delete(`/invoices/${id}`);
+      setInvoices((inv) => inv.filter((x) => x.id !== id));
+      toast.success("Faktura borttagen.");
+    } catch {
+      toast.error("Kunde inte ta bort fakturan.");
+    }
+  };
+
+  const viewPdf = (inv) => {
+    const token = localStorage.getItem("pn_token") || "";
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
+    window.location.href = `${backendUrl}/api/invoices/${inv.id}/pdf?token=${token}`;
+  };
+
+  const totalOutstanding = invoices.filter((i) => i.status !== "paid").reduce((s, i) => s + i.customer_pays, 0);
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-display font-bold text-xl text-slate-900">Fakturor</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Obetalt: {totalOutstanding.toFixed(2)} kr</p>
+        </div>
+        <button onClick={openCreate} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] rounded-full px-4 py-2 hover:bg-black transition-colors">
+          <Plus size={15} /> Ny faktura
+        </button>
+      </div>
+
+      {settings && <InvoiceSettingsPanel settings={settings} onSave={saveSettings} />}
+
+      {loading ? (
+        <p className="text-slate-500">Laddar...</p>
+      ) : invoices.length === 0 ? (
+        <div className="rounded-2xl bg-white border border-slate-100 p-12 text-center text-slate-500 flex flex-col items-center gap-2">
+          <FileText size={28} className="text-slate-300" />
+          Inga fakturor ännu.
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {invoices.map((inv) => (
+            <motion.div key={inv.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-white border border-slate-100 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <h3 className="font-semibold text-slate-900">#{inv.invoice_number} · {inv.customer_name}</h3>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS[inv.status]?.cls}`}>{STATUS[inv.status]?.label}</span>
+                </div>
+                <p className="text-sm text-slate-600">
+                  Förfaller {inv.due_date} · <strong>{inv.customer_pays.toFixed(2)} kr</strong>
+                  {inv.rut_deduction > 0 && <span className="text-green-700"> (varav RUT -{inv.rut_deduction.toFixed(2)} kr)</span>}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <select value={inv.status} onChange={(e) => setStatus(inv.id, e.target.value)} className="rounded-full border border-slate-200 text-sm px-3.5 py-2 outline-none focus:border-[#141414]">
+                  <option value="draft">Utkast</option>
+                  <option value="sent">Skickad</option>
+                  <option value="paid">Betald</option>
+                  <option value="overdue">Förfallen</option>
+                </select>
+                <button onClick={() => openEdit(inv)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#141414] transition-colors" title="Redigera">
+                  <Pencil size={16} />
+                </button>
+                <button onClick={() => viewPdf(inv)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#141414] transition-colors" title="Visa faktura">
+                  <Eye size={16} />
+                </button>
+
+                <button onClick={() => remove(inv.id)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {modalOpen && <InvoiceModal initial={editingInvoice} bookings={bookings} settings={settings} priceList={priceList} onClose={closeModal} onSave={saveInvoice} />}
+      </AnimatePresence>
+
+      <p className="text-xs text-slate-400 mt-4">
+        RUT-avdraget beräknas som 50% av arbetskostnaden för privatpersoner. Kontrollera alltid mot Skatteverkets aktuella regler och din redovisningskonsult.
+      </p>
+    </>
+  );
+}

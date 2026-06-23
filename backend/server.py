@@ -488,13 +488,19 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     elements.append(Paragraph(f"Förfallodatum: {inv['due_date']}", styles["Normal"]))
 
     elements.append(Spacer(1, 8 * mm))
-    all_hem = all(i["description"].strip().lower() in ("hemstädning", "hemstadning") for i in inv["items"])
-    qty_header = "Timmar" if all_hem else "Antal"
+    HOURLY = ("hemstädning","kontorsstädning","storstädning","byggstädning","trappstädning",
+               "hemstadning","kontorstadning","storstadning","byggstadning","trappstadning")
+    def is_hourly(desc): return desc.strip().lower() in HOURLY
+    all_hourly = all(is_hourly(i["description"]) for i in inv["items"])
+    any_hourly = any(is_hourly(i["description"]) for i in inv["items"])
+    qty_header = "Timmar" if all_hourly else "Antal/Timmar" if any_hourly else "Antal"
     data = [["Beskrivning", qty_header, "À-pris (kr)", "Summa (kr)"]]
     for item in inv["items"]:
         line_total = item["quantity"] * item["unit_price"]
-        is_hem = item["description"].strip().lower() in ("hemstädning", "hemstadning")
-        unit_label = f'{item["quantity"]:g}' if all_hem else (f'{item["quantity"]:g} tim' if is_hem else f'{item["quantity"]:g}')
+        if is_hourly(item["description"]):
+            unit_label = f'{item["quantity"]:g} tim'
+        else:
+            unit_label = f'{item["quantity"]:g}'
         data.append([item["description"], unit_label, f'{item["unit_price"]:.2f}', f'{line_total:.2f}'])
     table = Table(data, colWidths=[80 * mm, 25 * mm, 30 * mm, 30 * mm])
     table.setStyle(TableStyle([
