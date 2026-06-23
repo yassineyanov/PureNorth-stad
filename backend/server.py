@@ -1721,6 +1721,101 @@ async def import_customers_from_bookings(current=Depends(get_current_user)):
             created += 1
     return {"created": created, "updated": updated}
 
+
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+@api_router.get("/dashboard")
+async def dashboard(current=Depends(get_current_user)):
+    today = DateClass.today().isoformat()
+    week_start = (DateClass.today() - timedelta(days=DateClass.today().weekday())).isoformat()
+    week_end = (DateClass.today() + timedelta(days=6 - DateClass.today().weekday())).isoformat()
+    month_start = DateClass.today().replace(day=1).isoformat()
+    month_end = DateClass.today().isoformat()
+
+    # ── Today's shifts ──────────────────────────────────────────────
+    todays_shifts = await db.shifts.find({"date": today}).sort("start_time", 1).to_list(50)
+    employees = await db.employees.find().to_list(100)
+    emp_map = {str(e["_id"]): e for e in employees}
+    for s in todays_shifts:
+        s["_id"] = str(s["_id"])
+        emp = emp_map.get(s["employee_id"], {})
+        s["employee_name"] = emp.get("name", "Okänd")
+        s["employee_color"] = emp.get("color", "#141414")
+
+    # ── New bookings ─────────────────────────────────────────────────
+    new_bookings = await db.bookings.find({"status": "new"}).sort("created_at", -1).to_list(20)
+    for b in new_bookings:
+        b["_id"] = str(b["_id"])
+
+    # ── Upcoming bookings (next 7 days) ──────────────────────────────
+    upcoming = await db.bookings.find({
+        "preferred_date": {"$gte": today, "$lte": week_end},
+        "status": {"$ne": "done"}
+    }).sort("preferred_date", 1).to_list(10)
+    for b in upcoming:
+        b["_id"] = str(b["_id"])
+
+    # ── Unpaid invoices ───────────────────────────────────────────────
+    unpaid = await db.invoices.find({"status": {"$in": ["draft","sent","overdue"]}}).sort("due_date", 1).to_list(20)
+    for i in unpaid:
+        i["_id"] = str(i["_id"])
+    unpaid_total = sum(i.get("customer_pays", 0) for i in unpaid)
+    overdue = [i for i in unpaid if i.get("due_date", "9999") < today]
+
+    # ── This week stats ───────────────────────────────────────────────
+    week_shifts = await db.shifts.find({"date": {"$gte": week_start, "$lte": week_end}}).to_list(500)
+    week_bookings = await db.bookings.find({"created_at": {"$gte": week_start}}).to_list(500)
+
+    # ── This month stats ──────────────────────────────────────────────
+    month_invoices = await db.invoices.find({
+        "created_at": {"$gte": month_start}
+    }).to_list(500)
+    month_revenue = sum(i.get("subtotal", 0) for i in month_invoices)
+    month_paid = sum(i.get("customer_pays", 0) for i in month_invoices if i.get("status") == "paid")
+
+    # ── Sick employees today ──────────────────────────────────────────
+    sick_today = await db.absences.find({
+        "start_date": {"$lte": today},
+        "end_date": {"$gte": today},
+        "type": "Sjuk"
+    }).to_list(20)
+    sick_names = []
+    for a in sick_today:
+        emp = emp_map.get(a["employee_id"], {})
+        sick_names.append(emp.get("name", "Okänd"))
+
+    # ── Absent employees today (all types) ────────────────────────────
+    absent_today = await db.absences.find({
+        "start_date": {"$lte": today},
+        "end_date": {"$gte": today},
+    }).to_list(20)
+
+    return {
+        "today": today,
+        "todays_shifts": todays_shifts,
+        "todays_shift_count": len(todays_shifts),
+        "sick_today": sick_names,
+        "absent_today_count": len(absent_today),
+        "new_bookings": new_bookings[:5],
+        "new_bookings_count": len(new_bookings),
+        "upcoming_bookings": upcoming,
+        "unpaid_invoices": unpaid[:5],
+        "unpaid_invoices_count": len(unpaid),
+        "unpaid_total": round(unpaid_total, 2),
+        "overdue_count": len(overdue),
+        "week": {
+            "shifts": len(week_shifts),
+            "new_bookings": len(week_bookings),
+            "start": week_start,
+            "end": week_end,
+        },
+        "month": {
+            "revenue": round(month_revenue, 2),
+            "paid": round(month_paid, 2),
+            "invoice_count": len(month_invoices),
+        },
+        "employee_count": len(employees),
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
