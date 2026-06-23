@@ -1892,6 +1892,68 @@ async def reset_password(payload: ResetPasswordRequest):
 
     return {"success": True, "message": "Lösenordet har uppdaterats. Du kan nu logga in."}
 
+
+# ── Recurring Bookings ────────────────────────────────────────────────────────
+class RecurringBookingCreate(BaseModel):
+    name: str = Field(..., min_length=1)
+    email: str = "admin@purenorth.se"
+    phone: str = Field(..., min_length=1)
+    kvm: Optional[str] = None
+    services: List[str] = Field(default_factory=list)
+    preferred_date: str  # first occurrence YYYY-MM-DD
+    other_description: Optional[str] = None
+    recurrence: str = "weekly"  # weekly, biweekly, monthly
+    occurrences: int = Field(default=6, ge=2, le=52)
+
+
+@api_router.post("/bookings/recurring")
+async def create_recurring_bookings(payload: RecurringBookingCreate, current=Depends(get_current_user)):
+    from datetime import date as DateClass2
+    y, m, d = map(int, payload.preferred_date.split("-"))
+    start_date = DateClass2(y, m, d)
+
+    if payload.recurrence == "weekly":
+        delta = timedelta(weeks=1)
+    elif payload.recurrence == "biweekly":
+        delta = timedelta(weeks=2)
+    else:  # monthly
+        delta = None  # handled separately
+
+    created = []
+    current_date = start_date
+
+    for i in range(payload.occurrences):
+        if payload.recurrence == "monthly":
+            # Add months
+            month = start_date.month + i
+            year = start_date.year + (month - 1) // 12
+            month = ((month - 1) % 12) + 1
+            import calendar
+            day = min(start_date.day, calendar.monthrange(year, month)[1])
+            current_date = DateClass2(year, month, day)
+        
+        doc = {
+            "name": payload.name,
+            "email": payload.email,
+            "phone": payload.phone,
+            "kvm": payload.kvm,
+            "services": payload.services,
+            "preferred_date": current_date.isoformat(),
+            "other_description": payload.other_description,
+            "status": "new",
+            "is_recurring": True,
+            "recurrence": payload.recurrence,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        result = await db.bookings.insert_one(doc)
+        doc["_id"] = str(result.inserted_id)
+        created.append(doc)
+
+        if payload.recurrence != "monthly":
+            current_date += delta
+
+    return {"created": len(created), "bookings": [{"id": str(b["_id"]), "date": b["preferred_date"]} for b in created]}
+
 app.include_router(api_router)
 
 app.add_middleware(
