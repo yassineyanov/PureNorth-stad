@@ -2424,10 +2424,11 @@ async def send_booking_confirmation(booking: dict, inv_settings=None):
             date_str = date
 
     try:
+        admin_email = os.environ.get("ADMIN_EMAIL", "akhazzane.othmane@gmail.com")
         resend.Emails.send({
             "from": f"{company} <onboarding@resend.dev>",
-            "to": email,
-            "subject": f"Bokningsbekräftelse – {company}",
+            "to": admin_email,  # Temporary: send to admin until domain verified
+            "subject": f"Bokningsbekräftelse till {name} – {company}",
             "html": f"""
             <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
               <div style="background:#141414;padding:32px 36px;">
