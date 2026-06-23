@@ -861,6 +861,13 @@ async def update_status(booking_id: str, payload: StatusUpdate, current=Depends(
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Bokning hittades inte")
+    # Send confirmation email when status changes to "contacted"
+    if payload.status == "contacted":
+        doc = await db.bookings.find_one({"_id": to_object_id(booking_id)})
+        if doc:
+            doc["_id"] = str(doc["_id"])
+            inv_settings = await get_invoice_settings_obj()
+            await send_booking_confirmation(doc, inv_settings)
     return {"success": True}
 
 
