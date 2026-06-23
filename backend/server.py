@@ -2436,16 +2436,16 @@ async def send_booking_confirmation(booking: dict, inv_settings=None):
                 <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:14px;">Bokningsbekräftelse</p>
               </div>
               <div style="padding:36px;">
-                <p style="font-size:16px;color:#141414;margin:0 0 24px;">Hej <strong>{name}</strong>! 👋</p>
+                <p style="font-size:16px;color:#141414;margin:0 0 24px;">Hej <strong>{name}</strong>! </p>
                 <p style="color:#475569;line-height:1.6;margin:0 0 24px;">
                   Tack för att du kontaktade oss! Vi har tagit emot din bokningsförfrågan och återkommer inom kort för att bekräfta din tid.
                 </p>
 
                 <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:0 0 24px;border:1px solid #e2e8f0;">
                   <h3 style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 12px;">Din bokning</h3>
-                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>📅 Datum:</strong> " + date_str + "</p>" if date_str else ""}
-                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>🧹 Tjänster:</strong> " + services + "</p>" if services else ""}
-                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>📐 Yta:</strong> " + str(booking.get("kvm","")) + " kvm</p>" if booking.get("kvm") else ""}
+                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>Datum:</strong> " + date_str + "</p>" if date_str else ""}
+                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>Tjänst:</strong> " + services + "</p>" if services else ""}
+                  {"<p style='margin:6px 0;color:#141414;font-size:15px;'><strong>Yta:</strong> " + str(booking.get("kvm","")) + " kvm</p>" if booking.get("kvm") else ""}
                 </div>
 
                 <p style="color:#475569;line-height:1.6;margin:0 0 24px;">
@@ -2455,7 +2455,7 @@ async def send_booking_confirmation(booking: dict, inv_settings=None):
                 <div style="text-align:center;margin:0 0 24px;">
                   <a href="tel:{phone.replace('-','').replace(' ','')}"
                     style="display:inline-block;background:#141414;color:white;text-decoration:none;padding:14px 32px;border-radius:9999px;font-weight:600;font-size:15px;">
-                    📞 Ring oss: {phone}
+                    Ring oss: {phone}
                   </a>
                 </div>
 
