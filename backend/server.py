@@ -1620,22 +1620,27 @@ async def create_customer(payload: CustomerCreate, current=Depends(get_current_u
 async def enrich_customer(c: dict) -> dict:
     cid = str(c["_id"])
     c["_id"] = cid
-    # Count bookings
-    email = c.get("email", "")
-    phone = c.get("phone", "")
-    query = {}
-    if email:
-        query = {"$or": [{"email": email}, {"phone": phone}]} if phone else {"email": email}
-    elif phone:
-        query = {"phone": phone}
+    email = (c.get("email") or "").strip().lower()
+    phone = (c.get("phone") or "").strip()
 
-    if query:
-        bookings = await db.bookings.find(query).sort("created_at", -1).to_list(1000)
-        invoices = await db.invoices.find({"customer_email": email}).to_list(1000) if email else []
-        c["booking_count"] = len(bookings)
-        c["last_booking"] = bookings[0]["preferred_date"] if bookings and bookings[0].get("preferred_date") else (bookings[0]["created_at"][:10] if bookings else None)
-        c["invoice_count"] = len(invoices)
-        c["total_invoiced"] = sum(i.get("customer_pays", 0) for i in invoices)
+    # Only query if we have actual identifying info
+    bookings = []
+    invoices = []
+
+    if email and phone:
+        bookings = await db.bookings.find({"$or": [{"email": email}, {"phone": phone}]}).sort("created_at", -1).to_list(1000)
+    elif email:
+        bookings = await db.bookings.find({"email": email}).sort("created_at", -1).to_list(1000)
+    elif phone:
+        bookings = await db.bookings.find({"phone": phone}).sort("created_at", -1).to_list(1000)
+
+    if email:
+        invoices = await db.invoices.find({"customer_email": email}).to_list(1000)
+
+    c["booking_count"] = len(bookings)
+    c["last_booking"] = bookings[0].get("preferred_date") or bookings[0]["created_at"][:10] if bookings else None
+    c["invoice_count"] = len(invoices)
+    c["total_invoiced"] = sum(i.get("customer_pays", 0) for i in invoices)
     return c
 
 
