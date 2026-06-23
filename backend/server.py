@@ -1287,47 +1287,84 @@ async def payroll_slip(start: str, end: str, employee_id: str, current=Depends(g
     elements.append(info_table)
     elements.append(Spacer(1, 8*mm))
 
-    # Pay details table
+    # ── Pay details table ──────────────────────────────────────────────
     rate = row["hourly_rate"]
-    pay_data = [
-        ["Post", "Timmar", "À-pris (kr)", "Belopp (kr)"],
-        ["Normaltid", f'{row["normal_h"]:.2f}', f'{rate:.2f}', f'{row["base_pay"]:.2f}'],
-    ]
+    pay_data = [["Post", "Timmar/Antal", "À-pris (kr)", "Belopp (kr)"]]
+    pay_data.append(["Normaltid", f'{row["normal_h"]:.2f} tim', f'{rate:.2f}', f'{row["base_pay"]:.2f}'])
     if row["ob1_h"] > 0:
-        pay_data.append([f'OB1-tillägg ({settings.ob1_label})', f'{row["ob1_h"]:.2f}', f'{settings.ob1_extra:.2f}', f'{row["ob1_pay"]:.2f}'])
+        pay_data.append([f'OB1 ({settings.ob1_label})', f'{row["ob1_h"]:.2f} tim', f'{settings.ob1_extra:.2f}', f'{row["ob1_pay"]:.2f}'])
     if row["ob2_h"] > 0:
-        pay_data.append([f'OB2-tillägg ({settings.ob2_label})', f'{row["ob2_h"]:.2f}', f'{settings.ob2_extra:.2f}', f'{row["ob2_pay"]:.2f}'])
+        pay_data.append([f'OB2 ({settings.ob2_label})', f'{row["ob2_h"]:.2f} tim', f'{settings.ob2_extra:.2f}', f'{row["ob2_pay"]:.2f}'])
     if row["expense_total"] > 0:
         pay_data.append(["Utlägg", "-", "-", f'{row["expense_total"]:.2f}'])
 
-    pay_table = Table(pay_data, colWidths=[75*mm, 30*mm, 35*mm, 30*mm])
+    # Sjuklön section
+    if row.get("sjuklon_gross", 0) > 0:
+        pay_data.append(["── Sjukfrånvaro ──", "", "", ""])
+        pay_data.append([f'Sjuklön brutto (80% av sjuklön)', f'{row.get("sick_shifts_h",0):.2f} tim', f'{rate*0.8:.2f}', f'{row["sjuklon_gross"]:.2f}'])
+        pay_data.append(["Karensavdrag (20% av veckosjuklön)", "", "", f'-{row["karensavdrag"]:.2f}'])
+        pay_data.append(["Sjuklön netto (utbetalas)", "", "", f'{row["sjuklon_net"]:.2f}'])
+
+    # Absence/loss section (fast anställd only)
+    if row.get("absence_lost_amount", 0) > 0 and row.get("employment_type") == "fastanstalld" and row.get("sjuklon_gross", 0) == 0:
+        pay_data.append(["Förlorad lön (ej sjukfrånvaro)", "", "", f'-{row["absence_lost_amount"]:.2f}'])
+
+    pay_table = Table(pay_data, colWidths=[90*mm, 30*mm, 28*mm, 28*mm])
     pay_table.setStyle(TableStyle([
         ("BACKGROUND", (0,0),(-1,0), colors.HexColor("#141414")),
         ("TEXTCOLOR", (0,0),(-1,0), colors.white),
-        ("FONTSIZE", (0,0),(-1,-1), 10),
+        ("FONTSIZE", (0,0),(-1,-1), 9),
         ("ALIGN", (1,0),(-1,-1), "RIGHT"),
         ("GRID", (0,0),(-1,-1), 0.5, colors.HexColor("#E2E8F0")),
         ("BOTTOMPADDING", (0,0),(-1,0), 8),
         ("TOPPADDING", (0,0),(-1,0), 8),
+        ("BACKGROUND", (0,4),(-1,4), colors.HexColor("#F8FAFC")) if row.get("sjuklon_gross",0) > 0 else ("FONTSIZE",(0,0),(0,0),9),
+        ("FONTNAME", (0,4),(0,4), "Helvetica-Bold") if row.get("sjuklon_gross",0) > 0 else ("FONTSIZE",(0,0),(0,0),9),
+        ("TEXTCOLOR", (3,5),(3,7), colors.HexColor("#16a34a")) if row.get("sjuklon_gross",0) > 0 else ("FONTSIZE",(0,0),(0,0),9),
     ]))
     elements.append(pay_table)
-    elements.append(Spacer(1, 4*mm))
+    elements.append(Spacer(1, 6*mm))
 
-    # Total
-    total_data = [["Totalt att betala:", f'{row["total_pay"]:.2f} kr']]
+    # ── Summary box ───────────────────────────────────────────────────
+    elements.append(Paragraph("Sammanfattning", styles["Heading3"]))
+    summary_data = []
+    summary_data.append(["Grundlön (normaltid):", f'{row["base_pay"]:.2f} kr'])
+    if row["ob1_pay"] > 0:
+        summary_data.append([f'OB1-tillägg:', f'{row["ob1_pay"]:.2f} kr'])
+    if row["ob2_pay"] > 0:
+        summary_data.append([f'OB2-tillägg:', f'{row["ob2_pay"]:.2f} kr'])
+    if row["expense_total"] > 0:
+        summary_data.append(["Utlägg:", f'{row["expense_total"]:.2f} kr'])
+    if row.get("sjuklon_net", 0) > 0:
+        summary_data.append(["Sjuklön netto:", f'{row["sjuklon_net"]:.2f} kr'])
+        summary_data.append(["  (varav karensavdrag):", f'-{row["karensavdrag"]:.2f} kr'])
     if row.get("absence_days", 0) > 0:
-        total_data.append(["Frånvarodagar:", str(row["absence_days"])])
-    if row.get("absence_lost_amount", 0) > 0 and row.get("employment_type") == "fastanstalld":
-        total_data.append(["Förlorad lön vid frånvaro:", f'-{row["absence_lost_amount"]:.2f} kr'])
-    total_table = Table(total_data, colWidths=[100*mm, 40*mm])
+        summary_data.append(["Frånvarodagar totalt:", f'{row["absence_days"]} dagar'])
+    if row.get("absence_scheduled_days", 0) > 0:
+        summary_data.append(["Pass under frånvaro:", f'{row["absence_scheduled_days"]} pass'])
+    summary_data.append(["", ""])
+    summary_data.append(["TOTALT ATT BETALA:", f'{row["total_pay"]:.2f} kr'])
+
+    total_table = Table(summary_data, colWidths=[100*mm, 45*mm])
     total_table.setStyle(TableStyle([
-        ("FONTSIZE", (0,0),(-1,-1), 11),
-        ("FONTNAME", (0,0),(-1,-1), "Helvetica-Bold"),
+        ("FONTSIZE", (0,0),(-1,-1), 10),
         ("ALIGN", (1,0),(-1,-1), "RIGHT"),
-        ("LINEABOVE", (0,0),(-1,0), 1, colors.HexColor("#141414")),
-        ("TOPPADDING", (0,0),(-1,-1), 6),
+        ("LINEABOVE", (0,-1),(-1,-1), 1.5, colors.HexColor("#141414")),
+        ("FONTNAME", (0,-1),(-1,-1), "Helvetica-Bold"),
+        ("FONTSIZE", (0,-1),(-1,-1), 12),
+        ("TOPPADDING", (0,-1),(-1,-1), 8),
+        ("BOTTOMPADDING", (0,0),(-1,-2), 4),
     ]))
     elements.append(total_table)
+
+    # ── Legal note ────────────────────────────────────────────────────
+    elements.append(Spacer(1, 8*mm))
+    note_style = ParagraphStyle("note", parent=styles["Normal"], fontSize=7, textColor=colors.HexColor("#94a3b8"))
+    elements.append(Paragraph(
+        "Sjuklön beräknad enligt sjuklönelagen (1991:1047): 80% av ordinarie lön dag 1–14. "
+        "Karensavdrag = 20% av genomsnittlig veckosjuklön. Vid sjukdom >14 dagar ansöker den anställde om sjukpenning från Försäkringskassan.",
+        note_style
+    ))
 
     doc.build(elements)
     fname = f"lonebesked_{row['name'].replace(' ','_')}_{start}_{end}.pdf"
