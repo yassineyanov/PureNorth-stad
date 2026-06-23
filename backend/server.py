@@ -726,6 +726,21 @@ def build_paxml_str(summary: dict, settings: PayrollSettings, start: str, end: s
     return "\n".join(lines)
 
 
+
+# ---- Price List ----
+class PriceItem(BaseModel):
+    id: str
+    service: str
+    description: Optional[str] = None
+    unit: str = "tim"  # "tim", "kvm", "st", "fast"
+    price: float = 0
+    is_rut_eligible: bool = True
+    is_active: bool = True
+
+
+class PriceListSettings(BaseModel):
+    items: List[PriceItem] = Field(default_factory=list)
+
 # ---------------------------------------------------------------------------
 # App / Router
 # ---------------------------------------------------------------------------
@@ -1259,6 +1274,38 @@ async def payroll_slip(start: str, end: str, employee_id: str, current=Depends(g
     fname = f"lonebesked_{row['name'].replace(' ','_')}_{start}_{end}.pdf"
     return Response(content=buf.getvalue(), media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="{fname}"'})
+
+
+# ---- Price List endpoints ----
+DEFAULT_PRICES = [
+    {"id": "hem", "service": "Hemstädning", "description": "Löpande hemstädning per timme", "unit": "tim", "price": 478, "is_rut_eligible": True, "is_active": True},
+    {"id": "stor", "service": "Storstädning", "description": "Grundlig storstädning per timme", "unit": "tim", "price": 520, "is_rut_eligible": True, "is_active": True},
+    {"id": "flytt", "service": "Flyttstädning", "description": "Komplett flyttstädning per kvm", "unit": "kvm", "price": 45, "is_rut_eligible": True, "is_active": True},
+    {"id": "flytt_fast_lgh", "service": "Flyttstädning lägenhet (fast)", "description": "Fast pris 1-2 rok", "unit": "fast", "price": 2500, "is_rut_eligible": True, "is_active": True},
+    {"id": "kontor", "service": "Kontorsstädning", "description": "Kontorsstädning per timme (ex. moms)", "unit": "tim", "price": 350, "is_rut_eligible": False, "is_active": True},
+    {"id": "fonster", "service": "Fönsterputs", "description": "Per fönster (in- och utsida)", "unit": "st", "price": 80, "is_rut_eligible": True, "is_active": True},
+    {"id": "ugn", "service": "Ugnstvätt", "description": "Djuprengöring av ugn", "unit": "st", "price": 400, "is_rut_eligible": True, "is_active": True},
+    {"id": "kyl", "service": "Kyl/frys rengöring", "description": "Rengöring av kyl och frys", "unit": "st", "price": 300, "is_rut_eligible": True, "is_active": True},
+    {"id": "bygg", "service": "Byggstädning", "description": "Byggstädning per timme (ex. moms)", "unit": "tim", "price": 450, "is_rut_eligible": False, "is_active": True},
+    {"id": "trappa", "service": "Trappstädning", "description": "Per trapphus och tillfälle", "unit": "st", "price": 350, "is_rut_eligible": False, "is_active": True},
+]
+
+
+@api_router.get("/settings/pricelist")
+async def get_pricelist(current=Depends(get_current_user)):
+    doc = await db.settings.find_one({"_key": "pricelist"})
+    if not doc or not doc.get("items"):
+        return {"items": DEFAULT_PRICES}
+    return {"items": doc["items"]}
+
+
+@api_router.put("/settings/pricelist")
+async def set_pricelist(payload: PriceListSettings, current=Depends(get_current_user)):
+    doc = payload.model_dump()
+    doc["_key"] = "pricelist"
+    await db.settings.update_one({"_key": "pricelist"}, {"$set": doc}, upsert=True)
+    return payload
+
 
 app.include_router(api_router)
 
