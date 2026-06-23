@@ -871,6 +871,17 @@ async def update_status(booking_id: str, payload: StatusUpdate, current=Depends(
     return {"success": True}
 
 
+@api_router.patch("/bookings/{booking_id}")
+async def update_booking(booking_id: str, payload: dict, current=Depends(get_current_user)):
+    updates = {k: v for k, v in payload.items() if k not in ["_id", "id", "created_at"]}
+    await db.bookings.update_one({"_id": to_object_id(booking_id)}, {"$set": updates})
+    doc = await db.bookings.find_one({"_id": to_object_id(booking_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Bokning hittades inte")
+    doc["_id"] = str(doc["_id"])
+    return Booking(**doc)
+
+
 @api_router.delete("/bookings/{booking_id}")
 async def delete_booking(booking_id: str, current=Depends(get_current_user)):
     result = await db.bookings.delete_one({"_id": to_object_id(booking_id)})
