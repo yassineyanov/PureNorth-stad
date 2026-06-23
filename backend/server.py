@@ -424,129 +424,218 @@ def calc_invoice_amounts(items: list, rut_eligible: bool, customer_type: str, va
 
 
 def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
+    from reportlab.platypus import Image as RLImage
+    from reportlab.lib.utils import ImageReader
+
     buf = BytesIO()
+    page_w, page_h = A4
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
-        topMargin=20 * mm, bottomMargin=20 * mm, leftMargin=20 * mm, rightMargin=20 * mm,
+        topMargin=15*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm,
     )
     styles = getSampleStyleSheet()
+
+    def ps(name, **kw):
+        return ParagraphStyle(name, parent=styles["Normal"], **kw)
+
+    label_style  = ps("lbl",  fontSize=7,  textColor=colors.HexColor("#888888"), leading=10, spaceAfter=1)
+    value_style  = ps("val",  fontSize=9,  textColor=colors.HexColor("#1a1a1a"), leading=12)
+    bold_style   = ps("bld",  fontSize=9,  textColor=colors.HexColor("#1a1a1a"), leading=12, fontName="Helvetica-Bold")
+    small_style  = ps("sml",  fontSize=7.5,textColor=colors.HexColor("#555555"), leading=10)
+    footer_style = ps("ftr",  fontSize=7,  textColor=colors.HexColor("#999999"), leading=9)
+
     elements = []
 
-    # Logo + company name side by side
-    title_style = ParagraphStyle("title", parent=styles["Heading1"], fontSize=20, leading=24)
-    inv_num_style = ParagraphStyle("invnum", parent=styles["Normal"], fontSize=11, textColor=colors.HexColor("#555555"))
+    # ── HEADER: logo left, FAKTURA right ────────────────────────────────────
+    logo_cell = ""
     if settings.company_logo:
         try:
-            from reportlab.platypus import Image as RLImage
-            from reportlab.lib.utils import ImageReader
             logo_data = base64.b64decode(settings.company_logo.split(",")[-1])
             logo_buf = BytesIO(logo_data)
             ir = ImageReader(logo_buf)
             iw, ih = ir.getSize()
-            max_h = 18 * mm
+            max_h = 16*mm
             ratio = max_h / ih
             logo_buf.seek(0)
-            logo_img = RLImage(logo_buf, width=iw * ratio, height=max_h)
-            header_data = [[logo_img, Paragraph(f'<b>{settings.company_name or "Faktura"}</b>', title_style)]]
-            header_table = Table(header_data, colWidths=[iw * ratio + 6 * mm, None])
-            header_table.setStyle(TableStyle([
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-                ("TOPPADDING", (0, 0), (-1, -1), 0),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-            ]))
-            elements.append(header_table)
-        except Exception:
-            elements.append(Paragraph(settings.company_name or "Faktura", title_style))
+            logo_cell = RLImage(logo_buf, width=iw*ratio, height=max_h)
+        except:
+            logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
     else:
-        elements.append(Paragraph(settings.company_name or "Faktura", title_style))
-    elements.append(Paragraph(f"Faktura #{inv['invoice_number']}", inv_num_style))
-    elements.append(Spacer(1, 6 * mm))
+        logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
 
-    company_lines = []
-    if settings.company_orgnr:
-        company_lines.append(f"Org.nr: {settings.company_orgnr}")
-    if settings.company_address:
-        company_lines.append(settings.company_address)
-    if settings.company_email:
-        company_lines.append(settings.company_email)
-    if settings.company_phone:
-        company_lines.append(settings.company_phone)
-    for line in company_lines:
-        elements.append(Paragraph(line, styles["Normal"]))
+    faktura_title = Paragraph(
+        '<font size="28" color="#141414"><b>FAKTURA</b></font>',
+        ps("ft", alignment=2)
+    )
+    faktura_nr = Paragraph(
+        f'<font size="9" color="#888888">Nr {inv["invoice_number"]}</font>',
+        ps("fnr", alignment=2)
+    )
 
-    elements.append(Spacer(1, 8 * mm))
-    elements.append(Paragraph("Kund", styles["Heading3"]))
-    elements.append(Paragraph(inv["customer_name"], styles["Normal"]))
-    if inv.get("customer_address"):
-        elements.append(Paragraph(inv["customer_address"], styles["Normal"]))
-    if inv.get("customer_email"):
-        elements.append(Paragraph(inv["customer_email"], styles["Normal"]))
-    if inv.get("rut_eligible") and inv.get("customer_personnummer"):
-        elements.append(Paragraph(f"Personnummer: {inv['customer_personnummer']}", styles["Normal"]))
+    hdr = Table([[logo_cell, [faktura_title, faktura_nr]]], colWidths=[90*mm, None])
+    hdr.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+        ("ALIGN",(1,0),(1,0),"RIGHT"),
+        ("LEFTPADDING",(0,0),(-1,-1),0),
+        ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("TOPPADDING",(0,0),(-1,-1),0),
+        ("BOTTOMPADDING",(0,0),(-1,-1),0),
+    ]))
+    elements.append(hdr)
+    elements.append(Spacer(1, 4*mm))
 
-    elements.append(Spacer(1, 4 * mm))
-    elements.append(Paragraph(f"Fakturadatum: {inv['created_at'][:10]}", styles["Normal"]))
-    elements.append(Paragraph(f"Förfallodatum: {inv['due_date']}", styles["Normal"]))
+    # ── DIVIDER ──────────────────────────────────────────────────────────────
+    elements.append(Table([[""]], colWidths=[page_w - 40*mm]))
+    elements[-1].setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,-1),1.5,colors.HexColor("#141414")),
+        ("TOPPADDING",(0,0),(-1,-1),0),("BOTTOMPADDING",(0,0),(-1,-1),0),
+    ]))
+    elements.append(Spacer(1, 5*mm))
 
-    elements.append(Spacer(1, 8 * mm))
+    # ── SENDER + RECIPIENT + INVOICE DETAILS ────────────────────────────────
+    def info_block(label, lines):
+        block = [Paragraph(label, label_style)]
+        for l in lines:
+            if l: block.append(Paragraph(str(l), value_style))
+        return block
+
+    sender = info_block("FRÅN", [
+        settings.company_name,
+        settings.company_address,
+        settings.company_orgnr and f"Org.nr {settings.company_orgnr}",
+        settings.company_email,
+        settings.company_phone,
+    ])
+    recipient = info_block("TILL", [
+        inv["customer_name"],
+        inv.get("customer_address"),
+        inv.get("customer_email"),
+        inv.get("customer_phone"),
+        inv.get("customer_personnummer") and f"Personnr. {inv['customer_personnummer']}",
+    ])
+    details = [
+        [Paragraph("FAKTURADATUM", label_style), Paragraph(inv["created_at"][:10], value_style)],
+        [Paragraph("FÖRFALLODATUM", label_style), Paragraph(inv["due_date"], bold_style)],
+        [Paragraph("BETALNINGSVILLKOR", label_style), Paragraph(f"{inv.get('due_days',30)} dagar netto", value_style)],
+    ]
+    if settings.bankgiro:
+        details.append([Paragraph("BANKGIRO", label_style), Paragraph(settings.bankgiro, value_style)])
+    if settings.iban:
+        details.append([Paragraph("IBAN", label_style), Paragraph(settings.iban, small_style)])
+
+    details_tbl = Table(details, colWidths=[28*mm, 37*mm])
+    details_tbl.setStyle(TableStyle([
+        ("LEFTPADDING",(0,0),(-1,-1),0),("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("TOPPADDING",(0,0),(-1,-1),1),("BOTTOMPADDING",(0,0),(-1,-1),1),
+    ]))
+
+    top_row = Table([[sender, recipient, details_tbl]], colWidths=[65*mm, 65*mm, 65*mm])
+    top_row.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"TOP"),
+        ("LEFTPADDING",(0,0),(-1,-1),0),("RIGHTPADDING",(0,0),(-1,-1),4),
+        ("TOPPADDING",(0,0),(-1,-1),0),("BOTTOMPADDING",(0,0),(-1,-1),0),
+    ]))
+    elements.append(top_row)
+    elements.append(Spacer(1, 8*mm))
+
+    # ── ITEMS TABLE ──────────────────────────────────────────────────────────
     HOURLY = ("hemstädning","kontorsstädning","storstädning","byggstädning","trappstädning",
                "hemstadning","kontorstadning","storstadning","byggstadning","trappstadning")
     def is_hourly(desc): return desc.strip().lower() in HOURLY
-    all_hourly = all(is_hourly(i["description"]) for i in inv["items"])
-    any_hourly = any(is_hourly(i["description"]) for i in inv["items"])
-    qty_header = "Timmar" if all_hourly else "Antal/Timmar" if any_hourly else "Antal"
-    data = [["Beskrivning", qty_header, "À-pris (kr)", "Summa (kr)"]]
+
+    col_hdr_style = ParagraphStyle("ch", parent=styles["Normal"], fontSize=8,
+        textColor=colors.white, fontName="Helvetica-Bold")
+    col_val_style = ParagraphStyle("cv", parent=styles["Normal"], fontSize=9,
+        textColor=colors.HexColor("#1a1a1a"))
+    col_val_r = ParagraphStyle("cvr", parent=col_val_style, alignment=2)
+
+    data = [[
+        Paragraph("BESKRIVNING", col_hdr_style),
+        Paragraph("ANT/TIM", col_hdr_style),
+        Paragraph("À-PRIS", col_hdr_style),
+        Paragraph("BELOPP", col_hdr_style),
+    ]]
     for item in inv["items"]:
         line_total = item["quantity"] * item["unit_price"]
-        if is_hourly(item["description"]):
-            unit_label = f'{item["quantity"]:g} tim'
-        else:
-            unit_label = f'{item["quantity"]:g}'
-        data.append([item["description"], unit_label, f'{item["unit_price"]:.2f}', f'{line_total:.2f}'])
-    table = Table(data, colWidths=[80 * mm, 25 * mm, 30 * mm, 30 * mm])
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#141414")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
-        ("TOPPADDING", (0, 0), (-1, 0), 8),
-    ]))
-    elements.append(table)
+        qty_label = f'{item["quantity"]:g} tim' if is_hourly(item["description"]) else f'{item["quantity"]:g}'
+        data.append([
+            Paragraph(item["description"], col_val_style),
+            Paragraph(qty_label, col_val_r),
+            Paragraph(f'{item["unit_price"]:,.2f}', col_val_r),
+            Paragraph(f'{line_total:,.2f}', col_val_r),
+        ])
 
-    elements.append(Spacer(1, 6 * mm))
-    totals_data = [
-        ["Delsumma (exkl. moms)", f"{inv['subtotal']:.2f} kr"],
-        [f"Moms ({settings.vat_rate:g}%)", f"{inv['vat_amount']:.2f} kr"],
-        ["Totalt", f"{inv['total_amount']:.2f} kr"],
+    items_table = Table(data, colWidths=[85*mm, 22*mm, 30*mm, 30*mm])
+    row_count = len(data)
+    items_table.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0), colors.HexColor("#141414")),
+        ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white, colors.HexColor("#F8F9FA")]),
+        ("FONTSIZE",(0,0),(-1,-1),9),
+        ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+        ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
+        ("TOPPADDING",(0,0),(-1,-1),6),("BOTTOMPADDING",(0,0),(-1,-1),6),
+        ("LINEBELOW",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LINEBELOW",(0,0),(-1,0),0,colors.white),
+    ]))
+    elements.append(items_table)
+    elements.append(Spacer(1, 6*mm))
+
+    # ── TOTALS ───────────────────────────────────────────────────────────────
+    totals = [
+        ["Delsumma (exkl. moms)", f"{inv['subtotal']:,.2f} kr"],
+        [f"Moms ({settings.vat_rate:g}%)", f"{inv['vat_amount']:,.2f} kr"],
+        ["Totalt inkl. moms", f"{inv['total_amount']:,.2f} kr"],
     ]
     if inv.get("rut_eligible") and inv.get("rut_deduction", 0) > 0:
-        totals_data.append(["RUT-avdrag (50% av arbetskostnad)", f"-{inv['rut_deduction']:.2f} kr"])
-        totals_data.append(["Att betala", f"{inv['customer_pays']:.2f} kr"])
-    totals_table = Table(totals_data, colWidths=[100 * mm, 35 * mm])
+        totals.append([f"RUT-avdrag (50% av arbetskostnad)", f"-{inv['rut_deduction']:,.2f} kr"])
+        totals.append(["ATT BETALA", f"{inv['customer_pays']:,.2f} kr"])
+
+    tot_styles = []
+    last = len(totals) - 1
+    for i, row in enumerate(totals):
+        is_last = i == last
+        totals[i] = [
+            Paragraph(row[0], bold_style if is_last else small_style),
+            Paragraph(row[1], bold_style if is_last else small_style),
+        ]
+        if is_last:
+            tot_styles += [
+                ("LINEABOVE",(0,i),(-1,i),1.2,colors.HexColor("#141414")),
+                ("BACKGROUND",(0,i),(-1,i),colors.HexColor("#F0F0F0")),
+                ("TOPPADDING",(0,i),(-1,i),6),("BOTTOMPADDING",(0,i),(-1,i),6),
+            ]
+
+    totals_table = Table(totals, colWidths=[None, 40*mm], hAlign="RIGHT")
     totals_table.setStyle(TableStyle([
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
-        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
-        ("LINEABOVE", (0, -1), (-1, -1), 0.5, colors.HexColor("#141414")),
-    ]))
+        ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+        ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
+        ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
+        ("LINEBELOW",(0,0),(-1,-2),0.3,colors.HexColor("#E2E8F0")),
+    ] + tot_styles))
     elements.append(totals_table)
 
-    elements.append(Spacer(1, 10 * mm))
-    pay_lines = []
-    if settings.bankgiro:
-        pay_lines.append(f"Bankgiro: {settings.bankgiro}")
-    if settings.plusgiro:
-        pay_lines.append(f"Plusgiro: {settings.plusgiro}")
-    if settings.iban:
-        pay_lines.append(f"IBAN: {settings.iban}")
-    if pay_lines:
-        elements.append(Paragraph("Betalningsinformation", styles["Heading3"]))
-        for line in pay_lines:
-            elements.append(Paragraph(line, styles["Normal"]))
+    # ── NOTES ────────────────────────────────────────────────────────────────
+    if inv.get("notes"):
+        elements.append(Spacer(1, 6*mm))
+        elements.append(Paragraph("Meddelande", label_style))
+        elements.append(Paragraph(inv["notes"], small_style))
+
+    # ── FOOTER ───────────────────────────────────────────────────────────────
+    elements.append(Spacer(1, 10*mm))
+    footer_parts = []
+    if settings.company_name: footer_parts.append(settings.company_name)
+    if settings.company_orgnr: footer_parts.append(f"Org.nr {settings.company_orgnr}")
+    if settings.bankgiro: footer_parts.append(f"Bankgiro {settings.bankgiro}")
+    if settings.company_email: footer_parts.append(settings.company_email)
+    footer_line = "  ·  ".join(p for p in footer_parts if p)
+    if footer_line:
+        ft = Table([[Paragraph(footer_line, footer_style)]], colWidths=[page_w-40*mm])
+        ft.setStyle(TableStyle([
+            ("LINEABOVE",(0,0),(-1,-1),0.5,colors.HexColor("#CCCCCC")),
+            ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),0),
+            ("LEFTPADDING",(0,0),(-1,-1),0),
+        ]))
+        elements.append(ft)
 
     if inv.get("note"):
         elements.append(Spacer(1, 6 * mm))
