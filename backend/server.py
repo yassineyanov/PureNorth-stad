@@ -1535,6 +1535,192 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
         }
     }
 
+
+# ── CRM - Kundregister ────────────────────────────────────────────────────────
+class CustomerCreate(BaseModel):
+    name: str = Field(..., min_length=1)
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    personnummer: Optional[str] = None
+    customer_type: str = "private"  # private / company
+    notes: Optional[str] = None
+
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    personnummer: Optional[str] = None
+    customer_type: Optional[str] = None
+    notes: Optional[str] = None
+
+class Customer(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    personnummer: Optional[str] = None
+    customer_type: str = "private"
+    notes: Optional[str] = None
+    booking_count: int = 0
+    invoice_count: int = 0
+    total_invoiced: float = 0.0
+    last_booking: Optional[str] = None
+    created_at: str
+
+
+@api_router.post("/customers", response_model=Customer, response_model_by_alias=False)
+async def create_customer(payload: CustomerCreate, current=Depends(get_current_user)):
+    # Check if customer already exists by email or phone
+    query = {}
+    if payload.email:
+        query["email"] = payload.email.lower()
+    elif payload.phone:
+        query["phone"] = payload.phone
+    if query:
+        existing = await db.customers.find_one(query)
+        if existing:
+            existing["_id"] = str(existing["_id"])
+            return Customer(**existing)
+    doc = payload.model_dump()
+    if doc.get("email"):
+        doc["email"] = doc["email"].lower()
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    doc["booking_count"] = 0
+    doc["invoice_count"] = 0
+    doc["total_invoiced"] = 0.0
+    doc["last_booking"] = None
+    result = await db.customers.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return Customer(**doc)
+
+
+async def enrich_customer(c: dict) -> dict:
+    cid = str(c["_id"])
+    c["_id"] = cid
+    # Count bookings
+    email = c.get("email", "")
+    phone = c.get("phone", "")
+    query = {}
+    if email:
+        query = {"$or": [{"email": email}, {"phone": phone}]} if phone else {"email": email}
+    elif phone:
+        query = {"phone": phone}
+
+    if query:
+        bookings = await db.bookings.find(query).sort("created_at", -1).to_list(1000)
+        invoices = await db.invoices.find({"customer_email": email}).to_list(1000) if email else []
+        c["booking_count"] = len(bookings)
+        c["last_booking"] = bookings[0]["preferred_date"] if bookings and bookings[0].get("preferred_date") else (bookings[0]["created_at"][:10] if bookings else None)
+        c["invoice_count"] = len(invoices)
+        c["total_invoiced"] = sum(i.get("customer_pays", 0) for i in invoices)
+    return c
+
+
+@api_router.get("/customers", response_model=List[Customer], response_model_by_alias=False)
+async def list_customers(current=Depends(get_current_user)):
+    docs = await db.customers.find().sort("name", 1).to_list(2000)
+    result = []
+    for d in docs:
+        enriched = await enrich_customer(d)
+        result.append(Customer(**enriched))
+    return result
+
+
+@api_router.get("/customers/{customer_id}", response_model_by_alias=False)
+async def get_customer(customer_id: str, current=Depends(get_current_user)):
+    doc = await db.customers.find_one({"_id": to_object_id(customer_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Kund hittades inte")
+    enriched = await enrich_customer(doc)
+    email = enriched.get("email", "")
+    phone = enriched.get("phone", "")
+    query = {}
+    if email:
+        query = {"$or": [{"email": email}, {"phone": phone}]} if phone else {"email": email}
+    elif phone:
+        query = {"phone": phone}
+    bookings = await db.bookings.find(query).sort("created_at", -1).to_list(100) if query else []
+    invoices = await db.invoices.find({"customer_email": email}).sort("invoice_number", -1).to_list(100) if email else []
+    for b in bookings:
+        b["_id"] = str(b["_id"])
+    for i in invoices:
+        i["_id"] = str(i["_id"])
+    return {
+        "customer": Customer(**enriched).model_dump(),
+        "bookings": bookings,
+        "invoices": invoices,
+    }
+
+
+@api_router.patch("/customers/{customer_id}", response_model=Customer, response_model_by_alias=False)
+async def update_customer(customer_id: str, payload: CustomerUpdate, current=Depends(get_current_user)):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if updates:
+        await db.customers.update_one({"_id": to_object_id(customer_id)}, {"$set": updates})
+    doc = await db.customers.find_one({"_id": to_object_id(customer_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Kund hittades inte")
+    enriched = await enrich_customer(doc)
+    return Customer(**enriched)
+
+
+@api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str, current=Depends(get_current_user)):
+    result = await db.customers.delete_one({"_id": to_object_id(customer_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Kund hittades inte")
+    return {"success": True}
+
+
+@api_router.post("/customers/import-from-bookings")
+async def import_customers_from_bookings(current=Depends(get_current_user)):
+    bookings = await db.bookings.find().to_list(5000)
+    created = 0
+    updated = 0
+    for b in bookings:
+        email = b.get("email", "").lower()
+        phone = b.get("phone", "")
+        name = b.get("name", "")
+        if not name:
+            continue
+        existing = None
+        if email:
+            existing = await db.customers.find_one({"email": email})
+        if not existing and phone:
+            existing = await db.customers.find_one({"phone": phone})
+        if existing:
+            # Update if missing info
+            updates = {}
+            if not existing.get("email") and email:
+                updates["email"] = email
+            if not existing.get("phone") and phone:
+                updates["phone"] = phone
+            if updates:
+                await db.customers.update_one({"_id": existing["_id"]}, {"$set": updates})
+                updated += 1
+        else:
+            doc = {
+                "name": name,
+                "email": email or None,
+                "phone": phone or None,
+                "address": None,
+                "personnummer": None,
+                "customer_type": "private",
+                "notes": None,
+                "booking_count": 0,
+                "invoice_count": 0,
+                "total_invoiced": 0.0,
+                "last_booking": None,
+                "created_at": b.get("created_at", datetime.now(timezone.utc).isoformat()),
+            }
+            await db.customers.insert_one(doc)
+            created += 1
+    return {"created": created, "updated": updated}
+
 app.include_router(api_router)
 
 app.add_middleware(
