@@ -17,6 +17,7 @@ from io import BytesIO
 from xml.sax.saxutils import quoteattr
 import base64
 import bcrypt
+import resend
 import jwt
 from openpyxl import Workbook
 from reportlab.lib.pagesizes import A4
@@ -1815,6 +1816,81 @@ async def dashboard(current=Depends(get_current_user)):
         },
         "employee_count": len(employees),
     }
+
+
+# ── Password Reset ────────────────────────────────────────────────────────────
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=6)
+
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(payload: ForgotPasswordRequest):
+    email = payload.email.lower()
+    user = await db.users.find_one({"email": email})
+    # Always return success to avoid email enumeration
+    if not user:
+        return {"success": True, "message": "Om e-postadressen finns skickas ett återställningsmail."}
+
+    import secrets
+    token = secrets.token_urlsafe(32)
+    expires = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+
+    await db.password_resets.insert_one({
+        "email": email,
+        "token": token,
+        "expires": expires,
+        "used": False,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+    reset_url = f"https://purenorth-stad.vercel.app/admin?reset_token={token}"
+
+    resend.api_key = os.environ.get("RESEND_API_KEY", "")
+    try:
+        resend.Emails.send({
+            "from": "PureNorth Städ <onboarding@resend.dev>",
+            "to": email,
+            "subject": "Återställ ditt lösenord — PureNorth Städ",
+            "html": f"""
+            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+              <h2 style="color:#141414;margin-bottom:8px;">Återställ lösenord</h2>
+              <p style="color:#64748b;margin-bottom:24px;">Klicka på knappen nedan för att skapa ett nytt lösenord. Länken är giltig i 2 timmar.</p>
+              <a href="{reset_url}" style="display:inline-block;background:#141414;color:white;text-decoration:none;padding:12px 28px;border-radius:9999px;font-weight:600;font-size:15px;">
+                Återställ lösenord
+              </a>
+              <p style="color:#94a3b8;font-size:13px;margin-top:24px;">Om du inte begärt detta kan du ignorera detta mail.</p>
+              <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+              <p style="color:#94a3b8;font-size:12px;">PureNorth Städ — Miljövänlig städning i Umeå</p>
+            </div>
+            """
+        })
+    except Exception as e:
+        logger.error("Failed to send reset email: %s", e)
+
+    return {"success": True, "message": "Om e-postadressen finns skickas ett återställningsmail."}
+
+
+@api_router.post("/auth/reset-password")
+async def reset_password(payload: ResetPasswordRequest):
+    now = datetime.now(timezone.utc).isoformat()
+    reset_doc = await db.password_resets.find_one({
+        "token": payload.token,
+        "used": False,
+        "expires": {"$gt": now},
+    })
+    if not reset_doc:
+        raise HTTPException(status_code=400, detail="Ogiltig eller utgången återställningslänk.")
+
+    email = reset_doc["email"]
+    new_hash = hash_password(payload.new_password)
+    await db.users.update_one({"email": email}, {"$set": {"password_hash": new_hash}})
+    await db.password_resets.update_one({"_id": reset_doc["_id"]}, {"$set": {"used": True}})
+
+    return {"success": True, "message": "Lösenordet har uppdaterats. Du kan nu logga in."}
 
 app.include_router(api_router)
 
