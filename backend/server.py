@@ -3941,6 +3941,121 @@ async def export_bokforing_pdf(month: str, current=Depends(get_current_user)):
         headers={"Content-Disposition": f'inline; filename="bokforingsunderlag_{month}.pdf"'}
     )
 
+
+# ── Invoice Reminder ──────────────────────────────────────────────────────────
+@api_router.post("/invoices/{invoice_id}/remind")
+async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_user)):
+    """Send payment reminder to customer for overdue invoice"""
+    doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Faktura hittades inte")
+
+    customer_email = doc.get("customer_email", "")
+    if not customer_email:
+        raise HTTPException(status_code=400, detail="Kunden har ingen e-postadress")
+
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+    inv_num = doc.get("invoice_number", "")
+    customer_name = doc.get("customer_name", "")
+    due_date = doc.get("due_date", "")
+    amount = doc.get("customer_pays", 0)
+    reminder_count = doc.get("reminder_count", 0) + 1
+
+    # Calculate days overdue
+    try:
+        from datetime import date as DateObj
+        due = DateObj.fromisoformat(due_date)
+        days_overdue = (DateObj.today() - due).days
+    except:
+        days_overdue = 0
+
+    # Reminder fee (Swedish law: 60 kr after first reminder)
+    reminder_fee = 60 if reminder_count >= 2 else 0
+    total_with_fee = amount + reminder_fee
+
+    resend.api_key = os.environ.get("RESEND_API_KEY", "")
+    if not resend.api_key:
+        raise HTTPException(status_code=500, detail="E-posttjänst ej konfigurerad")
+
+    admin_email = os.environ.get("ADMIN_EMAIL", "akhazzane.othmane@gmail.com")
+
+    subject = f"Påminnelse #{reminder_count}: Faktura #{inv_num} förfallen – {company}"
+    if reminder_count >= 3:
+        subject = f"SISTA VARNING: Faktura #{inv_num} – {company}"
+
+    html = f"""
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#fff;">
+      <div style="background:#dc2626;padding:28px 36px;">
+        <h1 style="color:#fff;font-size:20px;margin:0;font-weight:700;">{company}</h1>
+        <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;">
+          {'⚠️ Påminnelse #' + str(reminder_count) if reminder_count < 3 else '🚨 SISTA VARNING'}
+        </p>
+      </div>
+      <div style="padding:36px;border:1px solid #e2e8f0;border-top:none;">
+        <p style="font-size:17px;color:#141414;margin:0 0 8px;font-weight:600;">Hej {customer_name},</p>
+        <p style="color:#64748b;font-size:15px;line-height:1.7;margin:0 0 24px;">
+          Vi har inte mottagit betalning för nedanstående faktura som förföll för
+          <strong style="color:#dc2626;">{days_overdue} dagar sedan</strong>.
+          Vänligen betala snarast möjligt för att undvika inkasso.
+        </p>
+        <div style="background:#fef2f2;border-radius:8px;padding:20px;margin:0 0 24px;border-left:3px solid #dc2626;">
+          <p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Fakturanummer</span> &nbsp; <strong>#{inv_num}</strong></p>
+          <p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Förfallodatum</span> &nbsp; <strong>{due_date}</strong></p>
+          <p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Ursprungligt belopp</span> &nbsp; <strong>{amount:.2f} kr</strong></p>
+          {'<p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Påminnelseavgift</span> &nbsp; <strong>' + str(reminder_fee) + ' kr</strong></p>' if reminder_fee > 0 else ''}
+          <p style="margin:0;font-size:16px;font-weight:700;color:#dc2626;">Att betala: {total_with_fee:.2f} kr</p>
+        </div>
+        {'<p style="color:#dc2626;font-size:14px;font-weight:600;margin:0 0 16px;">⚠️ Om betalning inte inkommer inom 10 dagar skickas ärendet till inkasso.</p>' if reminder_count >= 2 else ''}
+        <p style="color:#64748b;font-size:14px;margin:0 0 16px;">
+          Vid frågor, kontakta oss gärna.
+        </p>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 20px;"/>
+        <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">
+          {company} · Miljövänlig städning i Umeå
+        </p>
+      </div>
+    </div>
+    """
+
+    try:
+        # Generate PDF
+        pdf_bytes = build_invoice_pdf(doc, inv_settings)
+        import base64
+        pdf_b64 = base64.b64encode(pdf_bytes).decode()
+
+        resend.Emails.send({
+            "from": f"{company} <onboarding@resend.dev>",
+            "to": admin_email,
+            "subject": subject,
+            "html": html,
+            "attachments": [{
+                "filename": f"faktura_{inv_num}.pdf",
+                "content": pdf_b64,
+            }]
+        })
+
+        # Update invoice
+        await db.invoices.update_one(
+            {"_id": to_object_id(invoice_id)},
+            {"$set": {
+                "status": "overdue",
+                "reminder_count": reminder_count,
+                "last_reminder_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+
+        return {
+            "success": True,
+            "reminder_count": reminder_count,
+            "reminder_fee": reminder_fee,
+            "message": f"Påminnelse #{reminder_count} skickad!"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to send reminder: {e}")
+        raise HTTPException(status_code=500, detail=f"Kunde inte skicka påminnelse: {str(e)}")
+
 app.include_router(api_router)
 
 app.add_middleware(
