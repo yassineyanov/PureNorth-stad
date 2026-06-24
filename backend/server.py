@@ -401,6 +401,8 @@ class Invoice(BaseModel):
     customer_pays: float
     created_at: str
     paid_at: Optional[str] = None
+    reminder_count: Optional[int] = 0
+    last_reminder_at: Optional[str] = None
 
 
 def calc_invoice_amounts(items: list, rut_eligible: bool, customer_type: str, vat_rate: float):
