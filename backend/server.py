@@ -1923,6 +1923,12 @@ async def dashboard(current=Depends(get_current_user)):
         "end_date": {"$gte": today},
     }).to_list(20)
 
+    # ── Material costs this month ─────────────────────────────────────
+    month_costs = await db.costs.find({
+        "date": {"$gte": month_start, "$lte": month_end}
+    }).to_list(500)
+    month_material_cost = sum(c.get("amount", 0) for c in month_costs)
+
     return {
         "today": today,
         "todays_shifts": todays_shifts,
@@ -1948,6 +1954,8 @@ async def dashboard(current=Depends(get_current_user)):
             "invoice_count": len(month_invoices),
         },
         "employee_count": len(employees),
+        "month_material_cost": round(month_material_cost, 2),
+        "month_costs_count": len(month_costs),
     }
 
 
