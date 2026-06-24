@@ -3076,27 +3076,29 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
         elements.append(t)
 
     def kr(n): return f"{n:,.2f} kr".replace(",",".")
+    def konto(k): return f"[Konto {k}]"
 
     # ── 1. INTÄKTER ────────────────────────────────────────────────
     elements.append(Spacer(1,3*mm))
     section_header("1. INTÄKTER (FÖRSÄLJNING)", "#1e40af")
-    data_row("Antal fakturor", str(len(invoices)))
-    data_row("Antal bokningar", str(len(bookings)))
-    data_row("Fakturerat belopp (exkl. moms)", kr(revenue_excl_vat))
-    data_row("Utgående moms (25%)", kr(vat_collected))
-    data_row("RUT-avdrag", kr(rut_deductions))
+    data_row(f"Antal fakturor", str(len(invoices)))
+    data_row(f"Antal bokningar", str(len(bookings)))
+    data_row(f"Försäljning tjänster  {konto('3000')}", kr(revenue_excl_vat))
+    data_row(f"Utgående moms 25%  {konto('2610')}", kr(vat_collected))
+    data_row(f"RUT-avdrag  {konto('3001')}", kr(rut_deductions))
     data_row("Betalt av kunder", kr(paid_amount))
-    data_row("Obetalt", kr(unpaid_amount))
+    data_row("Obetalt (kundfordringar)", kr(unpaid_amount))
     data_row("TOTALT INTÄKTER (exkl. moms)", kr(revenue_excl_vat), is_total=True, color="#1e40af")
 
     elements.append(Spacer(1,3*mm))
 
     # ── 2. PERSONALKOSTNADER ───────────────────────────────────────
     section_header("2. PERSONALKOSTNADER", "#7c3aed")
-    data_row("Bruttolön total", kr(gross_salary))
-    data_row("Arbetsgivaravgift (31.42%)", kr(arbetsgivaravgifter))
-    data_row("Semesterersättning (12%)", kr(semesterersattning))
-    data_row("Utlägg (reseersättning m.m.)", kr(utlagg_total))
+    data_row(f"Bruttolön  {konto('7210')}", kr(gross_salary))
+    data_row(f"Arbetsgivaravgift 31.42%  {konto('7510')}", kr(arbetsgivaravgifter))
+    data_row(f"Semesterersättning 12%  {konto('7290')}", kr(semesterersattning))
+    data_row(f"Preliminärskatt (skuld)  {konto('2710')}", kr(prelskatt))
+    data_row(f"Utlägg reseersättning  {konto('7331')}", kr(utlagg_total))
     data_row("TOTALT PERSONALKOSTNADER", kr(total_payroll + utlagg_total), is_total=True, color="#7c3aed")
 
     # Per employee
@@ -3124,40 +3126,47 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
     elements.append(Spacer(1,3*mm))
 
     # ── 3. MATERIALKOSTNADER ───────────────────────────────────────
-    section_header("3. MATERIALKOSTNADER", "#0369a1")
-    data_row("Totalt inkl. moms", kr(material_total_incl))
-    data_row("Ingående moms (avdragsgill)", f"-{kr(ingaende_moms)}", color="#15803d")
-    data_row("Ingående moms utlägg", f"-{kr(utlagg_moms)}", color="#15803d")
-    data_row("NETTOKOSTNAD MATERIAL", kr(material_total_incl - ingaende_moms), is_total=True, color="#0369a1")
+    section_header("3. MATERIALKOSTNADER & UTLÄGG", "#0369a1")
+    data_row(f"Städmaterial  {konto('5410')}", kr(material_total_incl))
+    data_row(f"Bränsle  {konto('5612')}", "Se utlägg")
+    data_row(f"Milersättning  {konto('7331')}", "Se utlägg")
+    data_row(f"Parkering  {konto('5651')}", "Se utlägg")
+    data_row(f"Ingående moms material  {konto('2640')}", f"-{kr(ingaende_moms)}", color="#15803d")
+    data_row(f"Ingående moms utlägg  {konto('2640')}", f"-{kr(utlagg_moms)}", color="#15803d")
+    data_row("NETTOKOSTNAD MATERIAL (exkl. moms)", kr(material_total_incl - ingaende_moms), is_total=True, color="#0369a1")
 
     elements.append(Spacer(1,3*mm))
 
     # ── 4. MOMSREDOVISNING ─────────────────────────────────────────
     section_header("4. MOMSREDOVISNING (ATT REDOVISA TILL SKATTEVERKET)", "#b45309")
-    data_row("Utgående moms (försäljning)", kr(vat_collected))
-    data_row("Ingående moms (inköp + utlägg)", f"-{kr(total_ingaende_moms)}", color="#15803d")
-    data_row("MOMS ATT BETALA", kr(vat_to_pay), is_total=True, color="#b45309")
+    data_row(f"Utgående moms försäljning  {konto('2610')}", kr(vat_collected))
+    data_row(f"Ingående moms inköp + utlägg  {konto('2640')}", f"-{kr(total_ingaende_moms)}", color="#15803d")
+    data_row("MOMS ATT BETALA → Bankgiro 5050-1055", kr(vat_to_pay), is_total=True, color="#b45309")
 
     elements.append(Spacer(1,3*mm))
 
     # ── 5. ARBETSGIVARDEKLARATION ──────────────────────────────────
-    section_header("5. ARBETSGIVARDEKLARATION (AGI) - MÅNADSVIS", "#dc2626")
-    data_row("Arbetsgivaravgift", kr(arbetsgivaravgifter))
-    data_row("Preliminärskatt (ca 30%)", kr(prelskatt))
-    data_row("TOTALT ATT BETALA SKATTEVERKET", kr(agi_to_pay), is_total=True, color="#dc2626")
+    section_header("5. ARBETSGIVARDEKLARATION (AGI) - BETALA SENAST DEN 12:E", "#dc2626")
+    data_row(f"Arbetsgivaravgift  {konto('7510')}", kr(arbetsgivaravgifter))
+    data_row(f"Preliminärskatt  {konto('2710')}", kr(prelskatt))
+    data_row("TOTALT ATT BETALA SKATTEVERKET → Bankgiro 5050-1055", kr(agi_to_pay), is_total=True, color="#dc2626")
 
     elements.append(Spacer(1,3*mm))
 
     # ── 6. RESULTAT ────────────────────────────────────────────────
     section_header("6. RÖRELSERESULTAT", "#15803d")
-    data_row("Intäkter (exkl. moms)", kr(revenue_excl_vat))
-    data_row("Personalkostnader", f"-{kr(total_payroll + utlagg_total)}")
-    data_row("Materialkostnader (exkl. moms)", f"-{kr(material_total_incl - ingaende_moms)}")
+    data_row(f"Intäkter exkl. moms  {konto('3000')}", kr(revenue_excl_vat))
+    data_row(f"Personalkostnader  {konto('7210/7510')}", f"-{kr(total_payroll + utlagg_total)}")
+    data_row(f"Materialkostnader exkl. moms  {konto('5410')}", f"-{kr(material_total_incl - ingaende_moms)}")
     profit_color = "#15803d" if operating_profit >= 0 else "#dc2626"
     data_row("RÖRELSERESULTAT", kr(operating_profit), is_total=True, color=profit_color)
     data_row("Rörelsemarginal", f"{margin}%")
 
     elements.append(Spacer(1,4*mm))
+
+    # ── BAS KONTOPLAN NOTE ─────────────────────────────────────────
+    note_text = "Kontonummer enligt BAS-kontoplanen 2025. Kontrollera med din redovisningskonsult att kontona stämmer med ert bokföringssystem."
+    elements.append(Paragraph(note_text, ps("note", fontSize=7, textColor=colors.HexColor("#94a3b8"), spaceBefore=2, spaceAfter=4)))
 
     # ── FAKTURA LIST ───────────────────────────────────────────────
     if invoices:
