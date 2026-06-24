@@ -4142,6 +4142,146 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
         logger.error(f"Failed to send reminder: {e}")
         raise HTTPException(status_code=500, detail=f"Kunde inte skicka påminnelse: {str(e)}")
 
+
+# ── RUT Report ────────────────────────────────────────────────────────────────
+@api_router.get("/reports/rut")
+async def rut_report_pdf(month: str, current=Depends(get_current_user)):
+    """Export RUT report for Skatteverket application"""
+    import calendar
+    year, mon = month.split("-")
+    last_day = calendar.monthrange(int(year), int(mon))[1]
+    start = f"{month}-01"
+    end = f"{month}-{last_day:02d}"
+    start_dt = f"{start}T00:00:00"
+    end_dt = f"{end}T23:59:59"
+
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+    orgnr = inv_settings.company_orgnr or ""
+
+    MONTHS_SV = ["","Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"]
+    month_name = MONTHS_SV[int(mon)]
+
+    # Get invoices with RUT
+    invoices = await db.invoices.find({
+        "created_at": {"$gte": start_dt, "$lte": end_dt},
+        "rut_deduction": {"$gt": 0}
+    }).to_list(2000)
+
+    total_rut = sum(i.get("rut_deduction", 0) for i in invoices)
+    total_paid = sum(i.get("rut_deduction", 0) for i in invoices if i.get("status") == "paid")
+    total_pending = total_rut - total_paid
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm)
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+    page_w = A4[0]
+    elements = []
+
+    # Header
+    hdr = Table([[
+        Paragraph(f"<b>{company}</b>", ps("h", fontSize=14, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"<b>RUT-AVDRAG RAPPORT</b><br/>{month_name} {year}", ps("s", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+    ]], colWidths=[100*mm, None])
+    hdr.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#15803d")),
+        ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+        ("TOPPADDING",(0,0),(-1,-1),12),("BOTTOMPADDING",(0,0),(-1,-1),12),
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+    ]))
+    elements.append(hdr)
+    elements.append(Paragraph(
+        f"{company}  ·  Org.nr: {orgnr}  ·  Period: {start} – {end}  ·  Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        ps("info", fontSize=8, textColor=colors.HexColor("#64748b"), spaceBefore=4, spaceAfter=6)
+    ))
+
+    # Summary boxes
+    summary_data = [[
+        Paragraph(f"<b>Totalt RUT att ansöka</b><br/><font size='16'>{total_rut:,.2f} kr</font>".replace(",","."), ps("sb", fontSize=9, textColor=colors.HexColor("#15803d"))),
+        Paragraph(f"<b>Antal fakturor</b><br/><font size='16'>{len(invoices)} st</font>", ps("sb", fontSize=9, textColor=colors.HexColor("#141414"))),
+        Paragraph(f"<b>Ansökt (betalda)</b><br/><font size='16'>{total_paid:,.2f} kr</font>".replace(",","."), ps("sb", fontSize=9, textColor=colors.HexColor("#1e40af"))),
+    ]]
+    summary_tbl = Table(summary_data, colWidths=[(page_w-40*mm)/3]*3)
+    summary_tbl.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(0,0),colors.HexColor("#f0fdf4")),
+        ("BACKGROUND",(1,0),(1,0),colors.HexColor("#f8fafc")),
+        ("BACKGROUND",(2,0),(2,0),colors.HexColor("#eff6ff")),
+        ("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),
+        ("INNERGRID",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+        ("TOPPADDING",(0,0),(-1,-1),8),("BOTTOMPADDING",(0,0),(-1,-1),8),
+    ]))
+    elements.append(summary_tbl)
+    elements.append(Spacer(1,5*mm))
+
+    # How to apply
+    elements.append(Paragraph("HUR DU ANSÖKER OM RUT-AVDRAG", ps("sh", fontSize=9, fontName="Helvetica-Bold", spaceBefore=4, spaceAfter=2)))
+    steps = [
+        "1. Gå till skatteverket.se → Logga in med BankID",
+        "2. Välj 'ROT och RUT-avdrag' → 'Begär utbetalning'",
+        "3. Fyll i kundens personnummer och RUT-belopp per faktura",
+        "4. Skatteverket betalar ut inom 2-4 veckor",
+    ]
+    for step in steps:
+        elements.append(Paragraph(step, ps("s", fontSize=8, textColor=colors.HexColor("#475569"), spaceBefore=1)))
+    elements.append(Spacer(1,5*mm))
+
+    # Invoice list
+    elements.append(Paragraph("FAKTUROR MED RUT-AVDRAG", ps("sh", fontSize=9, fontName="Helvetica-Bold", spaceBefore=2, spaceAfter=2)))
+
+    if not invoices:
+        elements.append(Paragraph("Inga fakturor med RUT-avdrag denna period.", ps("s", fontSize=9, textColor=colors.HexColor("#94a3b8"))))
+    else:
+        inv_data = [["Faktura #", "Kund", "Personnummer", "Tjänst", "Arbetskostnad", "RUT 50%", "Status"]]
+        for inv in sorted(invoices, key=lambda x: x.get("created_at","")):
+            services = ", ".join(set(i.get("service","") for i in inv.get("items",[]) if i.get("service") != "Påminnelseavgift"))
+            rut = inv.get("rut_deduction", 0)
+            labor = rut * 2  # RUT is 50% of labor
+            personnr = inv.get("customer_personnummer", "Saknas")
+            status = "Betald ✓" if inv.get("status") == "paid" else "Obetald"
+            inv_data.append([
+                str(inv.get("invoice_number","")),
+                inv.get("customer_name","")[:20],
+                personnr,
+                services[:25],
+                f"{labor:,.2f}".replace(",","."),
+                f"{rut:,.2f}".replace(",","."),
+                status,
+            ])
+
+        # Totals row
+        inv_data.append(["", "TOTALT", "", "", f"{total_rut*2:,.2f}".replace(",","."), f"{total_rut:,.2f}".replace(",","."), ""])
+
+        inv_tbl = Table(inv_data, colWidths=[18*mm, 38*mm, 28*mm, 35*mm, 28*mm, 22*mm, 20*mm])
+        inv_tbl.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#15803d")),
+            ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+            ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+            ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#f0fdf4")),
+            ("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+            ("FONTSIZE",(0,0),(-1,-1),8),
+            ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+            ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+            ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
+            ("ALIGN",(4,0),(5,-1),"RIGHT"),
+        ]))
+        elements.append(inv_tbl)
+
+    elements.append(Spacer(1,5*mm))
+    elements.append(Paragraph(
+        f"OBS: Kunden måste ha betalat sin del innan du kan ansöka om RUT. Kontrollera att personnummer är korrekt.",
+        ps("note", fontSize=7, textColor=colors.HexColor("#94a3b8"))
+    ))
+
+    doc.build(elements)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="rut_rapport_{month}.pdf"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
