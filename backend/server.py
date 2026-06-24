@@ -2689,7 +2689,7 @@ async def costs_overview(start: str = None, end: str = None, current=Depends(get
         "total_costs": round(material_total, 2),
         "net_profit": round(net_profit, 2),
         "margin": round(margin, 1),
-        "costs_list": [{**c} for c in costs],
+        "costs_list": [{**{k: str(v) if k == "_id" else v for k, v in c.items()}} for c in costs],
     }
 
 app.include_router(api_router)
