@@ -60,7 +60,7 @@ export const Hero = () => {
           <div className="relative rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-30px_rgba(20,20,20,0.4)]">
             <img
               src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
-              alt="Elegant och rent premiuminteriör"
+              alt="Professionell städning i Umeå av PureNorth Städ" loading="eager" fetchpriority="high" decoding="async"
               className="w-full h-[420px] sm:h-[520px] object-cover"
             />
           </div>

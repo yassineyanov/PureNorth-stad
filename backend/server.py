@@ -2593,6 +2593,7 @@ class MaterialCostCreate(BaseModel):
     name: str
     category: str = "material"
     amount: float
+    moms_rate: float = 25.0
     date: str
     notes: Optional[str] = None
 
@@ -2646,6 +2647,8 @@ async def costs_overview(start: str = None, end: str = None, current=Depends(get
     # Material costs
     costs = await db.costs.find(cost_query).to_list(1000)
     material_total = sum(c.get("amount", 0) for c in costs)
+    material_excl_moms = sum(c.get("amount", 0) / (1 + c.get("moms_rate", 25)/100) for c in costs)
+    ingaende_moms = material_total - material_excl_moms
     material_by_cat = {}
     for c in costs:
         cat = c.get("category", "material")
@@ -2670,6 +2673,8 @@ async def costs_overview(start: str = None, end: str = None, current=Depends(get
     return {
         "revenue": round(revenue, 2),
         "material_costs": round(material_total, 2),
+        "material_excl_moms": round(material_excl_moms, 2),
+        "ingaende_moms": round(ingaende_moms, 2),
         "material_by_category": {k: round(v, 2) for k, v in material_by_cat.items()},
         "employee_costs": round(emp_cost, 2),
         "total_costs": round(total_costs, 2),
