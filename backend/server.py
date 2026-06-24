@@ -2577,6 +2577,108 @@ async def send_booking_confirmation(booking: dict, inv_settings=None):
         logger.error(f"Failed to send booking confirmation: {e}")
         return False
 
+
+# ── Material Costs ────────────────────────────────────────────────────────────
+class MaterialCost(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    name: str
+    category: str = "material"  # material, equipment, other
+    amount: float
+    date: str
+    notes: Optional[str] = None
+    created_at: str
+
+class MaterialCostCreate(BaseModel):
+    name: str
+    category: str = "material"
+    amount: float
+    date: str
+    notes: Optional[str] = None
+
+@api_router.get("/costs")
+async def list_costs(current=Depends(get_current_user)):
+    docs = await db.costs.find().sort("date", -1).to_list(1000)
+    for d in docs:
+        d["_id"] = str(d["_id"])
+    return docs
+
+@api_router.post("/costs")
+async def create_cost(payload: MaterialCostCreate, current=Depends(get_current_user)):
+    doc = payload.model_dump()
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.costs.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return doc
+
+@api_router.patch("/costs/{cost_id}")
+async def update_cost(cost_id: str, payload: MaterialCostCreate, current=Depends(get_current_user)):
+    updates = payload.model_dump()
+    await db.costs.update_one({"_id": to_object_id(cost_id)}, {"$set": updates})
+    doc = await db.costs.find_one({"_id": to_object_id(cost_id)})
+    doc["_id"] = str(doc["_id"])
+    return doc
+
+@api_router.delete("/costs/{cost_id}")
+async def delete_cost(cost_id: str, current=Depends(get_current_user)):
+    await db.costs.delete_one({"_id": to_object_id(cost_id)})
+    return {"success": True}
+
+@api_router.get("/costs/overview")
+async def costs_overview(start: str = None, end: str = None, current=Depends(get_current_user)):
+    # Build date filter
+    date_filter = {}
+    if start: date_filter["$gte"] = start
+    if end:   date_filter["$lte"] = end
+
+    cost_query = {"date": date_filter} if date_filter else {}
+    inv_query = {}
+    payroll_query = {}
+
+    if start or end:
+        if start: inv_query["created_at"] = {"$gte": start}
+        if end:   inv_query["created_at"] = {**inv_query.get("created_at", {}), "$lte": end + "T23:59:59"}
+
+    # Revenue from paid invoices
+    invoices = await db.invoices.find({**inv_query, "status": "paid"}).to_list(1000)
+    revenue = sum(i.get("customer_pays", 0) for i in invoices)
+
+    # Material costs
+    costs = await db.costs.find(cost_query).to_list(1000)
+    material_total = sum(c.get("amount", 0) for c in costs)
+    material_by_cat = {}
+    for c in costs:
+        cat = c.get("category", "material")
+        material_by_cat[cat] = material_by_cat.get(cat, 0) + c.get("amount", 0)
+
+    # Employee costs from payroll
+    employees = await db.employees.find().to_list(100)
+    emp_cost = 0
+    for emp in employees:
+        shifts = await db.shifts.find({"employee_id": str(emp["_id"])}).to_list(1000)
+        for s in shifts:
+            hours = s.get("hours", 0)
+            rate = emp.get("hourly_rate", 0)
+            emp_cost += hours * rate
+
+    # Profit calculation
+    total_costs = material_total + emp_cost
+    gross_profit = revenue - material_total
+    net_profit = revenue - total_costs
+    margin = (net_profit / revenue * 100) if revenue > 0 else 0
+
+    return {
+        "revenue": round(revenue, 2),
+        "material_costs": round(material_total, 2),
+        "material_by_category": {k: round(v, 2) for k, v in material_by_cat.items()},
+        "employee_costs": round(emp_cost, 2),
+        "total_costs": round(total_costs, 2),
+        "gross_profit": round(gross_profit, 2),
+        "net_profit": round(net_profit, 2),
+        "margin": round(margin, 1),
+        "costs_list": [{**c} for c in costs],
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
