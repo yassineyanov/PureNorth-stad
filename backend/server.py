@@ -3214,6 +3214,187 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
         headers={"Content-Disposition": f'inline; filename="manadsrapport_{month}.pdf"'}
     )
 
+
+# ── SIE4 Export ───────────────────────────────────────────────────────────────
+@api_router.get("/reports/sie")
+async def export_sie(month: str, current=Depends(get_current_user)):
+    """Export SIE4 file for redovisningskonsult
+    month format: YYYY-MM
+    """
+    import calendar
+    year, mon = month.split("-")
+    last_day = calendar.monthrange(int(year), int(mon))[1]
+    start = f"{month}-01"
+    end = f"{month}-{last_day:02d}"
+    start_dt = f"{start}T00:00:00"
+    end_dt = f"{end}T23:59:59"
+
+    ARBETSGIVARAVGIFT = 0.3142
+    PRELSKATT = 0.30
+    SEMESTERERSATTNING = 0.12
+
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+    orgnr = (inv_settings.company_orgnr or "").replace("-","")
+
+    # Collect data
+    invoices = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    payroll_summary, payroll_settings = await build_payroll_summary(start, end)
+    costs = await db.costs.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
+    expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
+
+    # Calculate totals
+    revenue = sum(i.get("subtotal", 0) for i in invoices)
+    vat_out = sum(i.get("vat_amount", 0) for i in invoices)
+    rut = sum(i.get("rut_deduction", 0) for i in invoices)
+
+    gross_salary = sum(
+        r["normal_h"] * r["hourly_rate"] +
+        r["ob1_h"] * payroll_settings.ob1_extra +
+        r["ob2_h"] * payroll_settings.ob2_extra +
+        r.get("sjuklon_net", 0)
+        for r in payroll_summary.values()
+    )
+    ag_avg = round(gross_salary * ARBETSGIVARAVGIFT, 2)
+    semester = round(gross_salary * SEMESTERERSATTNING, 2)
+    prelskatt = round(gross_salary * PRELSKATT, 2)
+    utlagg = sum(e.get("amount", 0) for e in expenses)
+
+    material = sum(c.get("amount", 0) for c in costs)
+    vat_in_mat = sum(c.get("amount",0) - c.get("amount",0)/(1+c.get("moms_rate",25)/100) for c in costs)
+    vat_in_exp = sum(e.get("amount",0) - e.get("amount",0)/(1+e.get("moms_rate",0)/100) for e in expenses if e.get("moms_rate",0) > 0)
+    vat_in = round(vat_in_mat + vat_in_exp, 2)
+
+    # Build SIE4 content
+    now = datetime.now(timezone.utc)
+    gen_date = now.strftime("%Y%m%d")
+    period = month.replace("-","")
+
+    # Verification entries (verifikationer)
+    ver_num = 1
+    verifikationer = []
+
+    # 1. Revenue entries per invoice
+    for inv in invoices:
+        date = (inv.get("created_at","")[:10] or start).replace("-","")
+        sub = inv.get("subtotal", 0)
+        vat = inv.get("vat_amount", 0)
+        pays = inv.get("customer_pays", 0)
+        rut_d = inv.get("rut_deduction", 0)
+        inv_num = inv.get("invoice_number", "")
+        customer = inv.get("customer_name", "")
+        ver = f'#VER A {ver_num} {date} "Faktura #{inv_num} - {customer}"
+'
+        ver += f'  #TRANS 3000 {{}} {-sub:.2f} {date} "Försäljning"
+'
+        ver += f'  #TRANS 2610 {{}} {-vat:.2f} {date} "Utgående moms"
+'
+        if rut_d > 0:
+            ver += f'  #TRANS 3001 {{}} {rut_d:.2f} {date} "RUT-avdrag"
+'
+        ver += f'  #TRANS 1510 {{}} {pays:.2f} {date} "Kundfordran"
+'
+        verifikationer.append(ver)
+        ver_num += 1
+
+    # 2. Payroll entry
+    if gross_salary > 0:
+        date = end.replace("-","")
+        ver = f'#VER L {ver_num} {date} "Löner {month}"
+'
+        ver += f'  #TRANS 7210 {{}} {gross_salary:.2f} {date} "Bruttolön"
+'
+        ver += f'  #TRANS 7510 {{}} {ag_avg:.2f} {date} "Arbetsgivaravgift"
+'
+        ver += f'  #TRANS 7290 {{}} {semester:.2f} {date} "Semesterersättning"
+'
+        ver += f'  #TRANS 2710 {{}} {-prelskatt:.2f} {date} "Prelskatt skuld"
+'
+        ver += f'  #TRANS 2731 {{}} {-ag_avg:.2f} {date} "AG-avgift skuld"
+'
+        ver += f'  #TRANS 1930 {{}} {-(gross_salary+semester-prelskatt):.2f} {date} "Utbetald lön"
+'
+        verifikationer.append(ver)
+        ver_num += 1
+
+    # 3. Material costs
+    for c in costs:
+        date = c.get("date","").replace("-","")
+        amount = c.get("amount", 0)
+        vat_c = amount - amount/(1+c.get("moms_rate",25)/100)
+        net = amount - vat_c
+        cat = c.get("category","material")
+        konto = {"material":"5410","equipment":"5410","transport":"5612","other":"6990"}.get(cat,"5410")
+        name = c.get("name","Material")
+        ver = f'#VER K {ver_num} {date} "{name}"
+'
+        ver += f'  #TRANS {konto} {{}} {net:.2f} {date} "{name}"
+'
+        ver += f'  #TRANS 2640 {{}} {vat_c:.2f} {date} "Ingående moms"
+'
+        ver += f'  #TRANS 1930 {{}} {-amount:.2f} {date} "Betalning"
+'
+        verifikationer.append(ver)
+        ver_num += 1
+
+    # Build SIE file
+    MONTHS_SV = ["","Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"]
+    sie_lines = [
+        f'#FLAGGA 0',
+        f'#FORMAT PC8',
+        f'#SIETYP 4',
+        f'#PROGRAM "PureNorth Admin" "1.0"',
+        f'#GEN {gen_date} "PureNorth Admin"',
+        f'#FNAMN "{company}"',
+        f'#ORGNR {orgnr}',
+        f'#RAR 0 {period}01 {period}{last_day:02d}',
+        f'#TAXAR {year}',
+        f'#VALUTA SEK',
+        f'',
+        f'#KONTO 1510 "Kundfordringar"',
+        f'#KONTO 1930 "Företagskonto"',
+        f'#KONTO 2610 "Utgående moms 25%"',
+        f'#KONTO 2640 "Ingående moms"',
+        f'#KONTO 2710 "Personalskatt"',
+        f'#KONTO 2731 "Arbetsgivaravgifter"',
+        f'#KONTO 3000 "Försäljning tjänster"',
+        f'#KONTO 3001 "RUT-avdrag"',
+        f'#KONTO 5410 "Förbrukningsinventarier"',
+        f'#KONTO 5612 "Bränsle och drivmedel"',
+        f'#KONTO 6990 "Övriga kostnader"',
+        f'#KONTO 7210 "Löner"',
+        f'#KONTO 7290 "Semesterersättning"',
+        f'#KONTO 7331 "Milersättning"',
+        f'#KONTO 7510 "Arbetsgivaravgifter"',
+        f'',
+    ]
+
+    # Add IB (ingående balans) - simplified
+    sie_lines.append(f'#IB 0 1930 0.00')
+    sie_lines.append(f'')
+
+    # Add verifications
+    for ver in verifikationer:
+        sie_lines.append(ver)
+
+    # Add UB (utgående balans)
+    sie_lines.append(f'')
+    sie_lines.append(f'#UB 0 1510 {sum(i.get("customer_pays",0) for i in invoices if i.get("status") != "paid"):.2f}')
+
+    sie_content = "\n".join(sie_lines)
+
+    # Encode to CP437 (SIE standard encoding)
+    try:
+        sie_bytes = sie_content.encode("cp437", errors="replace")
+    except:
+        sie_bytes = sie_content.encode("latin-1", errors="replace")
+
+    return Response(
+        content=sie_bytes,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="sie_{month}.se"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
