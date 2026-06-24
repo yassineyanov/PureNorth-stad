@@ -3480,6 +3480,107 @@ async def export_agi(month: str, current=Depends(get_current_user)):
         headers={"Content-Disposition": f'attachment; filename="agi_{month}.xml"'}
     )
 
+
+# ── AGI XML Export ────────────────────────────────────────────────────────────
+@api_router.get("/reports/agi")
+async def export_agi(month: str, current=Depends(get_current_user)):
+    """Export AGI (Arbetsgivardeklaration) XML for Skatteverket
+    month format: YYYY-MM
+    """
+    import calendar
+    year, mon = month.split("-")
+    last_day = calendar.monthrange(int(year), int(mon))[1]
+    start = f"{month}-01"
+    end = f"{month}-{last_day:02d}"
+
+    ARBETSGIVARAVGIFT = 0.3142
+    PRELSKATT = 0.30
+
+    inv_settings = await get_invoice_settings_obj()
+    orgnr = (inv_settings.company_orgnr or "").replace("-","")
+    company = inv_settings.company_name or "PureNorth Städ"
+
+    payroll_summary, payroll_settings = await build_payroll_summary(start, end)
+    employees = await db.employees.find().to_list(100)
+    emp_map = {str(e["_id"]): e for e in employees}
+
+    now = datetime.now(timezone.utc)
+    period = month.replace("-","")  # YYYYMM
+
+    # Build XML
+    lines = []
+    lines.append('<?xml version="1.0" encoding="UTF-8"?>')
+    lines.append('<Skatteverket xmlns="http://www.skatteverket.se/schema/instans/arbetsgivardeklaration" xmlns:agd="http://www.skatteverket.se/schema/instans/arbetsgivardeklaration">')
+    lines.append(f'  <Avsandare>')
+    lines.append(f'    <ProgramnameProduktnr>{company} Admin 1.0</ProgramnameProduktnr>')
+    lines.append(f'    <Tidpunkt>{now.strftime("%Y-%m-%dT%H:%M:%S")}</Tidpunkt>')
+    lines.append(f'  </Avsandare>')
+    lines.append(f'  <Blankettgemensamt>')
+    lines.append(f'    <Arbetsgivare>')
+    lines.append(f'      <AgRegistreradId>{orgnr}</AgRegistreradId>')
+    lines.append(f'    </Arbetsgivare>')
+    lines.append(f'  </Blankettgemensamt>')
+
+    total_ag_avg = 0
+    total_prelskatt = 0
+
+    for eid, row in payroll_summary.items():
+        emp = emp_map.get(eid, {})
+        personnr = emp.get("personnummer", "").replace("-","")
+        name = row["name"]
+        brutto = (
+            row["normal_h"] * row["hourly_rate"] +
+            row["ob1_h"] * payroll_settings.ob1_extra +
+            row["ob2_h"] * payroll_settings.ob2_extra +
+            row.get("sjuklon_net", 0)
+        )
+        prelskatt = round(brutto * PRELSKATT, 2)
+        ag_avg = round(brutto * ARBETSGIVARAVGIFT, 2)
+        total_ag_avg += ag_avg
+        total_prelskatt += prelskatt
+
+        if not personnr:
+            continue
+
+        lines.append(f'  <Blankett>')
+        lines.append(f'    <Arendeinformation>')
+        lines.append(f'      <Arendeagare>{orgnr}</Arendeagare>')
+        lines.append(f'      <Period>{period}</Period>')
+        lines.append(f'    </Arendeinformation>')
+        lines.append(f'    <Blankettinnehall>')
+        lines.append(f'      <HU>')
+        lines.append(f'        <ArbetsgivareHUGROUP>')
+        lines.append(f'          <AgRegistreradId faltkod="201">{orgnr}</AgRegistreradId>')
+        lines.append(f'        </ArbetsgivareHUGROUP>')
+        lines.append(f'        <RedovisningsPeriod faltkod="006">{period}</RedovisningsPeriod>')
+        lines.append(f'        <SummaArbAvgSlf faltkod="487">{int(total_ag_avg)}</SummaArbAvgSlf>')
+        lines.append(f'        <SummaSkatteavdr faltkod="497">{int(total_prelskatt)}</SummaSkatteavdr>')
+        lines.append(f'      </HU>')
+        lines.append(f'      <IU>')
+        lines.append(f'        <ArbetsgivareIUGROUP>')
+        lines.append(f'          <AgRegistreradId faltkod="201">{orgnr}</AgRegistreradId>')
+        lines.append(f'        </ArbetsgivareIUGROUP>')
+        lines.append(f'        <BetalningsmottagareIUGROUP>')
+        lines.append(f'          <Fodelsetid faltkod="215">{personnr}</Fodelsetid>')
+        lines.append(f'        </BetalningsmottagareIUGROUP>')
+        lines.append(f'        <RedovisningsPeriod faltkod="006">{period}</RedovisningsPeriod>')
+        lines.append(f'        <Specifikationsnummer faltkod="570">001</Specifikationsnummer>')
+        lines.append(f'        <AvdrPrelSkatt faltkod="001">{int(prelskatt)}</AvdrPrelSkatt>')
+        lines.append(f'        <KontantErsattningKU10 faltkod="011">{int(brutto)}</KontantErsattningKU10>')
+        lines.append(f'      </IU>')
+        lines.append(f'    </Blankettinnehall>')
+        lines.append(f'  </Blankett>')
+
+    lines.append('</Skatteverket>')
+
+    xml_content = "\n".join(lines)
+
+    return Response(
+        content=xml_content.encode("utf-8"),
+        media_type="application/xml",
+        headers={"Content-Disposition": f'attachment; filename="agi_{month}.xml"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
