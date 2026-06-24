@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Users, FileText, CreditCard, Receipt, Eye, DollarSign, Briefcase, Calculator, Landmark, BarChart } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Users, FileText, CreditCard, Receipt, Eye, DollarSign, Briefcase, Calculator, Landmark, BarChart, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -186,6 +186,12 @@ export default function EconomyPanel() {
           </Section>
 
           {/* ── Moms ─────────────────────────────────────────────── */}
+          <Section title={<span className="flex items-center gap-2"><Package size={17} className="text-blue-600"/>Materialkostnader</span>}>
+            <Row label="Totalt inkl. moms" value={kr(data.material_costs?.total_incl_moms || 0)} />
+            <Row label="Totalt exkl. moms" value={kr(data.material_costs?.total_excl_moms || 0)} />
+            <Row label="Ingående moms (avdragsgill)" value={`-${kr(data.material_costs?.ingaende_moms || 0)}`} positive />
+            <Row label="Antal kostnadsposter" value={`${data.material_costs?.count || 0} st`} />
+          </Section>
           <Section title={<span className="flex items-center gap-2"><Calculator size={17} className="text-amber-600"/>Momsredovisning</span>}>
             <div className="rounded-2xl bg-white border border-slate-100 p-5">
               <Row label="Utgående moms (samlad från kunder)" value={kr(data.vat.collected)} />
