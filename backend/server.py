@@ -1593,11 +1593,11 @@ async def set_pricelist(payload: PriceListSettings, current=Depends(get_current_
 
 
 # ── Economy / Ekonomiöversikt ────────────────────────────────────────────────
-@api_router.get("/economy/overview")
 def recalc_invoice(inv):
     """Return invoice with stored values - DB is already updated when reminder fee added"""
     return inv
 
+@api_router.get("/economy/overview")
 async def economy_overview(start: str, end: str, current=Depends(get_current_user)):
     # Constants (Swedish law 2025/2026)
     ARBETSGIVARAVGIFT = 0.3142   # 31.42% on gross salary
