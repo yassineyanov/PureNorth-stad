@@ -1595,26 +1595,8 @@ async def set_pricelist(payload: PriceListSettings, current=Depends(get_current_
 # ── Economy / Ekonomiöversikt ────────────────────────────────────────────────
 @api_router.get("/economy/overview")
 def recalc_invoice(inv):
-    """Recalculate invoice totals from items (includes påminnelseavgift etc)"""
-    items = inv.get("items", [])
-    if not items:
-        return inv
-    subtotal = sum(i.get("quantity",1) * i.get("unit_price",0) for i in items)
-    # Use stored vat rate or default 25%
-    stored_sub = inv.get("subtotal", subtotal) or subtotal
-    stored_vat = inv.get("vat_amount", 0)
-    vat_rate = (stored_vat / stored_sub * 100) if stored_sub > 0 else 25
-    vat_amount = round(subtotal * vat_rate / 100, 2)
-    rut_deduction = inv.get("rut_deduction", 0)
-    total_amount = round(subtotal + vat_amount, 2)
-    customer_pays = round(total_amount - rut_deduction, 2)
-    return {
-        **inv,
-        "subtotal": round(subtotal, 2),
-        "vat_amount": vat_amount,
-        "total_amount": total_amount,
-        "customer_pays": customer_pays,
-    }
+    """Return invoice with stored values - DB is already updated when reminder fee added"""
+    return inv
 
 async def economy_overview(start: str, end: str, current=Depends(get_current_user)):
     # Constants (Swedish law 2025/2026)
