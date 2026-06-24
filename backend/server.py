@@ -1610,6 +1610,13 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
 
     return {
         "period": {"start": start, "end": end},
+        "material_costs": {
+            "total_incl_moms": round(material_total_incl, 2),
+            "total_excl_moms": round(material_total_excl, 2),
+            "ingaende_moms": round(ingaende_moms, 2),
+            "by_category": {k: round(v, 2) for k, v in costs_by_category.items()},
+            "count": len(real_costs),
+        },
         "revenue": {
             "excl_vat": round(revenue_excl_vat, 2),
             "vat_collected": round(vat_collected, 2),
