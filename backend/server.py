@@ -3283,37 +3283,25 @@ async def export_sie(month: str, current=Depends(get_current_user)):
         rut_d = inv.get("rut_deduction", 0)
         inv_num = inv.get("invoice_number", "")
         customer = inv.get("customer_name", "")
-        ver = f'#VER A {ver_num} {date} "Faktura #{inv_num} - {customer}"
-'
-        ver += f'  #TRANS 3000 {{}} {-sub:.2f} {date} "Försäljning"
-'
-        ver += f'  #TRANS 2610 {{}} {-vat:.2f} {date} "Utgående moms"
-'
+        ver = f'#VER A {ver_num} {date} "Faktura #{inv_num} - {customer}"\n'
+        ver += f'  #TRANS 3000 {{}} {-sub:.2f} {date} "Försäljning"\n'
+        ver += f'  #TRANS 2610 {{}} {-vat:.2f} {date} "Utgående moms"\n'
         if rut_d > 0:
-            ver += f'  #TRANS 3001 {{}} {rut_d:.2f} {date} "RUT-avdrag"
-'
-        ver += f'  #TRANS 1510 {{}} {pays:.2f} {date} "Kundfordran"
-'
+            ver += f'  #TRANS 3001 {{}} {rut_d:.2f} {date} "RUT-avdrag"\n'
+        ver += f'  #TRANS 1510 {{}} {pays:.2f} {date} "Kundfordran"\n'
         verifikationer.append(ver)
         ver_num += 1
 
     # 2. Payroll entry
     if gross_salary > 0:
         date = end.replace("-","")
-        ver = f'#VER L {ver_num} {date} "Löner {month}"
-'
-        ver += f'  #TRANS 7210 {{}} {gross_salary:.2f} {date} "Bruttolön"
-'
-        ver += f'  #TRANS 7510 {{}} {ag_avg:.2f} {date} "Arbetsgivaravgift"
-'
-        ver += f'  #TRANS 7290 {{}} {semester:.2f} {date} "Semesterersättning"
-'
-        ver += f'  #TRANS 2710 {{}} {-prelskatt:.2f} {date} "Prelskatt skuld"
-'
-        ver += f'  #TRANS 2731 {{}} {-ag_avg:.2f} {date} "AG-avgift skuld"
-'
-        ver += f'  #TRANS 1930 {{}} {-(gross_salary+semester-prelskatt):.2f} {date} "Utbetald lön"
-'
+        ver = f'#VER L {ver_num} {date} "Löner {month}"\n'
+        ver += f'  #TRANS 7210 {{}} {gross_salary:.2f} {date} "Bruttolön"\n'
+        ver += f'  #TRANS 7510 {{}} {ag_avg:.2f} {date} "Arbetsgivaravgift"\n'
+        ver += f'  #TRANS 7290 {{}} {semester:.2f} {date} "Semesterersättning"\n'
+        ver += f'  #TRANS 2710 {{}} {-prelskatt:.2f} {date} "Prelskatt skuld"\n'
+        ver += f'  #TRANS 2731 {{}} {-ag_avg:.2f} {date} "AG-avgift skuld"\n'
+        ver += f'  #TRANS 1930 {{}} {-(gross_salary+semester-prelskatt):.2f} {date} "Utbetald lön"\n'
         verifikationer.append(ver)
         ver_num += 1
 
@@ -3326,14 +3314,10 @@ async def export_sie(month: str, current=Depends(get_current_user)):
         cat = c.get("category","material")
         konto = {"material":"5410","equipment":"5410","transport":"5612","other":"6990"}.get(cat,"5410")
         name = c.get("name","Material")
-        ver = f'#VER K {ver_num} {date} "{name}"
-'
-        ver += f'  #TRANS {konto} {{}} {net:.2f} {date} "{name}"
-'
-        ver += f'  #TRANS 2640 {{}} {vat_c:.2f} {date} "Ingående moms"
-'
-        ver += f'  #TRANS 1930 {{}} {-amount:.2f} {date} "Betalning"
-'
+        ver = f'#VER K {ver_num} {date} "{name}"\n'
+        ver += f'  #TRANS {konto} {{}} {net:.2f} {date} "{name}"\n'
+        ver += f'  #TRANS 2640 {{}} {vat_c:.2f} {date} "Ingående moms"\n'
+        ver += f'  #TRANS 1930 {{}} {-amount:.2f} {date} "Betalning"\n'
         verifikationer.append(ver)
         ver_num += 1
 
