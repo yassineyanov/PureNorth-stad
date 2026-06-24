@@ -2866,6 +2866,273 @@ async def send_invoice_email(invoice_id: str, current=Depends(get_current_user))
         logger.error(f"Failed to send invoice: {e}")
         raise HTTPException(status_code=500, detail=f"Kunde inte skicka faktura: {str(e)}")
 
+
+# ── Monthly Report for Konsult ───────────────────────────────────────────────
+@api_router.get("/reports/monthly")
+async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
+    """Generate comprehensive monthly report for redovisningskonsult
+    month format: YYYY-MM (e.g. 2025-01)
+    """
+    from reportlab.platypus import Image as RLImage
+    year, mon = month.split("-")
+    import calendar
+    last_day = calendar.monthrange(int(year), int(mon))[1]
+    start = f"{month}-01"
+    end = f"{month}-{last_day:02d}"
+    start_dt = f"{start}T00:00:00"
+    end_dt = f"{end}T23:59:59"
+
+    ARBETSGIVARAVGIFT = 0.3142
+    PRELSKATT = 0.30
+    SEMESTERERSATTNING = 0.12
+
+    # ── Data collection ────────────────────────────────────────────
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+    orgnr = inv_settings.company_orgnr or ""
+
+    invoices = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    payroll_summary, payroll_settings = await build_payroll_summary(start, end)
+    costs = await db.costs.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
+    expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
+    bookings = await db.bookings.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(1000)
+
+    # ── Calculations ───────────────────────────────────────────────
+    # Revenue
+    revenue_excl_vat = sum(i.get("subtotal", 0) for i in invoices)
+    vat_collected = sum(i.get("vat_amount", 0) for i in invoices)  # utgående moms
+    rut_deductions = sum(i.get("rut_deduction", 0) for i in invoices)
+    paid_amount = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
+    unpaid_amount = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") != "paid")
+
+    # Payroll
+    gross_salary = sum(
+        r["normal_h"] * r["hourly_rate"] +
+        r["ob1_h"] * payroll_settings.ob1_extra +
+        r["ob2_h"] * payroll_settings.ob2_extra +
+        r.get("sjuklon_net", 0)
+        for r in payroll_summary.values()
+    )
+    arbetsgivaravgifter = round(gross_salary * ARBETSGIVARAVGIFT, 2)
+    semesterersattning = round(gross_salary * SEMESTERERSATTNING, 2)
+    prelskatt = round(gross_salary * PRELSKATT, 2)
+    total_payroll = round(gross_salary + arbetsgivaravgifter + semesterersattning, 2)
+    utlagg_total = sum(e.get("amount", 0) for e in expenses)
+
+    # Material costs
+    material_total_incl = sum(c.get("amount", 0) for c in costs)
+    ingaende_moms = sum(c.get("amount", 0) - c.get("amount", 0) / (1 + c.get("moms_rate", 25)/100) for c in costs)
+    utlagg_moms = sum(e.get("amount", 0) - e.get("amount", 0) / (1 + e.get("moms_rate", 0)/100) for e in expenses if e.get("moms_rate", 0) > 0)
+    total_ingaende_moms = round(ingaende_moms + utlagg_moms, 2)
+
+    # VAT
+    vat_to_pay = round(vat_collected - total_ingaende_moms, 2)
+    agi_to_pay = round(arbetsgivaravgifter + prelskatt, 2)
+
+    # Profit
+    total_costs = total_payroll + utlagg_total + (material_total_incl - ingaende_moms)
+    operating_profit = round(revenue_excl_vat - total_costs, 2)
+    margin = round((operating_profit / revenue_excl_vat * 100) if revenue_excl_vat > 0 else 0, 1)
+
+    # ── PDF Build ──────────────────────────────────────────────────
+    buf = BytesIO()
+    page_w, page_h = A4
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=15*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm)
+
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+
+    h1 = ps("h1", fontSize=20, fontName="Helvetica-Bold", textColor=colors.HexColor("#141414"), spaceAfter=2)
+    h2 = ps("h2", fontSize=12, fontName="Helvetica-Bold", textColor=colors.HexColor("#141414"), spaceBefore=8, spaceAfter=4, borderPad=2)
+    normal = ps("n", fontSize=9, textColor=colors.HexColor("#1a1a1a"), leading=13)
+    small = ps("s", fontSize=8, textColor=colors.HexColor("#64748b"), leading=11)
+    bold = ps("b", fontSize=9, fontName="Helvetica-Bold", textColor=colors.HexColor("#1a1a1a"), leading=13)
+
+    elements = []
+
+    # ── HEADER ─────────────────────────────────────────────────────
+    import locale
+    MONTHS_SV = ["","Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"]
+    month_name = MONTHS_SV[int(mon)]
+
+    header_data = [[
+        Paragraph(f"<b>{company}</b>", ps("ch", fontSize=16, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"<b>MÅNADSRAPPORT</b><br/>{month_name} {year}", ps("ct", fontSize=11, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+    ]]
+    header_tbl = Table(header_data, colWidths=[100*mm, None])
+    header_tbl.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),
+        ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+        ("TOPPADDING",(0,0),(-1,-1),12),("BOTTOMPADDING",(0,0),(-1,-1),12),
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+    ]))
+    elements.append(header_tbl)
+
+    # Company info
+    info_line = f"Org.nr: {orgnr}  ·  Period: {start} – {end}  ·  Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+    elements.append(Paragraph(info_line, ps("info", fontSize=8, textColor=colors.HexColor("#94a3b8"), spaceBefore=3, spaceAfter=6)))
+
+    # Divider
+    div = Table([[""]], colWidths=[page_w-40*mm])
+    div.setStyle(TableStyle([("LINEBELOW",(0,0),(-1,-1),1,colors.HexColor("#141414")),("TOPPADDING",(0,0),(-1,-1),0),("BOTTOMPADDING",(0,0),(-1,-1),0)]))
+    elements.append(div)
+    elements.append(Spacer(1,4*mm))
+
+    def section_header(title, color="#141414"):
+        t = Table([[Paragraph(title, ps("sh", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white))]], colWidths=[page_w-40*mm])
+        t.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1),colors.HexColor(color)),
+            ("LEFTPADDING",(0,0),(-1,-1),8),("TOPPADDING",(0,0),(-1,-1),5),("BOTTOMPADDING",(0,0),(-1,-1),5),
+        ]))
+        elements.append(t)
+
+    def data_row(label, value, is_total=False, color=None):
+        lbl_style = bold if is_total else normal
+        val_style = bold if is_total else normal
+        val_para = Paragraph(value, ps("vr", fontSize=9, fontName="Helvetica-Bold" if is_total else "Helvetica",
+            textColor=colors.HexColor(color) if color else colors.HexColor("#1a1a1a"), alignment=2))
+        row = [[Paragraph(label, lbl_style), val_para]]
+        t = Table(row, colWidths=[120*mm, None])
+        bg = colors.HexColor("#F8FAFC") if is_total else colors.white
+        t.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1),bg),
+            ("LEFTPADDING",(0,0),(-1,-1),8),("RIGHTPADDING",(0,0),(-1,-1),8),
+            ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
+            ("LINEBELOW",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ]))
+        elements.append(t)
+
+    def kr(n): return f"{n:,.2f} kr".replace(",",".")
+
+    # ── 1. INTÄKTER ────────────────────────────────────────────────
+    elements.append(Spacer(1,3*mm))
+    section_header("1. INTÄKTER (FÖRSÄLJNING)", "#1e40af")
+    data_row("Antal fakturor", str(len(invoices)))
+    data_row("Antal bokningar", str(len(bookings)))
+    data_row("Fakturerat belopp (exkl. moms)", kr(revenue_excl_vat))
+    data_row("Utgående moms (25%)", kr(vat_collected))
+    data_row("RUT-avdrag", kr(rut_deductions))
+    data_row("Betalt av kunder", kr(paid_amount))
+    data_row("Obetalt", kr(unpaid_amount))
+    data_row("TOTALT INTÄKTER (exkl. moms)", kr(revenue_excl_vat), is_total=True, color="#1e40af")
+
+    elements.append(Spacer(1,3*mm))
+
+    # ── 2. PERSONALKOSTNADER ───────────────────────────────────────
+    section_header("2. PERSONALKOSTNADER", "#7c3aed")
+    data_row("Bruttolön total", kr(gross_salary))
+    data_row("Arbetsgivaravgift (31.42%)", kr(arbetsgivaravgifter))
+    data_row("Semesterersättning (12%)", kr(semesterersattning))
+    data_row("Utlägg (reseersättning m.m.)", kr(utlagg_total))
+    data_row("TOTALT PERSONALKOSTNADER", kr(total_payroll + utlagg_total), is_total=True, color="#7c3aed")
+
+    # Per employee
+    if payroll_summary:
+        elements.append(Spacer(1,2*mm))
+        emp_header = [["Namn", "Tim", "Bruttolön", "AG-avgift", "Semester", "Summa"]]
+        emp_data = emp_header.copy()
+        for r in payroll_summary.values():
+            gross = r["normal_h"]*r["hourly_rate"] + r["ob1_h"]*payroll_settings.ob1_extra + r["ob2_h"]*payroll_settings.ob2_extra + r.get("sjuklon_net",0)
+            emp_data.append([
+                r["name"], f"{r['normal_h']:.1f}",
+                kr(gross), kr(gross*ARBETSGIVARAVGIFT),
+                kr(gross*SEMESTERERSATTNING), kr(gross*(1+ARBETSGIVARAVGIFT+SEMESTERERSATTNING))
+            ])
+        emp_tbl = Table(emp_data, colWidths=[50*mm, 18*mm, 30*mm, 25*mm, 25*mm, 30*mm])
+        emp_tbl.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#F1F5F9")),
+            ("FONTSIZE",(0,0),(-1,-1),8),("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+            ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+            ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
+            ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+        ]))
+        elements.append(emp_tbl)
+
+    elements.append(Spacer(1,3*mm))
+
+    # ── 3. MATERIALKOSTNADER ───────────────────────────────────────
+    section_header("3. MATERIALKOSTNADER", "#0369a1")
+    data_row("Totalt inkl. moms", kr(material_total_incl))
+    data_row("Ingående moms (avdragsgill)", f"-{kr(ingaende_moms)}", color="#15803d")
+    data_row("Ingående moms utlägg", f"-{kr(utlagg_moms)}", color="#15803d")
+    data_row("NETTOKOSTNAD MATERIAL", kr(material_total_incl - ingaende_moms), is_total=True, color="#0369a1")
+
+    elements.append(Spacer(1,3*mm))
+
+    # ── 4. MOMSREDOVISNING ─────────────────────────────────────────
+    section_header("4. MOMSREDOVISNING (ATT REDOVISA TILL SKATTEVERKET)", "#b45309")
+    data_row("Utgående moms (försäljning)", kr(vat_collected))
+    data_row("Ingående moms (inköp + utlägg)", f"-{kr(total_ingaende_moms)}", color="#15803d")
+    data_row("MOMS ATT BETALA", kr(vat_to_pay), is_total=True, color="#b45309")
+
+    elements.append(Spacer(1,3*mm))
+
+    # ── 5. ARBETSGIVARDEKLARATION ──────────────────────────────────
+    section_header("5. ARBETSGIVARDEKLARATION (AGI) - MÅNADSVIS", "#dc2626")
+    data_row("Arbetsgivaravgift", kr(arbetsgivaravgifter))
+    data_row("Preliminärskatt (ca 30%)", kr(prelskatt))
+    data_row("TOTALT ATT BETALA SKATTEVERKET", kr(agi_to_pay), is_total=True, color="#dc2626")
+
+    elements.append(Spacer(1,3*mm))
+
+    # ── 6. RESULTAT ────────────────────────────────────────────────
+    section_header("6. RÖRELSERESULTAT", "#15803d")
+    data_row("Intäkter (exkl. moms)", kr(revenue_excl_vat))
+    data_row("Personalkostnader", f"-{kr(total_payroll + utlagg_total)}")
+    data_row("Materialkostnader (exkl. moms)", f"-{kr(material_total_incl - ingaende_moms)}")
+    profit_color = "#15803d" if operating_profit >= 0 else "#dc2626"
+    data_row("RÖRELSERESULTAT", kr(operating_profit), is_total=True, color=profit_color)
+    data_row("Rörelsemarginal", f"{margin}%")
+
+    elements.append(Spacer(1,4*mm))
+
+    # ── FAKTURA LIST ───────────────────────────────────────────────
+    if invoices:
+        section_header("7. FAKTURALISTA", "#475569")
+        inv_header = [["Faktura #", "Kund", "Datum", "Exkl. moms", "Moms", "Att betala", "Status"]]
+        inv_rows = inv_header.copy()
+        for i in sorted(invoices, key=lambda x: x.get("created_at","")):
+            status_map = {"paid":"Betald","draft":"Utkast","sent":"Skickad","overdue":"Förfallen"}
+            inv_rows.append([
+                i.get("invoice_number",""),
+                i.get("customer_name","")[:20],
+                i.get("created_at","")[:10],
+                f'{i.get("subtotal",0):.2f}',
+                f'{i.get("vat_amount",0):.2f}',
+                f'{i.get("customer_pays",0):.2f}',
+                status_map.get(i.get("status",""),""),
+            ])
+        inv_tbl = Table(inv_rows, colWidths=[20*mm, 45*mm, 20*mm, 25*mm, 20*mm, 25*mm, 20*mm])
+        inv_tbl.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#F1F5F9")),
+            ("FONTSIZE",(0,0),(-1,-1),7.5),("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+            ("LEFTPADDING",(0,0),(-1,-1),3),("RIGHTPADDING",(0,0),(-1,-1),3),
+            ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
+            ("ALIGN",(3,0),(-1,-1),"RIGHT"),
+        ]))
+        elements.append(inv_tbl)
+
+    elements.append(Spacer(1,4*mm))
+
+    # ── FOOTER ─────────────────────────────────────────────────────
+    footer_line = f"{company}  ·  Org.nr {orgnr}  ·  Månadsrapport {month_name} {year}  ·  Konfidentiellt"
+    ft = Table([[Paragraph(footer_line, ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8")))]], colWidths=[page_w-40*mm])
+    ft.setStyle(TableStyle([
+        ("LINEABOVE",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),
+        ("TOPPADDING",(0,0),(-1,-1),4),("LEFTPADDING",(0,0),(-1,-1),0),
+    ]))
+    elements.append(ft)
+
+    doc.build(elements)
+    pdf_bytes = buf.getvalue()
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="manadsrapport_{month}.pdf"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
