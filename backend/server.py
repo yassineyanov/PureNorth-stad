@@ -3847,26 +3847,47 @@ async def export_bokforing_pdf(month: str, current=Depends(get_current_user)):
         inv_num = inv.get("invoice_number","")
         customer = inv.get("customer_name","")
         date = inv.get("created_at","")[:10]
-        sub = inv.get("subtotal", 0)
-        vat = inv.get("vat_amount", 0)
-        pays = inv.get("customer_pays", 0)
-        rut = inv.get("rut_deduction", 0)
-        total = inv.get("total_amount", 0)
         status = inv.get("status","")
+        items = inv.get("items", [])
+        rut = inv.get("rut_deduction", 0)
+        reminder_count = inv.get("reminder_count", 0)
+
+        # Recalculate from items (includes påminnelseavgift if added)
+        sub = sum(i.get("quantity",1) * i.get("unit_price",0) for i in items)
+        vat_rate = 25
+        vat = round(sub * vat_rate / 100, 2)
+        total = round(sub + vat, 2)
+        pays = round(total - rut, 2)
+
+        # Check for reminder fee
+        reminder_fee_item = next((i for i in items if i.get("service") == "Påminnelseavgift"), None)
 
         elements.append(Spacer(1,2*mm))
         elements.append(Paragraph(
-            f"<b>Faktura #{inv_num}</b>  ·  {customer}  ·  {date}  ·  Status: {status}",
+            f"<b>Faktura #{inv_num}</b>  ·  {customer}  ·  {date}  ·  Status: {status}" +
+            (f"  ·  Påminnelse #{reminder_count}" if reminder_count > 0 else ""),
             ps("fh", fontSize=8, fontName="Helvetica-Bold", textColor=colors.HexColor("#1e40af"), spaceBefore=2, spaceAfter=1)
         ))
 
         rows = [
             ["1510", "Kundfordringar", f"{pays:.2f}", "", f"Faktura #{inv_num} - {customer}"],
-            ["3000", "Försäljning tjänster", "", f"{sub:.2f}", "Intäkt exkl. moms"],
-            ["2610", "Utgående moms 25%", "", f"{vat:.2f}", "Moms på försäljning"],
         ]
+        # Regular items
+        for item in items:
+            if item.get("service") == "Påminnelseavgift":
+                continue
+            item_total = item.get("quantity",1) * item.get("unit_price",0)
+            rows.append(["3000", item.get("service","Försäljning"), "", f"{item_total:.2f}", "Intäkt exkl. moms"])
+
+        rows.append(["2610", "Utgående moms 25%", "", f"{vat:.2f}", "Moms på försäljning"])
+
         if rut > 0:
             rows.append(["3001", "RUT-avdrag", f"{rut:.2f}", "", "RUT-reduktion"])
+
+        # Reminder fee as separate entry
+        if reminder_fee_item:
+            fee = reminder_fee_item.get("quantity",1) * reminder_fee_item.get("unit_price",0)
+            rows.append(["7690", "Påminnelseavgift", "", f"{fee:.2f}", f"Påminnelseavgift #{reminder_count}"])
 
         trans_table(rows)
 
