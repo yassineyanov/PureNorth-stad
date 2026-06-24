@@ -4037,14 +4037,43 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
             }]
         })
 
-        # Update invoice
+        # Update invoice - add reminder fee if reminder_count >= 2
+        update_fields = {
+            "status": "overdue",
+            "reminder_count": reminder_count,
+            "last_reminder_at": datetime.now(timezone.utc).isoformat()
+        }
+
+        if reminder_fee > 0:
+            # Add påminnelseavgift to invoice items
+            items = doc.get("items", [])
+            # Remove old reminder fee if exists
+            items = [i for i in items if i.get("service") != "Påminnelseavgift"]
+            # Add new reminder fee
+            items.append({
+                "service": "Påminnelseavgift",
+                "description": f"Påminnelseavgift enligt inkassolagen",
+                "quantity": 1,
+                "unit_price": reminder_fee,
+                "is_material": False,
+            })
+            # Recalculate totals
+            subtotal = sum(i["quantity"] * i["unit_price"] for i in items)
+            vat_rate = doc.get("vat_amount", 0) / doc.get("subtotal", 1) * 100 if doc.get("subtotal", 0) > 0 else 25
+            vat_amount = round(subtotal * vat_rate / 100, 2)
+            rut_deduction = doc.get("rut_deduction", 0)
+            total_amount = round(subtotal + vat_amount, 2)
+            customer_pays = round(total_amount - rut_deduction, 2)
+
+            update_fields["items"] = items
+            update_fields["subtotal"] = round(subtotal, 2)
+            update_fields["vat_amount"] = vat_amount
+            update_fields["total_amount"] = total_amount
+            update_fields["customer_pays"] = customer_pays
+
         await db.invoices.update_one(
             {"_id": to_object_id(invoice_id)},
-            {"$set": {
-                "status": "overdue",
-                "reminder_count": reminder_count,
-                "last_reminder_at": datetime.now(timezone.utc).isoformat()
-            }}
+            {"$set": update_fields}
         )
 
         return {
