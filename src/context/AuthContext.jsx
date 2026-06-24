@@ -16,6 +16,13 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       return;
     }
+    // Add 5 second timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      localStorage.removeItem("pn_token");
+      setUser(false);
+      setLoading(false);
+    }, 5000);
+
     api
       .get("/auth/me")
       .then((res) => setUser(res.data))
@@ -23,7 +30,10 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("pn_token");
         setUser(false);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
   }, []);
 
   const login = async (email, password) => {

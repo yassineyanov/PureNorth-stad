@@ -13,7 +13,7 @@ const STATUS = {
   overdue: { label: "Förfallen", cls: "bg-red-50 text-red-700" },
 };
 
-const SERVICE_TYPES = ["Hemstädning", "Flyttstädning", "Kontorsstädning", "Storstädning", "Annat"];
+// SERVICE_TYPES now comes from priceList dynamically
 
 function defaultDueDate(paymentTermsDays) {
   const d = new Date();
@@ -21,12 +21,12 @@ function defaultDueDate(paymentTermsDays) {
   return d.toISOString().slice(0, 10);
 }
 
-function inferItems(initialItems) {
+function inferItems(initialItems, defaultService = "Hemstädning", defaultPrice = 0) {
   if (!initialItems || initialItems.length === 0) {
-    return [{ service: "Hemstädning", description: "Hemstädning", quantity: 1, unit_price: 0, is_material: false }];
+    return [{ service: defaultService, description: defaultService, quantity: 1, unit_price: defaultPrice, is_material: false }];
   }
   return initialItems.map((it) => {
-    const isKnownService = SERVICE_TYPES.slice(0, -1).includes(it.description);
+    const isKnownService = true; // all services from priceList are valid
     return {
       service: isKnownService ? it.description : "Annat",
       description: it.description,
@@ -163,20 +163,70 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
   const [customerAddress, setCustomerAddress] = useState(initial?.customer_address || "");
   const [customerPersonnummer, setCustomerPersonnummer] = useState(initial?.customer_personnummer || "");
   const [customerType, setCustomerType] = useState(initial?.customer_type || "private");
-  const [rutEligible, setRutEligible] = useState(initial ? initial.rut_eligible : true);
+  const [rutEligible, setRutEligible] = useState(initial ? initial.rut_eligible : false);
   const [bookingId, setBookingId] = useState(initial?.booking_id || "");
-  const [items, setItems] = useState(() => inferItems(initial?.items));
+  const firstService = priceList.find((p) => p.is_active)?.service || "Hemstädning";
+  const firstPrice = priceList.find((p) => p.is_active)?.price || 0;
+  const [items, setItems] = useState(() => inferItems(initial?.items, firstService, firstPrice));
   const [note, setNote] = useState(initial?.note || "");
   const [dueDate, setDueDate] = useState(initial?.due_date || defaultDueDate(settings?.payment_terms_days));
   const [saving, setSaving] = useState(false);
 
-  const applyBooking = (id) => {
+  const applyBooking = async (id) => {
     setBookingId(id);
     const b = bookings.find((x) => x.id === id);
-    if (b) {
-      setCustomerName(b.name);
-      setCustomerEmail(b.email || "");
-      setCustomerPhone(b.phone || "");
+    if (!b) return;
+    setCustomerName(b.name);
+    setCustomerEmail(b.email || "");
+    setCustomerPhone(b.phone || "");
+
+    // Check sessionStorage from calculator first
+    const saved = sessionStorage.getItem("calc_invoice_items");
+    if (saved) {
+      try {
+        const calcItems = JSON.parse(saved);
+        const newItems = calcItems.map(ci => ({
+          service: ci.service, description: ci.service,
+          quantity: ci.hours || ci.qty || 1,
+          unit_price: ci.rate || 0, is_material: false,
+        }));
+        setItems(newItems);
+        toast.success("Priser hämtade från kalkylatorn!");
+        sessionStorage.removeItem("calc_invoice_items");
+        return;
+      } catch {}
+    }
+
+    // Auto-calculate from booking services + kvm
+    if (b.services?.length > 0) {
+      try {
+        const plRes = await api.get("/settings/pricelist");
+        const priceItems = (plRes.data.items || []).filter(p => p.is_active);
+        const SPEED = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35};
+        const ST = ["fönsterputs","ugnstvätt","kyl/frys","trappstädning"];
+        const qty = parseInt(b.kvm) || 0;
+        const autoItems = b.services.map(svc => {
+          const item = priceItems.find(p =>
+            p.service.toLowerCase().includes(svc.toLowerCase()) ||
+            svc.toLowerCase().includes(p.service.toLowerCase())
+          );
+          if (!item) return null;
+          const speedKey = Object.keys(SPEED).find(k => svc.toLowerCase().includes(k));
+          const speed = speedKey ? SPEED[speedKey] : null;
+          const st = ST.some(s => svc.toLowerCase().includes(s));
+          const isFast = item.unit === "fast";
+          let quantity = 1;
+          if (isFast) { quantity = 1; }
+          else if (st) { quantity = qty || 1; }
+          else if (speed && qty) { quantity = Math.ceil((qty / speed) * 2) / 2; }
+          else { quantity = qty || 1; }
+          return { service: item.service, description: item.service, quantity, unit_price: item.price, is_material: false };
+        }).filter(Boolean);
+        if (autoItems.length > 0) {
+          setItems(autoItems);
+          toast.success("Priser beräknade automatiskt från bokningen!");
+        }
+      } catch {}
     }
   };
 
@@ -184,13 +234,15 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
     setItems((arr) => arr.map((it, idx) => (idx === i ? { ...it, [field]: value } : it)));
   };
 
+  const isCustomService = (svc) => !priceList.find((p) => p.service === svc);
+
   const updateService = (i, service) => {
     setItems((arr) => arr.map((it, idx) => {
       if (idx !== i) return it;
       const priceMatch = priceList.find((p) => p.service === service && p.is_active);
       const newPrice = priceMatch ? priceMatch.price : it.unit_price;
-      if (service === "Annat") {
-        return { ...it, service, description: it.service === "Annat" ? it.description : "", unit_price: newPrice };
+      if (service === "Annat" || isCustomService(service)) {
+        return { ...it, service, description: "", unit_price: newPrice };
       }
       return { ...it, service, description: service, unit_price: newPrice };
     }));
@@ -328,7 +380,9 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
                 <div key={i} className="rounded-xl bg-slate-50 p-3 space-y-2">
                   <div className="flex items-center gap-2">
                     <select value={it.service} onChange={(e) => updateService(i, e.target.value)} className="flex-1 rounded-lg border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] bg-white">
-                      {SERVICE_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+                      {[...priceList.filter((p) => p.is_active).map((p) => p.service), "Annat"]
+                        .filter((s, idx, arr) => arr.indexOf(s) === idx)
+                        .map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                     {priceList.find((p) => p.service === it.service) && (
                       <span className="text-xs text-slate-400 whitespace-nowrap">
@@ -341,7 +395,7 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
                   )}
                   <div className="grid grid-cols-4 gap-2 items-end">
                     <div>
-                      <Label className="text-[10px] text-slate-400">{(priceList.find((p) => p.service === it.service)?.unit === "tim" || it.service === "Hemstädning" || it.service === "Kontorsstädning" || it.service === "Storstädning" || it.service === "Byggstädning") ? "Timmar" : "Antal"}</Label>
+                      <Label className="text-[10px] text-slate-400">{priceList.find((p) => p.service === it.service)?.unit === "tim" ? "Timmar" : "Antal"}</Label>
                       <Input type="number" step="0.01" value={it.quantity} onChange={(e) => updateItem(i, "quantity", e.target.value)} className="text-sm mt-0.5" />
                     </div>
                     <div>
@@ -349,7 +403,7 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
                       <Input type="number" step="0.01" value={it.unit_price} onChange={(e) => updateItem(i, "unit_price", e.target.value)} className="text-sm mt-0.5" />
                     </div>
                     <label className="text-xs flex items-center gap-1.5 text-slate-600 self-center">
-                      <input type="checkbox" checked={it.is_material} onChange={(e) => updateItem(i, "is_material", e.target.checked)} className="rounded" /> Material
+                      
                     </label>
                     {items.length > 1 && (
                       <button type="button" onClick={() => removeItem(i)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 justify-self-end self-center">
@@ -474,7 +528,7 @@ export default function InvoicePanel() {
   const viewPdf = (inv) => {
     const token = localStorage.getItem("pn_token") || "";
     const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
-    window.location.href = `${backendUrl}/api/invoices/${inv.id}/pdf?token=${token}`;
+    window.open(`${backendUrl}/api/invoices/${inv.id}/pdf?token=${token}`, "_blank");
   };
 
   const totalOutstanding = invoices.filter((i) => i.status !== "paid").reduce((s, i) => s + i.customer_pays, 0);

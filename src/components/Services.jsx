@@ -11,7 +11,7 @@ const services = [
   },
   {
     title: "Flyttstädning",
-    desc: "Noggrann städning vid in- och utflyttning, med nöjd-kund-garanti.",
+    desc: "Noggrann städning vid in och utflyttning, med nöjd kund garanti.",
     icon: Truck,
     img: "https://images.unsplash.com/photo-1600585152220-90363fe7e115?crop=entropy&cs=srgb&fm=jpg&q=85&w=940",
   },
@@ -58,7 +58,7 @@ export const Services = () => {
                 <div className="h-44 overflow-hidden">
                   <img
                     src={s.img}
-                    alt={s.title}
+                    alt={`${s.title} i Umeå – PureNorth Städ`} loading="lazy" decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>

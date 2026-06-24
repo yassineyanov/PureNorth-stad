@@ -1,20 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Phone, Send, CheckCircle2 } from "lucide-react";
+import { Phone, Send, CheckCircle2, ChevronDown, ChevronUp, Check, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const SERVICE_OPTIONS = [
-  "Hemstädning",
-  "Flyttstädning",
-  "Kontorsstädning",
-  "Storstädning",
-  "Annat",
-];
+// SERVICE_OPTIONS loaded dynamically from Prislista
 
 const initialForm = {
   name: "",
@@ -33,13 +27,46 @@ export const BookingForm = () => {
   const [services, setServices] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [serviceOptions, setServiceOptions] = useState(["Hemstädning", "Flyttstädning", "Kontorsstädning", "Storstädning", "Annat"]);
+  const [priceItems, setPriceItems] = useState([]);
+  const KVM_SERVICES = ["Hemstädning", "Flyttstädning", "Storstädning", "Byggstädning"];
+  const needsKvm = services.some(s => KVM_SERVICES.includes(s));
+  const quantityInfo = (() => {
+    if (services.length === 0) return null;
+    if (priceItems.length > 0) {
+      const units = services.map(s => { const item = priceItems.find(p => p.service === s); return item ? item.unit : null; }).filter(Boolean);
+      if (units.includes("st")) return { label: "Antal (st)", placeholder: "T.ex. 5" };
+      if (units.includes("kvm") || units.includes("tim")) return { label: "Yta (kvm)", placeholder: "T.ex. 75" };
+      return null;
+    }
+    if (needsKvm) return { label: "Yta (kvm)", placeholder: "T.ex. 75" };
+    return null;
+  })();
 
-  const annatSelected = services.includes("Annat");
+  useEffect(() => {
+    api.get("/settings/pricelist").then((res) => {
+      const items = res.data.items?.filter((p) => p.is_active && !p.service.includes("(fast)")) || [];
+      const active = items.map((p) => p.service);
+      setPriceItems(items);
+      if (active.length > 0) {
+        setServiceOptions([...active, "Annat"].filter((s, i, arr) => arr.indexOf(s) === i));
+      }
+    }).catch(() => {});
+  }, []);
 
-  const toggleService = (s) => {
-    setServices((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    );
+  const annatSelected = services.includes("Annat") || services.some((s) => !serviceOptions.slice(0, -1).includes(s));
+
+  const toggleService = (s, closeDropdown = true) => {
+    setServices((prev) => {
+      if (s === "Annat") {
+        return prev.includes(s) ? [] : ["Annat"];
+      } else {
+        const without = prev.filter((x) => x !== "Annat");
+        return without.includes(s) ? without.filter((x) => x !== s) : [...without, s];
+      }
+    });
+    if (closeDropdown) setServiceDropdownOpen(false);
   };
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -145,33 +172,67 @@ export const BookingForm = () => {
                   <Label htmlFor="phone" className="text-white/70">Telefonnummer *</Label>
                   <Input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} />
                 </div>
-                <div>
-                  <Label htmlFor="kvm" className="text-white/70">Yta (kvm)</Label>
-                  <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder="t.ex. 75" className={darkInput} />
-                </div>
+                {quantityInfo && (
+                  <div>
+                    <Label htmlFor="kvm" className="text-white/70">{quantityInfo.label}</Label>
+                    <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} />
+                  </div>
+                )}
               </div>
 
               <div>
                 <Label className="text-white/70">Vilka tjänster? *</Label>
-                <div className="mt-2 grid sm:grid-cols-2 gap-2.5">
-                  {SERVICE_OPTIONS.map((s) => (
-                    <label
-                      key={s}
-                      data-testid={`booking-service-${s}`}
-                      className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-colors ${
-                        services.includes(s)
-                          ? "border-white/60 bg-white/10"
-                          : "border-white/15 hover:border-white/30"
-                      }`}
+                <div className="mt-2 relative">
+                  <button
+                    type="button"
+                    onClick={() => setServiceDropdownOpen((o) => !o)}
+                    className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${
+                      services.length > 0 ? "border-white/60 bg-white/10" : "border-white/15 hover:border-white/30"
+                    }`}
+                  >
+                    <span className="text-[15px] text-white/90">
+                      {services.length === 0
+                        ? "Välj tjänster..."
+                        : services.length === 1 ? services[0] : `${services.length} tjänster valda`}
+                    </span>
+                    {serviceDropdownOpen ? <ChevronUp size={18} className="text-white/60 shrink-0" /> : <ChevronDown size={18} className="text-white/60 shrink-0" />}
+                  </button>
+                  {services.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {services.map(s => (
+                        <span key={s} className="inline-flex items-center gap-1.5 bg-white/15 border border-white/30 text-white text-xs font-medium px-3 py-1.5 rounded-full">
+                          {s}
+                          <button type="button" onClick={(e) => { e.stopPropagation(); toggleService(s, false); }} className="text-white/60 hover:text-white transition-colors ml-0.5">
+                            <X size={12}/>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {serviceDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-1 rounded-xl border border-white/20 bg-[#1a1a1a] overflow-hidden z-10 relative max-h-56 overflow-y-auto"
                     >
-                      <Checkbox
-                        checked={services.includes(s)}
-                        onCheckedChange={() => toggleService(s)}
-                        className="border-white/40 data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-[#141414]"
-                      />
-                      <span className="text-[15px] text-white/90">{s}</span>
-                    </label>
-                  ))}
+                      {serviceOptions.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          data-testid={`booking-service-${s}`}
+                          onClick={() => toggleService(s)}
+                          className={`w-full flex items-center justify-between px-4 py-3 text-left text-[15px] transition-colors border-b border-white/10 last:border-b-0 ${
+                            services.includes(s)
+                              ? "text-white bg-white/10"
+                              : "text-white/70 hover:bg-white/5 hover:text-white"
+                          }`}
+                        >
+                          <span>{s}</span>
+                          {services.includes(s) && <Check size={16} className="text-white shrink-0" />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
                 </div>
               </div>
 
@@ -196,7 +257,7 @@ export const BookingForm = () => {
 
               <div>
                 <Label htmlFor="date" className="text-white/70">Önskat datum för bokning</Label>
-                <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} />
+                <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} min={new Date().toISOString().split("T")[0]} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
               </div>
 
               <button

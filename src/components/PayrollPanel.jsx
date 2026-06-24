@@ -116,7 +116,7 @@ function SettingsPanel({ settings, onSave }) {
           </div>
           <p className="text-xs text-slate-400">Lönekoderna ovan används i PAXML-exporten. Kontrollera med din redovisningskonsult eller ditt lönesystem vilka koder som gäller för er.</p>
           <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs text-blue-800 space-y-1">
-            <p className="font-semibold">📋 Riktmärken — Serviceentreprenadavtalet 2025 (Almega/Fastighets):</p>
+            <p className="font-semibold">Riktmärken — Serviceentreprenadavtalet 2025 (Almega/Fastighets):</p>
             <p>• Kväll mån–fre 18:00–24:00: <strong>25,69 kr/tim</strong></p>
             <p>• Natt 00:00–06:00: <strong>35 kr/tim</strong></p>
             <p>• Helg lör–sön hela dagen: <strong>54,08 kr/tim</strong></p>
@@ -191,7 +191,7 @@ export default function PayrollPanel() {
   const viewSlip = (employeeId) => {
     const token = localStorage.getItem("pn_token") || "";
     const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
-    window.location.href = `${backendUrl}/api/payroll/slip?start=${start}&end=${end}&employee_id=${employeeId}&token=${token}`;
+    window.open(`${backendUrl}/api/payroll/slip?start=${start}&end=${end}&employee_id=${employeeId}&token=${token}`, "_blank");
   };
 
   return (

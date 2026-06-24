@@ -68,3 +68,97 @@ html {
     background-image: radial-gradient(circle at 1px 1px, rgba(20, 20, 20, 0.05) 1px, transparent 0);
     background-size: 28px 28px;
 }
+
+
+/* Hide scrollbar for tab navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* Fix date inputs on iOS Safari */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 40px;
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  color: #1e293b;
+  background-color: #fff;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-width: 120px;
+}
+
+input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 40px;
+}
+
+/* ═══════════════════════════════════════
+   MOBILE GLOBAL FIXES
+═══════════════════════════════════════ */
+
+/* Prevent horizontal overflow on page */
+html, body {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* All tables scroll horizontally without moving the page */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix select on iOS */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px !important;
+}
+
+/* Fix inputs on iOS */
+input, textarea, select {
+  font-size: 16px !important; /* Prevents iOS zoom on focus */
+  border-radius: 12px;
+}
+
+/* Fix modals on mobile */
+@media (max-width: 640px) {
+  /* Full-screen modals on small screens */
+  .fixed.inset-0.z-50 > div[class*="max-w"] {
+    margin: 0;
+    border-radius: 20px 20px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 92vh !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Tabs: prevent page scroll, allow tab scroll */
+  .scrollbar-hide {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: none;
+  }
+
+  /* Booking cards stack better on mobile */
+  .grid.gap-3 {
+    grid-template-columns: 1fr;
+  }
+}
