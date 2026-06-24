@@ -820,6 +820,11 @@ async def build_payroll_summary(start: str, end: str):
         row["ob1_pay"] = ob1_pay
         row["ob2_pay"] = ob2_pay
         row["total_pay"] = base_pay + ob1_pay + ob2_pay + row["expense_total"] + row["sjuklon_net"]
+        # Nettolön = bruttolön - prelskatt (30%)
+        brutto = base_pay + ob1_pay + ob2_pay + row["sjuklon_net"]
+        row["brutto_pay"] = round(brutto, 2)
+        row["prelskatt"] = round(brutto * 0.30, 2)
+        row["netto_pay"] = round(brutto - brutto * 0.30 + row["expense_total"], 2)
 
     return summary, settings
 
