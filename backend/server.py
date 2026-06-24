@@ -1619,7 +1619,7 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     )
     vat_collected = sum(i.get("vat_amount", 0) for i in invoices)
     rut_deductions = sum(i.get("rut_deduction", 0) for i in invoices)
-    total_invoiced = sum(i.get("total_amount", 0) for i in invoices)
+    total_invoiced = sum(i.get("customer_pays", 0) for i in invoices)
     paid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
     unpaid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") != "paid")
     total_revenue = revenue_excl_vat + reminder_fees
