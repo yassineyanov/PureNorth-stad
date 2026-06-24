@@ -1559,15 +1559,28 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     utlagg_total = sum(r.get("expense_total", 0) for r in payroll_summary.values())
 
     # ── Profit / Loss ──────────────────────────────────────────────────
-    total_costs = total_payroll_cost + utlagg_total
+    total_costs = total_payroll_cost + utlagg_total + material_total_excl
     operating_profit = round(revenue_excl_vat - total_costs, 2)
     profit_margin = round((operating_profit / revenue_excl_vat * 100) if revenue_excl_vat > 0 else 0, 1)
 
     # ── VAT to pay ─────────────────────────────────────────────────────
-    # Ingående moms (on expenses) - estimate based on materials ~25%
-    material_total = sum(i.get("material_total", 0) for i in invoices)
-    ingoing_vat_estimate = round(material_total * 0.25, 2)
+    # Real material costs from costs collection
+    cost_query = {"date": {"$gte": start[:10], "$lte": end[:10]}}
+    real_costs = await db.costs.find(cost_query).to_list(1000)
+    material_total_incl = sum(c.get("amount", 0) for c in real_costs)
+    ingaende_moms = sum(
+        c.get("amount", 0) - c.get("amount", 0) / (1 + c.get("moms_rate", 25) / 100)
+        for c in real_costs
+    )
+    material_total_excl = material_total_incl - ingaende_moms
+    ingoing_vat_estimate = round(ingaende_moms, 2)
     vat_to_pay = round(vat_collected - ingoing_vat_estimate, 2)
+
+    # Group costs by category
+    costs_by_category = {}
+    for c in real_costs:
+        cat = c.get("category", "material")
+        costs_by_category[cat] = costs_by_category.get(cat, 0) + c.get("amount", 0)
 
     # ── Obligations (what to pay Skatteverket) ─────────────────────────
     # AGI = arbetsgivardeklaration, paid monthly by the 12th
