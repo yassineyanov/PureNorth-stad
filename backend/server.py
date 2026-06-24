@@ -3762,6 +3762,185 @@ async def export_moms_pdf(month: str, current=Depends(get_current_user)):
         headers={"Content-Disposition": f'inline; filename="momsdeklaration_{month}.pdf"'}
     )
 
+
+# ── Bokföringsunderlag PDF ────────────────────────────────────────────────────
+@api_router.get("/reports/bokforing")
+async def export_bokforing_pdf(month: str, current=Depends(get_current_user)):
+    """Export Bokföringsunderlag with BAS account codes per transaction"""
+    import calendar
+    year, mon = month.split("-")
+    last_day = calendar.monthrange(int(year), int(mon))[1]
+    start = f"{month}-01"
+    end = f"{month}-{last_day:02d}"
+    start_dt = f"{start}T00:00:00"
+    end_dt = f"{end}T23:59:59"
+
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+    orgnr = inv_settings.company_orgnr or ""
+
+    MONTHS_SV = ["","Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"]
+    month_name = MONTHS_SV[int(mon)]
+
+    invoices = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    costs = await db.costs.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
+    expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm)
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+    page_w = A4[0]
+    elements = []
+
+    # Header
+    hdr = Table([[
+        Paragraph("<b>BOKFÖRINGSUNDERLAG</b>", ps("h", fontSize=14, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"{month_name} {year}", ps("s", fontSize=10, textColor=colors.white, alignment=2))
+    ]], colWidths=[120*mm, None])
+    hdr.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),
+        ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+        ("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+    ]))
+    elements.append(hdr)
+    elements.append(Paragraph(
+        f"{company}  ·  Org.nr: {orgnr}  ·  Period: {start} – {end}  ·  Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        ps("info", fontSize=8, textColor=colors.HexColor("#64748b"), spaceBefore=3, spaceAfter=6)
+    ))
+
+    def section_hdr(title, color="#1e40af"):
+        t = Table([[Paragraph(title, ps("sh", fontSize=9, fontName="Helvetica-Bold", textColor=colors.white))]], colWidths=[page_w-40*mm])
+        t.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1),colors.HexColor(color)),
+            ("LEFTPADDING",(0,0),(-1,-1),8),("TOPPADDING",(0,0),(-1,-1),5),("BOTTOMPADDING",(0,0),(-1,-1),5),
+        ]))
+        elements.append(t)
+
+    def trans_table(rows):
+        """rows: list of [konto, kontonamn, debet, kredit, beskrivning]"""
+        hrow = [["Konto", "Kontonamn", "Debet (kr)", "Kredit (kr)", "Beskrivning"]]
+        data = hrow + rows
+        t = Table(data, colWidths=[18*mm, 55*mm, 28*mm, 28*mm, None])
+        t.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#F1F5F9")),
+            ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+            ("FONTSIZE",(0,0),(-1,-1),8),
+            ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+            ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+            ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
+            ("ALIGN",(2,0),(3,-1),"RIGHT"),
+            ("TEXTCOLOR",(2,1),(2,-1),colors.HexColor("#1e40af")),
+            ("TEXTCOLOR",(3,1),(3,-1),colors.HexColor("#dc2626")),
+        ]))
+        elements.append(t)
+
+    # ── 1. FAKTUROR ────────────────────────────────────────────────
+    elements.append(Spacer(1,3*mm))
+    section_hdr("1. FAKTUROR (KUNDFORDRINGAR)", "#1e40af")
+
+    for inv in sorted(invoices, key=lambda x: x.get("created_at","")):
+        inv_num = inv.get("invoice_number","")
+        customer = inv.get("customer_name","")
+        date = inv.get("created_at","")[:10]
+        sub = inv.get("subtotal", 0)
+        vat = inv.get("vat_amount", 0)
+        pays = inv.get("customer_pays", 0)
+        rut = inv.get("rut_deduction", 0)
+        total = inv.get("total_amount", 0)
+        status = inv.get("status","")
+
+        elements.append(Spacer(1,2*mm))
+        elements.append(Paragraph(
+            f"<b>Faktura #{inv_num}</b>  ·  {customer}  ·  {date}  ·  Status: {status}",
+            ps("fh", fontSize=8, fontName="Helvetica-Bold", textColor=colors.HexColor("#1e40af"), spaceBefore=2, spaceAfter=1)
+        ))
+
+        rows = [
+            ["1510", "Kundfordringar", f"{pays:.2f}", "", f"Faktura #{inv_num} - {customer}"],
+            ["3000", "Försäljning tjänster", "", f"{sub:.2f}", "Intäkt exkl. moms"],
+            ["2610", "Utgående moms 25%", "", f"{vat:.2f}", "Moms på försäljning"],
+        ]
+        if rut > 0:
+            rows.append(["3001", "RUT-avdrag", f"{rut:.2f}", "", "RUT-reduktion"])
+
+        trans_table(rows)
+
+    # ── 2. MATERIALKOSTNADER ───────────────────────────────────────
+    if costs:
+        elements.append(Spacer(1,4*mm))
+        section_hdr("2. MATERIALKOSTNADER", "#0369a1")
+        cat_konto = {"material":"5410","equipment":"5420","transport":"5612","other":"6990","parking":"5651"}
+        cat_name = {"material":"Förbrukningsinventarier","equipment":"Maskiner","transport":"Bränsle","other":"Övriga kostnader","parking":"Parkering"}
+
+        for c in sorted(costs, key=lambda x: x.get("date","")):
+            amount = c.get("amount", 0)
+            mrate = c.get("moms_rate", 25)
+            vat_c = round(amount - amount/(1+mrate/100), 2) if mrate > 0 else 0
+            net = round(amount - vat_c, 2)
+            cat = c.get("category","material")
+            konto = cat_konto.get(cat,"5410")
+            kname = cat_name.get(cat,"Kostnad")
+            name = c.get("name","")
+            date = c.get("date","")
+
+            elements.append(Spacer(1,2*mm))
+            elements.append(Paragraph(
+                f"<b>{name}</b>  ·  {date}  ·  {c.get('category','')}",
+                ps("ch", fontSize=8, fontName="Helvetica-Bold", textColor=colors.HexColor("#0369a1"), spaceBefore=2, spaceAfter=1)
+            ))
+            rows = [
+                [konto, kname, f"{net:.2f}", "", f"Kostnad exkl. moms"],
+                ["2640", "Ingående moms", f"{vat_c:.2f}", "", f"Moms {mrate}%"],
+                ["1930", "Företagskonto", "", f"{amount:.2f}", "Betalning"],
+            ]
+            trans_table(rows)
+
+    # ── 3. UTLÄGG ──────────────────────────────────────────────────
+    if expenses:
+        elements.append(Spacer(1,4*mm))
+        section_hdr("3. UTLÄGG (ANSTÄLLDA)", "#7c3aed")
+        exp_konto = {"Material":"5410","Bränsle":"5612","Milersättning":"7331","Parkering":"5651","Övrigt":"6990"}
+
+        for e in sorted(expenses, key=lambda x: x.get("date","")):
+            amount = e.get("amount", 0)
+            mrate = e.get("moms_rate", 0)
+            vat_e = round(amount - amount/(1+mrate/100), 2) if mrate > 0 else 0
+            net = round(amount - vat_e, 2)
+            cat = e.get("category","Övrigt")
+            konto = exp_konto.get(cat,"6990")
+            name = e.get("description","") or cat
+            date = e.get("date","")
+
+            elements.append(Spacer(1,2*mm))
+            elements.append(Paragraph(
+                f"<b>{name}</b>  ·  {date}  ·  {cat}",
+                ps("eh", fontSize=8, fontName="Helvetica-Bold", textColor=colors.HexColor("#7c3aed"), spaceBefore=2, spaceAfter=1)
+            ))
+            rows = [
+                [konto, cat, f"{net:.2f}", "", "Utlägg exkl. moms"],
+            ]
+            if vat_e > 0:
+                rows.append(["2640", "Ingående moms", f"{vat_e:.2f}", "", f"Moms {mrate}%"])
+            rows.append(["2890", "Skuld anställd", "", f"{amount:.2f}", "Att ersätta"])
+            trans_table(rows)
+
+    # Footer
+    elements.append(Spacer(1,4*mm))
+    elements.append(Paragraph(
+        "Bokföringsunderlag enligt BAS-kontoplanen 2025. Kontrollera med din redovisningskonsult.",
+        ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"))
+    ))
+
+    doc.build(elements)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="bokforingsunderlag_{month}.pdf"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
