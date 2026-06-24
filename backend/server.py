@@ -2787,6 +2787,85 @@ async def get_my_expenses(current=Depends(get_current_user)):
         d["_id"] = str(d["_id"])
     return docs
 
+
+# ── Send Invoice by Email ─────────────────────────────────────────────────────
+@api_router.post("/invoices/{invoice_id}/send")
+async def send_invoice_email(invoice_id: str, current=Depends(get_current_user)):
+    doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Faktura hittades inte")
+
+    customer_email = doc.get("customer_email", "")
+    if not customer_email:
+        raise HTTPException(status_code=400, detail="Kunden har ingen e-postadress")
+
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+    inv_num = doc.get("invoice_number", "")
+    customer_name = doc.get("customer_name", "")
+    due_date = doc.get("due_date", "")
+    amount = doc.get("customer_pays", 0)
+
+    # Generate PDF
+    pdf_bytes = build_invoice_pdf(doc, inv_settings)
+    import base64
+    pdf_b64 = base64.b64encode(pdf_bytes).decode()
+
+    resend.api_key = os.environ.get("RESEND_API_KEY", "")
+    if not resend.api_key:
+        raise HTTPException(status_code=500, detail="E-posttjänst ej konfigurerad")
+
+    admin_email = os.environ.get("ADMIN_EMAIL", "akhazzane.othmane@gmail.com")
+
+    try:
+        resend.Emails.send({
+            "from": f"{company} <onboarding@resend.dev>",
+            "to": admin_email,  # Temp until domain verified
+            "subject": f"Faktura #{inv_num} från {company}",
+            "html": f"""
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#fff;">
+              <div style="background:#141414;padding:28px 36px;">
+                <h1 style="color:#fff;font-size:22px;margin:0;font-weight:700;">{company}</h1>
+                <p style="color:rgba(255,255,255,0.55);margin:6px 0 0;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">Faktura</p>
+              </div>
+              <div style="padding:36px;border:1px solid #e2e8f0;border-top:none;">
+                <p style="font-size:17px;color:#141414;margin:0 0 8px;font-weight:600;">Hej {customer_name},</p>
+                <p style="color:#64748b;font-size:15px;line-height:1.7;margin:0 0 24px;">
+                  Tack för att du anlitade oss! Bifogat finner du din faktura.
+                </p>
+                <div style="background:#f8fafc;border-radius:8px;padding:20px;margin:0 0 24px;border-left:3px solid #141414;">
+                  <p style="margin:0 0 8px;font-size:14px;color:#141414;"><span style="color:#64748b;">Fakturanummer</span> &nbsp; <strong>#{inv_num}</strong></p>
+                  <p style="margin:0 0 8px;font-size:14px;color:#141414;"><span style="color:#64748b;">Förfallodatum</span> &nbsp; <strong>{due_date}</strong></p>
+                  <p style="margin:0;font-size:14px;color:#141414;"><span style="color:#64748b;">Att betala</span> &nbsp; <strong>{amount:.2f} kr</strong></p>
+                </div>
+                <p style="color:#64748b;font-size:14px;margin:0 0 24px;">
+                  Fakturan finns bifogad som PDF. Har du frågor är du välkommen att kontakta oss.
+                </p>
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 20px;"/>
+                <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">
+                  {company} · Miljövänlig städning i Umeå · 50% RUT-avdrag
+                </p>
+              </div>
+            </div>
+            """,
+            "attachments": [{
+                "filename": f"faktura_{inv_num}.pdf",
+                "content": pdf_b64,
+            }]
+        })
+
+        # Update invoice status to sent
+        await db.invoices.update_one(
+            {"_id": to_object_id(invoice_id)},
+            {"$set": {"status": "sent", "sent_at": datetime.now(timezone.utc).isoformat()}}
+        )
+
+        return {"success": True, "message": f"Faktura skickad till {customer_email}"}
+
+    except Exception as e:
+        logger.error(f"Failed to send invoice: {e}")
+        raise HTTPException(status_code=500, detail=f"Kunde inte skicka faktura: {str(e)}")
+
 app.include_router(api_router)
 
 app.add_middleware(
