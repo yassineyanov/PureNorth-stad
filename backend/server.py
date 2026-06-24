@@ -1599,37 +1599,36 @@ def recalc_invoice(inv):
 
 @api_router.get("/economy/overview")
 async def economy_overview(start: str, end: str, current=Depends(get_current_user)):
-    # Constants (Swedish law 2025/2026)
-    ARBETSGIVARAVGIFT = 0.3142   # 31.42% on gross salary
-    PRELSKATT = 0.30             # ~30% source tax (approximate)
-    SEMESTERERSATTNING = 0.12    # 12% holiday pay on gross salary
+    ARBETSGIVARAVGIFT = 0.3142
+    PRELSKATT = 0.30
+    SEMESTERERSATTNING = 0.12
 
-    # ── Revenue from invoices ──────────────────────────────────────────
-    invoices_raw = await db.invoices.find({
+    # ── Invoices ──────────────────────────────────────────────────
+    invoices = await db.invoices.find({
         "created_at": {"$gte": start, "$lte": end + "T23:59:59"}
     }).to_list(2000)
-    invoices = [recalc_invoice(i) for i in invoices_raw]
 
-    revenue_excl_vat = sum(i.get("subtotal", 0) for i in invoices)
-    reminder_fees = sum(
+    # Core revenue calculations
+    forsaljning_excl_moms = sum(i.get("subtotal", 0) for i in invoices)
+    utgaende_moms = sum(i.get("vat_amount", 0) for i in invoices)
+    rut_avdrag = sum(i.get("rut_deduction", 0) for i in invoices)
+    kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
+    betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled"])
+
+    # Påminnelseavgifter (no moms)
+    paminnelse_avgifter = sum(
         sum(item.get("quantity",1) * item.get("unit_price",0)
             for item in inv.get("items",[])
-            if "Påminnelseavgift" in item.get("service","") or "inkasso" in item.get("description","").lower()
-        ) for inv in invoices
+            if "Påminnelseavgift" in item.get("service",""))
+        for inv in invoices
     )
-    vat_collected = sum(i.get("vat_amount", 0) for i in invoices)
-    rut_deductions = sum(i.get("rut_deduction", 0) for i in invoices)
-    total_invoiced = sum(i.get("customer_pays", 0) for i in invoices)
-    paid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
-    unpaid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") != "paid")
-    total_revenue = revenue_excl_vat + reminder_fees
 
     invoice_count = len(invoices)
     paid_count = sum(1 for i in invoices if i.get("status") == "paid")
 
-    # ── Payroll costs ──────────────────────────────────────────────────
+    # ── Payroll ───────────────────────────────────────────────────
     payroll_summary, payroll_settings = await build_payroll_summary(start, end)
-
     gross_salary = sum(
         r["normal_h"] * r["hourly_rate"] +
         r["ob1_h"] * payroll_settings.ob1_extra +
@@ -1641,80 +1640,86 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     semesterersattning = round(gross_salary * SEMESTERERSATTNING, 2)
     prelskatt_estimate = round(gross_salary * PRELSKATT, 2)
     total_payroll_cost = round(gross_salary + arbetsgivaravgifter + semesterersattning, 2)
-
-    # Employee expenses (utlägg - reimbursed costs)
     utlagg_total = sum(r.get("expense_total", 0) for r in payroll_summary.values())
 
-    # ── VAT to pay ─────────────────────────────────────────────────────
-    # Real material costs from costs collection
-    cost_query = {"date": {"$gte": start[:10], "$lte": end[:10]}}
-    real_costs = await db.costs.find(cost_query).to_list(1000)
-    material_total_incl = sum(c.get("amount", 0) for c in real_costs)
-    ingaende_moms = sum(
-        c.get("amount", 0) - c.get("amount", 0) / (1 + c.get("moms_rate", 25) / 100)
-        for c in real_costs
-    )
-    material_total_excl = material_total_incl - ingaende_moms
-    ingoing_vat_estimate = round(ingaende_moms, 2)
-    vat_to_pay = round(vat_collected - ingoing_vat_estimate, 2)
-
-    # Group costs by category
-    costs_by_category = {}
-    for c in real_costs:
-        cat = c.get("category", "material")
-        costs_by_category[cat] = costs_by_category.get(cat, 0) + c.get("amount", 0)
-
-    # ── Profit / Loss ──────────────────────────────────────────────────
-    total_costs = total_payroll_cost + utlagg_total + material_total_excl
-    operating_profit = round(revenue_excl_vat - total_costs, 2)
-    profit_margin = round((operating_profit / revenue_excl_vat * 100) if revenue_excl_vat > 0 else 0, 1)
-
-    # ── Obligations (what to pay Skatteverket) ─────────────────────────
-    # AGI = arbetsgivardeklaration, paid monthly by the 12th
-    agi_to_pay = round(arbetsgivaravgifter + prelskatt_estimate, 2)
-
-    # ── Per employee breakdown ─────────────────────────────────────────
+    # Per employee
     employee_costs = []
     for eid, row in payroll_summary.items():
-        gross = (
-            row["normal_h"] * row["hourly_rate"] +
-            row["ob1_h"] * payroll_settings.ob1_extra +
-            row["ob2_h"] * payroll_settings.ob2_extra +
-            row.get("sjuklon_net", 0)
-        )
-        ag_avg = round(gross * ARBETSGIVARAVGIFT, 2)
-        sem = round(gross * SEMESTERERSATTNING, 2)
-        total_cost = round(gross + ag_avg + sem, 2)
+        gross = (row["normal_h"]*row["hourly_rate"] + row["ob1_h"]*payroll_settings.ob1_extra +
+                 row["ob2_h"]*payroll_settings.ob2_extra + row.get("sjuklon_net",0))
         employee_costs.append({
             "name": row["name"],
-            "employment_type": row.get("employment_type", "fastanstalld"),
+            "employment_type": row.get("employment_type","fastanstalld"),
+            "normal_h": row["normal_h"],
+            "hourly_rate": row["hourly_rate"],
             "gross_salary": round(gross, 2),
-            "arbetsgivaravgift": ag_avg,
-            "semesterersattning": sem,
-            "total_cost": total_cost,
-            "hours": round(row["normal_h"] + row["ob1_h"] + row["ob2_h"], 2),
+            "ag_avgift": round(gross * ARBETSGIVARAVGIFT, 2),
+            "semester": round(gross * SEMESTERERSATTNING, 2),
+            "prelskatt": round(gross * PRELSKATT, 2),
+            "netto_lon": round(gross * (1 - PRELSKATT), 2),
+            "total_cost": round(gross * (1 + ARBETSGIVARAVGIFT + SEMESTERERSATTNING), 2),
+            "expense_total": row.get("expense_total", 0),
         })
+
+    # ── Material costs ────────────────────────────────────────────
+    real_costs = await db.costs.find({
+        "date": {"$gte": start[:10], "$lte": end[:10]}
+    }).to_list(1000)
+    material_total_incl = sum(c.get("amount", 0) for c in real_costs)
+    ingaende_moms_mat = sum(
+        c.get("amount",0) - c.get("amount",0)/(1+c.get("moms_rate",25)/100)
+        for c in real_costs
+    )
+    material_excl_moms = material_total_incl - ingaende_moms_mat
+
+    expenses = await db.expenses.find({
+        "date": {"$gte": start[:10], "$lte": end[:10]}
+    }).to_list(1000)
+    ingaende_moms_exp = sum(
+        e.get("amount",0) - e.get("amount",0)/(1+e.get("moms_rate",0)/100)
+        for e in expenses if e.get("moms_rate",0) > 0
+    )
+    ingaende_moms_total = round(ingaende_moms_mat + ingaende_moms_exp, 2)
+
+    # ── Moms ─────────────────────────────────────────────────────
+    moms_att_betala = round(utgaende_moms - ingaende_moms_total, 2)
+
+    # ── AGI ──────────────────────────────────────────────────────
+    agi_to_pay = round(arbetsgivaravgifter + prelskatt_estimate, 2)
+
+    # ── Profit ───────────────────────────────────────────────────
+    total_intakter = forsaljning_excl_moms + paminnelse_avgifter
+    total_kostnader = total_payroll_cost + utlagg_total + material_excl_moms
+    rorelseresultat = round(total_intakter - total_kostnader, 2)
+    rorselsemarginal = round((rorelseresultat / total_intakter * 100) if total_intakter > 0 else 0, 1)
+
+    # ── Costs by category ─────────────────────────────────────────
+    costs_by_category = {}
+    for c in real_costs:
+        cat = c.get("category","material")
+        costs_by_category[cat] = costs_by_category.get(cat,0) + c.get("amount",0)
 
     return {
         "period": {"start": start, "end": end},
-        "material_costs": {
-            "total_incl_moms": round(material_total_incl, 2),
-            "total_excl_moms": round(material_total_excl, 2),
-            "ingaende_moms": round(ingaende_moms, 2),
-            "by_category": {k: round(v, 2) for k, v in costs_by_category.items()},
-            "count": len(real_costs),
-        },
         "revenue": {
-            "excl_vat": round(revenue_excl_vat, 2),
-            "reminder_fees": round(reminder_fees, 2),
-            "total_revenue": round(total_revenue, 2),
-            "vat_collected": round(vat_collected, 2),
-            "rut_deductions": round(rut_deductions, 2),
-            "total_invoiced": round(total_invoiced, 2),
-            "paid": round(paid_invoices, 2),
-            "unpaid": round(unpaid_invoices, 2),
+            "forsaljning_excl_moms": round(forsaljning_excl_moms, 2),
+            "paminnelse_avgifter": round(paminnelse_avgifter, 2),
+            "total_intakter": round(total_intakter, 2),
+            "utgaende_moms": round(utgaende_moms, 2),
+            "rut_avdrag": round(rut_avdrag, 2),
+            "kund_betalar": round(kund_betalar, 2),
+            "betalda": round(betalda, 2),
+            "obetalda": round(obetalda, 2),
             "invoice_count": invoice_count,
             "paid_count": paid_count,
+            # Legacy fields for compatibility
+            "excl_vat": round(forsaljning_excl_moms, 2),
+            "vat_collected": round(utgaende_moms, 2),
+            "rut_deductions": round(rut_avdrag, 2),
+            "total_invoiced": round(kund_betalar, 2),
+            "paid": round(betalda, 2),
+            "unpaid": round(obetalda, 2),
+            "reminder_fees": round(paminnelse_avgifter, 2),
         },
         "payroll": {
             "gross_salary": round(gross_salary, 2),
@@ -1726,24 +1731,33 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
             "utlagg": round(utlagg_total, 2),
             "employees": employee_costs,
         },
+        "material_costs": {
+            "total_incl_moms": round(material_total_incl, 2),
+            "total_excl_moms": round(material_excl_moms, 2),
+            "ingaende_moms": round(ingaende_moms_mat, 2),
+            "by_category": {k: round(v,2) for k,v in costs_by_category.items()},
+            "count": len(real_costs),
+        },
         "vat": {
-            "collected": round(vat_collected, 2),
-            "ingoing_estimate": round(ingoing_vat_estimate, 2),
-            "to_pay": round(vat_to_pay, 2),
+            "collected": round(utgaende_moms, 2),
+            "ingoing_estimate": round(ingaende_moms_total, 2),
+            "to_pay": round(moms_att_betala, 2),
+            # Legacy
+            "ingoing_estimate": round(ingaende_moms_total, 2),
         },
         "obligations": {
-            "salaries_to_pay": round(gross_salary, 2),
+            "salaries_to_pay": round(gross_salary * (1-PRELSKATT), 2),
             "agi_to_pay": agi_to_pay,
             "arbetsgivaravgifter": arbetsgivaravgifter,
             "prelskatt_estimate": prelskatt_estimate,
-            "vat_to_pay": round(vat_to_pay, 2),
-            "total_to_pay": round(gross_salary + agi_to_pay + vat_to_pay, 2),
+            "vat_to_pay": round(moms_att_betala, 2),
+            "total_to_pay": round(gross_salary*(1-PRELSKATT) + agi_to_pay + moms_att_betala, 2),
         },
         "result": {
-            "revenue_excl_vat": round(revenue_excl_vat, 2),
-            "total_costs": round(total_costs, 2),
-            "operating_profit": operating_profit,
-            "profit_margin": profit_margin,
+            "revenue_excl_vat": round(total_intakter, 2),
+            "total_costs": round(total_kostnader, 2),
+            "operating_profit": rorelseresultat,
+            "profit_margin": rorselsemarginal,
         },
         "constants": {
             "arbetsgivaravgift_pct": ARBETSGIVARAVGIFT * 100,
