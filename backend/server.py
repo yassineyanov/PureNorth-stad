@@ -1594,6 +1594,28 @@ async def set_pricelist(payload: PriceListSettings, current=Depends(get_current_
 
 # ── Economy / Ekonomiöversikt ────────────────────────────────────────────────
 @api_router.get("/economy/overview")
+def recalc_invoice(inv):
+    """Recalculate invoice totals from items (includes påminnelseavgift etc)"""
+    items = inv.get("items", [])
+    if not items:
+        return inv
+    subtotal = sum(i.get("quantity",1) * i.get("unit_price",0) for i in items)
+    # Use stored vat rate or default 25%
+    stored_sub = inv.get("subtotal", subtotal) or subtotal
+    stored_vat = inv.get("vat_amount", 0)
+    vat_rate = (stored_vat / stored_sub * 100) if stored_sub > 0 else 25
+    vat_amount = round(subtotal * vat_rate / 100, 2)
+    rut_deduction = inv.get("rut_deduction", 0)
+    total_amount = round(subtotal + vat_amount, 2)
+    customer_pays = round(total_amount - rut_deduction, 2)
+    return {
+        **inv,
+        "subtotal": round(subtotal, 2),
+        "vat_amount": vat_amount,
+        "total_amount": total_amount,
+        "customer_pays": customer_pays,
+    }
+
 async def economy_overview(start: str, end: str, current=Depends(get_current_user)):
     # Constants (Swedish law 2025/2026)
     ARBETSGIVARAVGIFT = 0.3142   # 31.42% on gross salary
@@ -1601,9 +1623,10 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     SEMESTERERSATTNING = 0.12    # 12% holiday pay on gross salary
 
     # ── Revenue from invoices ──────────────────────────────────────────
-    invoices = await db.invoices.find({
+    invoices_raw = await db.invoices.find({
         "created_at": {"$gte": start, "$lte": end + "T23:59:59"}
     }).to_list(2000)
+    invoices = [recalc_invoice(i) for i in invoices_raw]
 
     revenue_excl_vat = sum(i.get("subtotal", 0) for i in invoices)
     vat_collected = sum(i.get("vat_amount", 0) for i in invoices)
@@ -2965,7 +2988,8 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
     company = inv_settings.company_name or "PureNorth Städ"
     orgnr = inv_settings.company_orgnr or ""
 
-    invoices = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    invoices_raw = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    invoices = [recalc_invoice(i) for i in invoices_raw]
     payroll_summary, payroll_settings = await build_payroll_summary(start, end)
     costs = await db.costs.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
     expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
@@ -3240,7 +3264,8 @@ async def export_sie(month: str, current=Depends(get_current_user)):
     orgnr = (inv_settings.company_orgnr or "").replace("-","")
 
     # Collect data
-    invoices = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    invoices_raw = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    invoices = [recalc_invoice(i) for i in invoices_raw]
     payroll_summary, payroll_settings = await build_payroll_summary(start, end)
     costs = await db.costs.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
     expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
@@ -3606,7 +3631,8 @@ async def export_moms_pdf(month: str, current=Depends(get_current_user)):
     month_name = MONTHS_SV[int(mon)]
 
     # Collect data
-    invoices = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    invoices_raw = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    invoices = [recalc_invoice(i) for i in invoices_raw]
     costs = await db.costs.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
     expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
 
