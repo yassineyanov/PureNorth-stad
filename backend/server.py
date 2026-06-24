@@ -2693,6 +2693,89 @@ async def costs_overview(start: str = None, end: str = None, current=Depends(get
         "costs_list": [{**{k: str(v) if k == "_id" else v for k, v in c.items()}} for c in costs],
     }
 
+
+# ── Receipt Upload ────────────────────────────────────────────────────────────
+@api_router.post("/expenses/submit")
+async def submit_expense(
+    employee_id: str = Form(...),
+    date: str = Form(...),
+    amount: float = Form(...),
+    moms_rate: float = Form(25.0),
+    category: str = Form("Material"),
+    description: str = Form(""),
+    receipt: UploadFile = File(None),
+    current=Depends(get_current_user)
+):
+    """Staff submits expense with optional receipt photo"""
+    doc = {
+        "employee_id": employee_id,
+        "date": date,
+        "amount": amount,
+        "moms_rate": moms_rate,
+        "category": category,
+        "description": description,
+        "status": "pending",
+        "submitted_by": current.get("email", ""),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "receipt_image": None,
+    }
+
+    # Handle receipt image upload
+    if receipt and receipt.filename:
+        try:
+            contents = await receipt.read()
+            import base64
+            ext = receipt.filename.split(".")[-1].lower()
+            mime = "image/jpeg" if ext in ["jpg","jpeg"] else "image/png" if ext == "png" else "image/jpeg"
+            doc["receipt_image"] = f"data:{mime};base64,{base64.b64encode(contents).decode()}"
+        except Exception as e:
+            logger.error(f"Receipt upload error: {e}")
+
+    result = await db.expenses.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return doc
+
+@api_router.get("/expenses/pending")
+async def get_pending_expenses(current=Depends(get_current_user)):
+    """Get all pending expense submissions"""
+    docs = await db.expenses.find({"status": "pending"}).sort("created_at", -1).to_list(100)
+    for d in docs:
+        d["_id"] = str(d["_id"])
+        # Get employee name
+        try:
+            emp = await db.employees.find_one({"_id": to_object_id(d["employee_id"])})
+            d["employee_name"] = emp.get("name", "Okänd") if emp else "Okänd"
+        except:
+            d["employee_name"] = "Okänd"
+    return docs
+
+@api_router.patch("/expenses/{expense_id}/approve")
+async def approve_expense(expense_id: str, current=Depends(get_current_user)):
+    """Admin approves expense - moves to approved status"""
+    await db.expenses.update_one(
+        {"_id": to_object_id(expense_id)},
+        {"$set": {"status": "approved", "approved_by": current.get("email"), "approved_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True}
+
+@api_router.patch("/expenses/{expense_id}/reject")
+async def reject_expense(expense_id: str, current=Depends(get_current_user)):
+    """Admin rejects expense"""
+    await db.expenses.update_one(
+        {"_id": to_object_id(expense_id)},
+        {"$set": {"status": "rejected"}}
+    )
+    return {"success": True}
+
+@api_router.get("/expenses/my")
+async def get_my_expenses(current=Depends(get_current_user)):
+    """Get current user's submitted expenses"""
+    email = current.get("email", "")
+    docs = await db.expenses.find({"submitted_by": email}).sort("created_at", -1).to_list(100)
+    for d in docs:
+        d["_id"] = str(d["_id"])
+    return docs
+
 app.include_router(api_router)
 
 app.add_middleware(
