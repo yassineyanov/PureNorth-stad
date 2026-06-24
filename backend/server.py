@@ -1558,11 +1558,6 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     # Employee expenses (utlägg - reimbursed costs)
     utlagg_total = sum(r.get("expense_total", 0) for r in payroll_summary.values())
 
-    # ── Profit / Loss ──────────────────────────────────────────────────
-    total_costs = total_payroll_cost + utlagg_total + material_total_excl
-    operating_profit = round(revenue_excl_vat - total_costs, 2)
-    profit_margin = round((operating_profit / revenue_excl_vat * 100) if revenue_excl_vat > 0 else 0, 1)
-
     # ── VAT to pay ─────────────────────────────────────────────────────
     # Real material costs from costs collection
     cost_query = {"date": {"$gte": start[:10], "$lte": end[:10]}}
@@ -1581,6 +1576,11 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     for c in real_costs:
         cat = c.get("category", "material")
         costs_by_category[cat] = costs_by_category.get(cat, 0) + c.get("amount", 0)
+
+    # ── Profit / Loss ──────────────────────────────────────────────────
+    total_costs = total_payroll_cost + utlagg_total + material_total_excl
+    operating_profit = round(revenue_excl_vat - total_costs, 2)
+    profit_margin = round((operating_profit / revenue_excl_vat * 100) if revenue_excl_vat > 0 else 0, 1)
 
     # ── Obligations (what to pay Skatteverket) ─────────────────────────
     # AGI = arbetsgivardeklaration, paid monthly by the 12th
