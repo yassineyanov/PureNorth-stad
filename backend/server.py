@@ -5,7 +5,7 @@ import os
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, Response
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, Response, Form, File, UploadFile
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import logging
