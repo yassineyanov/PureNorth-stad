@@ -1236,9 +1236,23 @@ async def payroll_export(start: str, end: str, format: str = "xlsx", current=Dep
             ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
             ("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),
         ]))
-        elements.append(Paragraph(company, ps("h", fontSize=18, fontName="Helvetica-Bold")))
-        elements.append(Paragraph(f"Lönesammanställning · {start} – {end}", ps("s", fontSize=11, textColor=colors.HexColor("#64748b"), spaceAfter=6)))
-        elements.append(Paragraph(f"Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}", ps("d", fontSize=8, textColor=colors.HexColor("#94a3b8"), spaceAfter=8)))
+        # Header block
+        hdr_data = [[
+            Paragraph(f"<b>{company}</b>", ps("ch", fontSize=16, fontName="Helvetica-Bold", textColor=colors.white)),
+            Paragraph(f"<b>LÖNESAMMANSTÄLLNING</b><br/>{start} – {end}", ps("ct", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+        ]]
+        hdr_tbl = Table(hdr_data, colWidths=[100*mm, None])
+        hdr_tbl.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),
+            ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+            ("TOPPADDING",(0,0),(-1,-1),12),("BOTTOMPADDING",(0,0),(-1,-1),12),
+            ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+        ]))
+        elements.append(hdr_tbl)
+        elements.append(Paragraph(
+            f"Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')} UTC",
+            ps("d", fontSize=8, textColor=colors.HexColor("#94a3b8"), spaceBefore=4, spaceAfter=8)
+        ))
         PRELSKATT = 0.30
         # Table
         data = [["Namn", "Tim", "Bruttolön", "Prelskatt (30%)", "Nettolön →Bank", "Utlägg", "Summa"]]
