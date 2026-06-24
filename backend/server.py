@@ -1610,16 +1610,13 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     }).to_list(2000)
     invoices = [recalc_invoice(i) for i in invoices_raw]
 
-    # Separate reminder fees (no moms) from regular revenue
-    def get_reminder_fee(inv):
-        return sum(
-            i.get("quantity",1) * i.get("unit_price",0)
-            for i in inv.get("items",[])
-            if i.get("service") == "Påminnelseavgift" or "inkasso" in i.get("description","").lower()
-        )
-
     revenue_excl_vat = sum(i.get("subtotal", 0) for i in invoices)
-    reminder_fees = sum(get_reminder_fee(i) for i in invoices)
+    reminder_fees = sum(
+        sum(item.get("quantity",1) * item.get("unit_price",0)
+            for item in inv.get("items",[])
+            if "Påminnelseavgift" in item.get("service","") or "inkasso" in item.get("description","").lower()
+        ) for inv in invoices
+    )
     vat_collected = sum(i.get("vat_amount", 0) for i in invoices)
     rut_deductions = sum(i.get("rut_deduction", 0) for i in invoices)
     total_invoiced = sum(i.get("total_amount", 0) for i in invoices)
