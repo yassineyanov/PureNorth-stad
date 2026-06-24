@@ -2674,20 +2674,9 @@ async def costs_overview(start: str = None, end: str = None, current=Depends(get
         cat = c.get("category", "material")
         material_by_cat[cat] = material_by_cat.get(cat, 0) + c.get("amount", 0)
 
-    # Employee costs from payroll
-    employees = await db.employees.find().to_list(100)
-    emp_cost = 0
-    for emp in employees:
-        shifts = await db.shifts.find({"employee_id": str(emp["_id"])}).to_list(1000)
-        for s in shifts:
-            hours = s.get("hours", 0)
-            rate = emp.get("hourly_rate", 0)
-            emp_cost += hours * rate
 
     # Profit calculation
-    total_costs = material_total + emp_cost
-    gross_profit = revenue - material_total
-    net_profit = revenue - total_costs
+    net_profit = revenue - material_total
     margin = (net_profit / revenue * 100) if revenue > 0 else 0
 
     return {
@@ -2696,9 +2685,8 @@ async def costs_overview(start: str = None, end: str = None, current=Depends(get
         "material_excl_moms": round(material_excl_moms, 2),
         "ingaende_moms": round(ingaende_moms, 2),
         "material_by_category": {k: round(v, 2) for k, v in material_by_cat.items()},
-        "employee_costs": round(emp_cost, 2),
-        "total_costs": round(total_costs, 2),
-        "gross_profit": round(gross_profit, 2),
+        "employee_costs": 0,
+        "total_costs": round(material_total, 2),
         "net_profit": round(net_profit, 2),
         "margin": round(margin, 1),
         "costs_list": [{**c} for c in costs],
