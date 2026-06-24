@@ -1217,6 +1217,59 @@ async def payroll_summary(start: str, end: str, current=Depends(get_current_user
 @api_router.get("/payroll/export")
 async def payroll_export(start: str, end: str, format: str = "xlsx", current=Depends(get_current_user)):
     summary, settings = await build_payroll_summary(start, end)
+    if format == "pdf":
+        inv_settings = await get_invoice_settings_obj()
+        company = inv_settings.company_name or "PureNorth Städ"
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=A4,
+            topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm)
+        styles = getSampleStyleSheet()
+        elements = []
+        def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+        # Header
+        hdr = Table([[
+            ParagraphStyle and Paragraph(company, ps("h", fontSize=16, fontName="Helvetica-Bold", textColor=colors.white)),
+            Paragraph(f"LÖNESAMMANSTÄLLNING<br/>{start} – {end}", ps("s", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+        ]], colWidths=[100*mm, None])
+        hdr.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),
+            ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+            ("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),
+        ]))
+        elements.append(Paragraph(company, ps("h", fontSize=18, fontName="Helvetica-Bold")))
+        elements.append(Paragraph(f"Lönesammanställning · {start} – {end}", ps("s", fontSize=11, textColor=colors.HexColor("#64748b"), spaceAfter=6)))
+        elements.append(Paragraph(f"Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}", ps("d", fontSize=8, textColor=colors.HexColor("#94a3b8"), spaceAfter=8)))
+        PRELSKATT = 0.30
+        # Table
+        data = [["Namn", "Tim", "Bruttolön", "Prelskatt (30%)", "Nettolön →Bank", "Utlägg", "Summa"]]
+        total_brutto = total_netto = total_utlagg = total_summa = 0
+        for r in summary.values():
+            brutto = r["normal_h"]*r["hourly_rate"] + r["ob1_h"]*settings.ob1_extra + r["ob2_h"]*settings.ob2_extra + r.get("sjuklon_net",0)
+            prelskatt = brutto * PRELSKATT
+            netto = brutto - prelskatt
+            utlagg = r.get("expense_total", 0)
+            summa = r.get("total_pay", 0)
+            total_brutto += brutto; total_netto += netto; total_utlagg += utlagg; total_summa += summa
+            data.append([r["name"], f'{r["normal_h"]:.1f}', f'{brutto:.2f}', f'-{prelskatt:.2f}', f'{netto:.2f}', f'{utlagg:.2f}', f'{summa:.2f}'])
+        data.append(["TOTALT", "", f'{total_brutto:.2f}', f'-{total_brutto*PRELSKATT:.2f}', f'{total_netto:.2f}', f'{total_utlagg:.2f}', f'{total_summa:.2f}'])
+        tbl = Table(data, colWidths=[45*mm, 18*mm, 28*mm, 28*mm, 28*mm, 22*mm, 25*mm])
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
+            ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+            ("FONTSIZE",(0,0),(-1,-1),9),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+            ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+            ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+            ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+            ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+            ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),
+            ("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+            ("TEXTCOLOR",(4,1),(4,-1),colors.HexColor("#15803d")),
+            ("TEXTCOLOR",(3,1),(3,-1),colors.HexColor("#dc2626")),
+        ]))
+        elements.append(tbl)
+        doc.build(elements)
+        return Response(content=buf.getvalue(), media_type="application/pdf",
+            headers={"Content-Disposition": f'inline; filename="lon_{start}_{end}.pdf"'})
     if format == "paxml":
         xml_str = build_paxml_str(summary, settings, start, end)
         return Response(
