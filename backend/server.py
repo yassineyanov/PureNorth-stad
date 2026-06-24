@@ -3982,16 +3982,16 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
 
     admin_email = os.environ.get("ADMIN_EMAIL", "akhazzane.othmane@gmail.com")
 
-    subject = f"Påminnelse #{reminder_count}: Faktura #{inv_num} förfallen – {company}"
+    subject = f"Påminnelse #{reminder_count}: Faktura #{inv_num} – {company}"
     if reminder_count >= 3:
-        subject = f"SISTA VARNING: Faktura #{inv_num} – {company}"
+        subject = f"Sista betalningspåminnelse: Faktura #{inv_num} – {company}"
 
     html = f"""
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#fff;">
       <div style="background:#dc2626;padding:28px 36px;">
         <h1 style="color:#fff;font-size:20px;margin:0;font-weight:700;">{company}</h1>
-        <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;">
-          {'⚠️ Påminnelse #' + str(reminder_count) if reminder_count < 3 else '🚨 SISTA VARNING'}
+        <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;letter-spacing:0.05em;text-transform:uppercase;">
+          {'Påminnelse #' + str(reminder_count) if reminder_count < 3 else 'Sista betalningspåminnelse'}
         </p>
       </div>
       <div style="padding:36px;border:1px solid #e2e8f0;border-top:none;">
@@ -4008,7 +4008,7 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
           {'<p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Påminnelseavgift</span> &nbsp; <strong>' + str(reminder_fee) + ' kr</strong></p>' if reminder_fee > 0 else ''}
           <p style="margin:0;font-size:16px;font-weight:700;color:#dc2626;">Att betala: {total_with_fee:.2f} kr</p>
         </div>
-        {'<p style="color:#dc2626;font-size:14px;font-weight:600;margin:0 0 16px;">⚠️ Om betalning inte inkommer inom 10 dagar skickas ärendet till inkasso.</p>' if reminder_count >= 2 else ''}
+        {'<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px 16px;margin:0 0 16px;"><p style="color:#dc2626;font-size:13px;font-weight:600;margin:0;">Om betalning inte inkommer inom 10 dagar lämnas ärendet till inkassobolag för vidare åtgärd.</p></div>' if reminder_count >= 2 else ''}
         <p style="color:#64748b;font-size:14px;margin:0 0 16px;">
           Vid frågor, kontakta oss gärna.
         </p>
