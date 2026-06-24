@@ -4074,25 +4074,28 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
         }
 
         if reminder_fee > 0:
-            # Add påminnelseavgift to invoice items
+            # Add påminnelseavgift to invoice items (NO moms on reminder fee)
             items = doc.get("items", [])
             # Remove old reminder fee if exists
             items = [i for i in items if i.get("service") != "Påminnelseavgift"]
             # Add new reminder fee
             items.append({
                 "service": "Påminnelseavgift",
-                "description": f"Påminnelseavgift enligt inkassolagen",
+                "description": "Påminnelseavgift enligt inkassolagen (ingen moms)",
                 "quantity": 1,
                 "unit_price": reminder_fee,
                 "is_material": False,
             })
-            # Recalculate totals
-            subtotal = sum(i["quantity"] * i["unit_price"] for i in items)
+
+            # Recalculate: reminder fee is AFTER moms and RUT
+            work_items = [i for i in items if i.get("service") != "Påminnelseavgift"]
+            subtotal = sum(i["quantity"] * i["unit_price"] for i in work_items)
             vat_rate = doc.get("vat_amount", 0) / doc.get("subtotal", 1) * 100 if doc.get("subtotal", 0) > 0 else 25
             vat_amount = round(subtotal * vat_rate / 100, 2)
             rut_deduction = doc.get("rut_deduction", 0)
-            total_amount = round(subtotal + vat_amount, 2)
-            customer_pays = round(total_amount - rut_deduction, 2)
+            total_excl_reminder = round(subtotal + vat_amount - rut_deduction, 2)
+            customer_pays = round(total_excl_reminder + reminder_fee, 2)
+            total_amount = round(subtotal + vat_amount + reminder_fee, 2)
 
             update_fields["items"] = items
             update_fields["subtotal"] = round(subtotal, 2)
