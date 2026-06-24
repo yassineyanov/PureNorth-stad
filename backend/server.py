@@ -255,6 +255,7 @@ class ExpenseCreate(BaseModel):
     employee_id: str
     date: str
     amount: float = Field(..., ge=0)
+    moms_rate: float = 0.0
     category: str = "Övrigt"
     description: Optional[str] = None
 
