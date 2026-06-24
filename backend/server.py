@@ -3581,6 +3581,187 @@ async def export_agi(month: str, current=Depends(get_current_user)):
         headers={"Content-Disposition": f'attachment; filename="agi_{month}.xml"'}
     )
 
+
+# ── Momsdeklaration PDF ───────────────────────────────────────────────────────
+@api_router.get("/reports/moms")
+async def export_moms_pdf(month: str, current=Depends(get_current_user)):
+    """Export Momsdeklaration PDF in Skatteverket format
+    month format: YYYY-MM
+    """
+    import calendar
+    year, mon = month.split("-")
+    last_day = calendar.monthrange(int(year), int(mon))[1]
+    start = f"{month}-01"
+    end = f"{month}-{last_day:02d}"
+    start_dt = f"{start}T00:00:00"
+    end_dt = f"{end}T23:59:59"
+
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+    orgnr = inv_settings.company_orgnr or ""
+
+    MONTHS_SV = ["","Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"]
+    month_name = MONTHS_SV[int(mon)]
+
+    # Collect data
+    invoices = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
+    costs = await db.costs.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
+    expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
+
+    # Calculate moms
+    # Utgående moms (from invoices)
+    sales_excl = sum(i.get("subtotal", 0) for i in invoices)
+    vat_out_25 = sum(i.get("vat_amount", 0) for i in invoices)
+
+    # Ingående moms (from costs + expenses)
+    vat_in_mat = sum(c.get("amount",0) - c.get("amount",0)/(1+c.get("moms_rate",25)/100) for c in costs if c.get("moms_rate",25) > 0)
+    vat_in_exp = sum(e.get("amount",0) - e.get("amount",0)/(1+e.get("moms_rate",0)/100) for e in expenses if e.get("moms_rate",0) > 0)
+    vat_in_total = round(vat_in_mat + vat_in_exp, 2)
+
+    moms_to_pay = round(vat_out_25 - vat_in_total, 2)
+
+    # Build PDF
+    buf = BytesIO()
+    page_w, page_h = A4
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm)
+
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+
+    elements = []
+
+    # ── HEADER ─────────────────────────────────────────────────────
+    hdr = Table([[
+        Paragraph(f"<b>MOMSDEKLARATION</b>", ps("h", fontSize=16, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"{month_name} {year}", ps("s", fontSize=11, textColor=colors.white, alignment=2))
+    ]], colWidths=[120*mm, None])
+    hdr.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),
+        ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+        ("TOPPADDING",(0,0),(-1,-1),12),("BOTTOMPADDING",(0,0),(-1,-1),12),
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+    ]))
+    elements.append(hdr)
+
+    # Company info
+    elements.append(Paragraph(
+        f"{company}  ·  Org.nr: {orgnr}  ·  Redovisningsperiod: {start} – {end}",
+        ps("info", fontSize=8, textColor=colors.HexColor("#64748b"), spaceBefore=4, spaceAfter=6)
+    ))
+
+    # Divider
+    div = Table([[""]], colWidths=[page_w-40*mm])
+    div.setStyle(TableStyle([("LINEBELOW",(0,0),(-1,-1),1,colors.HexColor("#141414")),
+        ("TOPPADDING",(0,0),(-1,-1),0),("BOTTOMPADDING",(0,0),(-1,-1),0)]))
+    elements.append(div)
+    elements.append(Spacer(1,5*mm))
+
+    def row(ruta, label, value, bold=False, color=None):
+        val_color = colors.HexColor(color) if color else colors.HexColor("#141414")
+        fn = "Helvetica-Bold" if bold else "Helvetica"
+        data = [[
+            Paragraph(f"<b>Ruta {ruta}</b>", ps("r", fontSize=8, textColor=colors.HexColor("#94a3b8"))),
+            Paragraph(label, ps("l", fontSize=9, fontName=fn, textColor=colors.HexColor("#1a1a1a"))),
+            Paragraph(f"{value:,.2f} kr".replace(",","."), ps("v", fontSize=9, fontName=fn, textColor=val_color, alignment=2))
+        ]]
+        t = Table(data, colWidths=[18*mm, 120*mm, None])
+        t.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#F8FAFC") if bold else colors.white),
+            ("LINEBELOW",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+            ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
+            ("TOPPADDING",(0,0),(-1,-1),5),("BOTTOMPADDING",(0,0),(-1,-1),5),
+        ]))
+        elements.append(t)
+
+    def section(title, color="#141414"):
+        t = Table([[Paragraph(title, ps("sh", fontSize=9, fontName="Helvetica-Bold", textColor=colors.white))]], colWidths=[page_w-40*mm])
+        t.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1),colors.HexColor(color)),
+            ("LEFTPADDING",(0,0),(-1,-1),8),("TOPPADDING",(0,0),(-1,-1),5),("BOTTOMPADDING",(0,0),(-1,-1),5),
+        ]))
+        elements.append(t)
+
+    # ── A. MOMS ATT REDOVISA ────────────────────────────────────────
+    section("A. MOMS ATT REDOVISA (UTGÅENDE MOMS)", "#1e40af")
+    row("05", "Momspliktig försäljning (exkl. moms)", sales_excl)
+    row("10", "Utgående moms 25%", vat_out_25)
+    row("11", "Utgående moms 12%", 0)
+    row("12", "Utgående moms 6%", 0)
+
+    elements.append(Spacer(1,3*mm))
+
+    # ── B. AVDRAGSGILL INGÅENDE MOMS ───────────────────────────────
+    section("B. AVDRAGSGILL INGÅENDE MOMS", "#0369a1")
+    row("48", "Ingående moms att dra av", vat_in_total, color="#15803d")
+
+    elements.append(Spacer(1,3*mm))
+
+    # ── SUMMARY ────────────────────────────────────────────────────
+    section("SAMMANFATTNING - ATT BETALA/FÅ TILLBAKA", "#b45309")
+    row("49", "Moms att betala (+) eller få tillbaka (−)",
+        moms_to_pay, bold=True, color="#dc2626" if moms_to_pay > 0 else "#15803d")
+
+    elements.append(Spacer(1,5*mm))
+
+    # ── PAYMENT INFO ───────────────────────────────────────────────
+    if moms_to_pay > 0:
+        pay_info = f"Betala {moms_to_pay:,.2f} kr till Skatteverket · Bankgiro: 5050-1055 · Ref: {orgnr} · Senast 26:e".replace(",",".")
+        pay_color = "#dc2626"
+    else:
+        pay_info = f"Du får tillbaka {abs(moms_to_pay):,.2f} kr från Skatteverket".replace(",",".")
+        pay_color = "#15803d"
+
+    pt = Table([[Paragraph(pay_info, ps("pi", fontSize=9, fontName="Helvetica-Bold", textColor=colors.white))]], colWidths=[page_w-40*mm])
+    pt.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,-1),colors.HexColor(pay_color)),
+        ("LEFTPADDING",(0,0),(-1,-1),10),("TOPPADDING",(0,0),(-1,-1),8),("BOTTOMPADDING",(0,0),(-1,-1),8),
+    ]))
+    elements.append(pt)
+
+    elements.append(Spacer(1,5*mm))
+
+    # ── INVOICE BREAKDOWN ──────────────────────────────────────────
+    if invoices:
+        section("FAKTUROR I PERIODEN", "#475569")
+        inv_data = [["Faktura #", "Kund", "Datum", "Exkl. moms", "Moms 25%", "Totalt"]]
+        for i in sorted(invoices, key=lambda x: x.get("created_at","")):
+            inv_data.append([
+                i.get("invoice_number",""),
+                i.get("customer_name","")[:25],
+                i.get("created_at","")[:10],
+                f'{i.get("subtotal",0):.2f}',
+                f'{i.get("vat_amount",0):.2f}',
+                f'{i.get("customer_pays",0):.2f}',
+            ])
+        inv_tbl = Table(inv_data, colWidths=[20*mm, 60*mm, 22*mm, 28*mm, 22*mm, 28*mm])
+        inv_tbl.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#F1F5F9")),
+            ("FONTSIZE",(0,0),(-1,-1),8),
+            ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+            ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+            ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
+            ("ALIGN",(3,0),(-1,-1),"RIGHT"),
+        ]))
+        elements.append(inv_tbl)
+
+    elements.append(Spacer(1,4*mm))
+
+    # ── FOOTER ─────────────────────────────────────────────────────
+    note = "Denna deklaration är baserad på fakturametoden. Kontrollera med din redovisningskonsult innan du skickar till Skatteverket."
+    elements.append(Paragraph(note, ps("note", fontSize=7, textColor=colors.HexColor("#94a3b8"))))
+    elements.append(Paragraph(
+        f"{company}  ·  Org.nr {orgnr}  ·  Momsdeklaration {month_name} {year}  ·  Skapad {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"), spaceBefore=3)
+    ))
+
+    doc.build(elements)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="momsdeklaration_{month}.pdf"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
