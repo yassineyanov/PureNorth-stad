@@ -2369,7 +2369,8 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
     name: str = Field(..., min_length=1)
-    role: str = "staff"  # "admin" or "staff"
+    role: str = "staff"  # "admin", "staff", or "sales"
+    employee_id: Optional[str] = None
 
 
 class UserUpdate(BaseModel):
@@ -2384,6 +2385,7 @@ class UserOut(BaseModel):
     email: str
     name: str
     role: str
+    employee_id: Optional[str] = None
     created_at: str
 
 
@@ -2410,6 +2412,7 @@ async def create_user(payload: UserCreate, current=Depends(require_admin)):
         "password_hash": hash_password(payload.password),
         "name": payload.name,
         "role": payload.role if payload.role in ("admin", "staff", "sales") else "staff",
+        "employee_id": payload.employee_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     result = await db.users.insert_one(doc)
