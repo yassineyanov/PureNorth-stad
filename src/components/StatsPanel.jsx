@@ -36,6 +36,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function StatsPanel() {
   const [data, setData] = useState(null);
+  const [costsData, setCostsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [months, setMonths] = useState(6);
 
@@ -44,6 +45,12 @@ export default function StatsPanel() {
     try {
       const res = await api.get("/stats/overview", { params: { months: m } });
       setData(res.data);
+      try {
+        const now = new Date();
+        const y = now.getFullYear();
+        const costsRes = await api.get("/costs/overview", { params: { start: `${y}-01-01`, end: `${y}-12-31` }});
+        setCostsData(costsRes.data);
+      } catch {}
     } catch { toast.error("Kunde inte hämta statistik."); }
     finally { setLoading(false); }
   };
@@ -85,6 +92,7 @@ export default function StatsPanel() {
         <Card title="Totalt bokningar" value={data.totals.bookings} icon={Calendar} color="blue" sub={`Senaste ${months} månader`}/>
         <Card title="Totala timmar" value={`${data.totals.hours} h`} icon={Clock} color="amber" sub="Schemalagda pass"/>
         <Card title="Populäraste tjänst" value={data.top_services[0]?.service || "–"} icon={Users} sub={`${data.top_services[0]?.count || 0} bokningar`}/>
+        {costsData && <Card title="Materialkostnader (år)" value={`${Math.round(costsData.material_costs || 0).toLocaleString("sv-SE")} kr`} icon={TrendingDown} sub={`Ingående moms: ${Math.round(costsData.ingaende_moms || 0).toLocaleString("sv-SE")} kr`}/>}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">

@@ -17,6 +17,7 @@ function ExpenseModal({ employees, onClose, onSave }) {
   const [employeeId, setEmployeeId] = useState(employees[0]?.id || "");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [amount, setAmount] = useState("");
+  const [momsRate, setMomsRate] = useState(25);
   const [category, setCategory] = useState("Övrigt");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
@@ -26,7 +27,7 @@ function ExpenseModal({ employees, onClose, onSave }) {
     if (!employeeId || !date || !amount) return;
     setSaving(true);
     try {
-      await onSave({ employee_id: employeeId, date, amount: parseFloat(amount), category, description: description.trim() || null });
+      await onSave({ employee_id: employeeId, date, amount: parseFloat(amount), moms_rate: momsRate, category, description: description.trim() || null });
     } finally {
       setSaving(false);
     }
@@ -52,8 +53,17 @@ function ExpenseModal({ employees, onClose, onSave }) {
               <Input id="e-date" type="date" style={{WebkitAppearance:"none", appearance:"none"}} value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
             </div>
             <div>
-              <Label htmlFor="e-amount">Belopp (kr)</Label>
+              <Label htmlFor="e-amount">Belopp inkl. moms (kr)</Label>
               <Input id="e-amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1.5" placeholder="0.00" />
+            </div>
+            <div>
+              <Label>Moms %</Label>
+              <select value={momsRate} onChange={e=>setMomsRate(+e.target.value)} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value={25}>25% (standard)</option>
+                <option value={12}>12% (livsmedel)</option>
+                <option value={6}>6% (böcker)</option>
+                <option value={0}>0% (ingen moms)</option>
+              </select>
             </div>
           </div>
           <div>
@@ -164,6 +174,7 @@ export default function ExpensePanel() {
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS[e.status]?.cls}`}>{STATUS[e.status]?.label}</span>
                 </div>
                 <p className="text-sm text-slate-600">{e.date} · {e.category} · <strong>{e.amount.toFixed(2)} kr</strong></p>
+                {e.moms_rate > 0 && <p className="text-xs text-blue-600">Ingående moms ({e.moms_rate}%): {(e.amount - e.amount/(1+e.moms_rate/100)).toFixed(2)} kr</p>}
                 {e.description && <p className="text-sm text-slate-500 mt-1">{e.description}</p>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
