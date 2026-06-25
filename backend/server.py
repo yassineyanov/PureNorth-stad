@@ -4624,6 +4624,132 @@ async def costs_report_pdf(month: str, current=Depends(get_current_user)):
         headers={"Content-Disposition": f'inline; filename="kostnader_{month}.pdf"'}
     )
 
+
+# ── Invoices Excel Export ─────────────────────────────────────────────────────
+@api_router.get("/invoices/export-xlsx")
+async def export_invoices_xlsx(start: str = None, end: str = None, current=Depends(get_current_user)):
+    """Export invoices to Excel"""
+    query = {}
+    if start and end:
+        query["created_at"] = {"$gte": start, "$lte": end + "T23:59:59"}
+    elif start:
+        query["created_at"] = {"$gte": start}
+    elif end:
+        query["created_at"] = {"$lte": end + "T23:59:59"}
+
+    invoices = await db.invoices.find(query).sort("created_at", -1).to_list(5000)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Fakturor"
+
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    # Headers
+    headers = [
+        "Faktura #", "Datum", "Förfallodatum", "Kund", "E-post",
+        "Typ", "Tjänst", "Exkl. moms (kr)", "Moms 25% (kr)",
+        "Totalt inkl. moms (kr)", "RUT-avdrag (kr)", "Påminnelseavgift (kr)",
+        "Att betala (kr)", "Status", "Påminnelser",
+    ]
+    ws.append(headers)
+
+    # Style header
+    header_fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
+    for col, cell in enumerate(ws[1], 1):
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center", wrap_text=True)
+
+    status_map = {"paid": "Betald", "draft": "Utkast", "sent": "Skickad", "overdue": "Förfallen", "cancelled": "Avbruten"}
+
+    total_excl = total_moms = total_rut = total_pam = total_pays = 0
+    paid_count = unpaid_count = 0
+
+    for inv in invoices:
+        items = inv.get("items", [])
+        pam_fee = sum(item.get("quantity",1)*item.get("unit_price",0) for item in items if "Påminnelseavgift" in item.get("service",""))
+        services = ", ".join(set(i.get("service","") for i in items if "Påminnelseavgift" not in i.get("service","")))
+        status = inv.get("status","")
+        excl = inv.get("subtotal", 0)
+        moms = inv.get("vat_amount", 0)
+        rut = inv.get("rut_deduction", 0)
+        pays = inv.get("customer_pays", 0)
+
+        total_excl += excl
+        total_moms += moms
+        total_rut += rut
+        total_pam += pam_fee
+        total_pays += pays
+        if status == "paid": paid_count += 1
+        else: unpaid_count += 1
+
+        row = [
+            inv.get("invoice_number",""),
+            inv.get("created_at","")[:10],
+            inv.get("due_date",""),
+            inv.get("customer_name",""),
+            inv.get("customer_email",""),
+            "Företag" if inv.get("customer_type") == "company" else "Privat",
+            services[:50],
+            round(excl, 2),
+            round(moms, 2),
+            round(excl + moms, 2),
+            round(rut, 2),
+            round(pam_fee, 2),
+            round(pays, 2),
+            status_map.get(status, status),
+            inv.get("reminder_count", 0),
+        ]
+        ws.append(row)
+
+        # Color status
+        status_colors = {"paid": "DCFCE7", "overdue": "FEE2E2", "sent": "EFF6FF", "draft": "F8FAFC"}
+        fill_color = status_colors.get(status, "FFFFFF")
+        for cell in ws[ws.max_row]:
+            cell.fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
+            cell.font = Font(size=9)
+            cell.alignment = Alignment(horizontal="left")
+
+    # Totals row
+    ws.append(["TOTALT", "", "", "", "", "", "",
+        round(total_excl,2), round(total_moms,2), round(total_excl+total_moms,2),
+        round(total_rut,2), round(total_pam,2), round(total_pays,2), "", ""])
+    for cell in ws[ws.max_row]:
+        cell.font = Font(bold=True, size=9)
+        cell.fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+
+    # Summary sheet
+    ws2 = wb.create_sheet("Sammanfattning")
+    ws2.append(["Post", "Värde"])
+    ws2.append(["Antal fakturor", len(invoices)])
+    ws2.append(["Betalda", paid_count])
+    ws2.append(["Obetalda", unpaid_count])
+    ws2.append(["Total exkl. moms", round(total_excl,2)])
+    ws2.append(["Total moms", round(total_moms,2)])
+    ws2.append(["Total RUT-avdrag", round(total_rut,2)])
+    ws2.append(["Total påminnelseavgifter", round(total_pam,2)])
+    ws2.append(["Totalt att betala", round(total_pays,2)])
+    for cell in ws2[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
+
+    # Column widths
+    col_widths = [12, 12, 14, 25, 25, 10, 30, 16, 14, 18, 14, 18, 14, 12, 12]
+    for i, width in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+    ws2.column_dimensions["A"].width = 25
+    ws2.column_dimensions["B"].width = 18
+
+    buf = BytesIO()
+    wb.save(buf)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="fakturor.xlsx"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
