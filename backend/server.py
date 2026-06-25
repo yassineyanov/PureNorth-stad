@@ -5520,6 +5520,14 @@ async def export_shifts_pdf(start: str, end: str, current=Depends(get_current_us
     for eid, emp_data in sorted(by_emp.items(), key=lambda x: x[1]["name"]):
         for s in emp_data["shifts"]:
             ob = "OB1" if s.get("is_ob1") else ("OB2" if s.get("is_ob2") else "-")
+            # Check if employee is absent this day
+            emp_absences = absence_map.get(eid, [])
+            sick_note = ""
+            for ab in emp_absences:
+                if ab["start"] <= s.get("date","") <= ab["end"]:
+                    atype_map = {"sjuk":"🤒 Sjuk","semester":"🏖 Semester","vab":"👶 VAB","permission":"📋 Permission"}
+                    sick_note = atype_map.get(ab["type"], ab["type"])
+                    break
             data.append([
                 s.get("date",""),
                 emp_data["name"],
@@ -5527,7 +5535,7 @@ async def export_shifts_pdf(start: str, end: str, current=Depends(get_current_us
                 s.get("end_time",""),
                 f'{s["hours"]:.1f} tim',
                 ob,
-                s.get("note","") or "-",
+                sick_note or s.get("note","") or "-",
             ])
         # Employee subtotal
         data.append(["", f'SUMMA {emp_data["name"]}', "", "", f'{emp_data["total_h"]:.1f} tim', "", ""])
