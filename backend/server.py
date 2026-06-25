@@ -5806,6 +5806,105 @@ async def export_expenses_pdf(start: str = None, end: str = None, current=Depend
     doc.build(elements)
     return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": 'inline; filename="utlagg.pdf"'})
 
+
+# ── Utlägg Excel Export ───────────────────────────────────────────────────────
+@api_router.get("/expenses/export-xlsx")
+async def export_expenses_xlsx(start: str = None, end: str = None, current=Depends(get_current_user)):
+    """Export expenses/utlägg to Excel"""
+    query = {}
+    if start and end:
+        query["date"] = {"$gte": start, "$lte": end}
+    expenses = await db.expenses.find(query).sort("date", -1).to_list(5000)
+    employees = await db.employees.find().to_list(100)
+    emp_map = {str(e["_id"]): e["name"] for e in employees}
+
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Utlägg"
+
+    headers = ["Datum", "Anställd", "Kategori", "Beskrivning", "Moms %", "Ingående moms (kr)", "Belopp (kr)", "Status"]
+    ws.append(headers)
+
+    header_fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+
+    status_map = {"approved":"Godkänd","pending":"Väntar","rejected":"Avvisad","paid":"Utbetald"}
+    status_colors = {"approved":"DCFCE7","pending":"FEF3C7","rejected":"FEE2E2","paid":"DBEAFE"}
+
+    total = total_moms = 0
+    for e in expenses:
+        eid = e.get("employee_id","")
+        emp_name = emp_map.get(eid) or e.get("employee_name","") or "Okänd"
+        amt = e.get("amount",0)
+        mrate = e.get("moms_rate",0)
+        moms = round(amt - amt/(1+mrate/100), 2) if mrate > 0 else 0
+        total += amt
+        total_moms += moms
+        status = e.get("status","pending")
+
+        ws.append([
+            e.get("date",""),
+            emp_name,
+            e.get("category","") or "-",
+            e.get("description","") or "-",
+            f'{mrate}%',
+            moms,
+            amt,
+            status_map.get(status, status),
+        ])
+        fill_color = status_colors.get(status, "FFFFFF")
+        for cell in ws[ws.max_row]:
+            cell.font = Font(size=9)
+            cell.fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
+
+    # Totals
+    ws.append(["TOTALT","","","","", round(total_moms,2), round(total,2),""])
+    for cell in ws[ws.max_row]:
+        cell.font = Font(bold=True, size=9)
+        cell.fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+
+    # Summary sheet
+    ws2 = wb.create_sheet("Per kategori")
+    ws2.append(["Kategori", "Antal", "Belopp (kr)", "Ingående moms (kr)"])
+    for cell in ws2[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+
+    by_cat = {}
+    for e in expenses:
+        cat = e.get("category","Övrigt")
+        if cat not in by_cat: by_cat[cat] = {"count":0,"total":0,"moms":0}
+        amt = e.get("amount",0)
+        mrate = e.get("moms_rate",0)
+        moms = round(amt - amt/(1+mrate/100), 2) if mrate > 0 else 0
+        by_cat[cat]["count"] += 1
+        by_cat[cat]["total"] += amt
+        by_cat[cat]["moms"] += moms
+
+    for cat, vals in sorted(by_cat.items()):
+        ws2.append([cat, vals["count"], round(vals["total"],2), round(vals["moms"],2)])
+        for cell in ws2[ws2.max_row]: cell.font = Font(size=9)
+
+    col_widths = [14, 22, 16, 30, 10, 20, 16, 14]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    for i, w in enumerate([20,10,16,18], 1):
+        ws2.column_dimensions[get_column_letter(i)].width = w
+
+    buf = BytesIO()
+    wb.save(buf)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="utlagg.xlsx"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
