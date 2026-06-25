@@ -3977,7 +3977,7 @@ async def export_bokforing_pdf(month: str, current=Depends(get_current_user)):
         # Reminder fee as separate entry
         if reminder_fee_item:
             fee = reminder_fee_item.get("quantity",1) * reminder_fee_item.get("unit_price",0)
-            rows.append(["7690", "Påminnelseavgift", "", f"{fee:.2f}", f"Påminnelseavgift #{reminder_count}"])
+            rows.append(["3590", "Påminnelseavgifter", "", f"{fee:.2f}", f"Påminnelseavgift #{reminder_count}"])
 
         trans_table(rows)
 
