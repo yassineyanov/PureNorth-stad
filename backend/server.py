@@ -4896,6 +4896,45 @@ async def costs_report_pdf(month: str, current=Depends(get_current_user)):
     ]))
     elements.append(comp_tbl)
 
+    # Lönsamhet section
+    elements.append(Spacer(1,5*mm))
+    elements.append(Paragraph("LÖNSAMHETSANALYS", ps("sh", fontSize=9, fontName="Helvetica-Bold", spaceBefore=2, spaceAfter=2)))
+
+    # Get revenue for this month
+    invoices = await db.invoices.find({
+        "created_at": {"$gte": start + "T00:00:00", "$lte": end + "T23:59:59"},
+        "status": "paid"
+    }).to_list(1000)
+    revenue = sum(i.get("customer_pays",0) for i in invoices)
+    bruttovinst = round(revenue - total, 2)
+    bruttomarginal = round((bruttovinst / revenue * 100) if revenue > 0 else 0, 1)
+
+    lon_data = [
+        ["Post", "Belopp"],
+        ["Intäkter (betalda fakturor)", f"{revenue:.2f} kr"],
+        ["Materialkostnader (inkl. moms)", f"-{total:.2f} kr"],
+        ["Ingående moms (avdragsgill)", f"+{round(ingaende_moms,2):.2f} kr"],
+        ["Nettokostnader (exkl. moms)", f"-{round(excl_moms,2):.2f} kr"],
+        ["BRUTTOVINST", f"{bruttovinst:.2f} kr"],
+        ["Bruttomarginal", f"{bruttomarginal}%"],
+    ]
+    lon_tbl = Table(lon_data, colWidths=[120*mm, None])
+    lon_tbl.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
+        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+        ("FONTSIZE",(0,0),(-1,-1),9),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+        ("BACKGROUND",(0,-2),(-1,-1),colors.HexColor("#F1F5F9")),
+        ("FONTNAME",(0,-2),(-1,-1),"Helvetica-Bold"),
+        ("TEXTCOLOR",(1,-2),(1,-2),colors.HexColor("#15803d") if bruttovinst >= 0 else colors.HexColor("#dc2626")),
+        ("LINEABOVE",(0,-2),(-1,-2),1,colors.HexColor("#141414")),
+    ]))
+    elements.append(lon_tbl)
+
     elements.append(Spacer(1,4*mm))
     elements.append(Paragraph(
         f"{company}  ·  Kostnadsrapport {month_name} {year}  ·  Skapad {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
