@@ -2138,6 +2138,112 @@ async def export_customers_pdf(current=Depends(get_current_user)):
         headers={"Content-Disposition": 'inline; filename="kundregister.pdf"'}
     )
 
+
+# ── Customers PDF Export ──────────────────────────────────────────────────────
+@api_router.get("/customers/export-pdf")
+async def export_customers_pdf(current=Depends(get_current_user)):
+    """Export customers list to PDF"""
+    customers = await db.customers.find().sort("name", 1).to_list(5000)
+    invoices = await db.invoices.find().to_list(5000)
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+
+    # Stats per customer
+    inv_by_customer = {}
+    for inv in invoices:
+        name = inv.get("customer_name","")
+        if name not in inv_by_customer:
+            inv_by_customer[name] = {"count":0,"total":0,"paid":0,"last":""}
+        inv_by_customer[name]["count"] += 1
+        inv_by_customer[name]["total"] += inv.get("customer_pays",0)
+        if inv.get("status") == "paid":
+            inv_by_customer[name]["paid"] += inv.get("customer_pays",0)
+        date = inv.get("created_at","")[:10]
+        if date > inv_by_customer[name]["last"]:
+            inv_by_customer[name]["last"] = date
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm,
+        title="Kundregister", author=company)
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+    page_w = A4[0]
+    elements = []
+
+    # Header
+    hdr = Table([[
+        Paragraph(f"<b>{company}</b>", ps("h", fontSize=14, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"<b>KUNDREGISTER</b><br/>Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ps("s", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+    ]], colWidths=[100*mm, None])
+    hdr.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),
+        ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+        ("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+    ]))
+    elements.append(hdr)
+    elements.append(Spacer(1,3*mm))
+
+    # Summary
+    total_invoiced = sum(s["total"] for s in inv_by_customer.values())
+    active = sum(1 for s in inv_by_customer.values() if s["count"] > 0)
+    sum_data = [[
+        Paragraph(f"<b>Antal kunder</b><br/>{len(customers)} st", ps("sb", fontSize=9)),
+        Paragraph(f"<b>Aktiva kunder</b><br/>{active} st", ps("sb", fontSize=9, textColor=colors.HexColor("#15803d"))),
+        Paragraph(f"<b>Totalt fakturerat</b><br/>{total_invoiced:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#1e40af"))),
+    ]]
+    sum_tbl = Table(sum_data, colWidths=[(page_w-40*mm)/3]*3)
+    sum_tbl.setStyle(TableStyle([
+        ("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),
+        ("INNERGRID",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),8),("RIGHTPADDING",(0,0),(-1,-1),8),
+        ("TOPPADDING",(0,0),(-1,-1),8),("BOTTOMPADDING",(0,0),(-1,-1),8),
+    ]))
+    elements.append(sum_tbl)
+    elements.append(Spacer(1,5*mm))
+
+    # Customer table
+    data = [["Namn", "E-post", "Telefon", "Typ", "Fakturor", "Totalt (kr)", "Senaste faktura"]]
+    for c in customers:
+        name = c.get("name","")
+        stats = inv_by_customer.get(name, {"count":0,"total":0,"paid":0,"last":"-"})
+        data.append([
+            name,
+            c.get("email","") or "-",
+            c.get("phone","") or "-",
+            "Företag" if c.get("customer_type") == "company" else "Privat",
+            str(stats["count"]),
+            f'{stats["total"]:.2f}' if stats["total"] > 0 else "-",
+            stats["last"] or "-",
+        ])
+
+    tbl = Table(data, colWidths=[45*mm, 50*mm, 28*mm, 18*mm, 18*mm, 26*mm, 30*mm])
+    tbl.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
+        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+        ("FONTSIZE",(0,0),(-1,-1),8.5),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),5),("RIGHTPADDING",(0,0),(-1,-1),5),
+        ("TOPPADDING",(0,0),(-1,-1),5),("BOTTOMPADDING",(0,0),(-1,-1),5),
+        ("ALIGN",(4,0),(5,-1),"RIGHT"),
+        ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white, colors.HexColor("#F8FAFC")]),
+    ]))
+    elements.append(tbl)
+    elements.append(Spacer(1,4*mm))
+    elements.append(Paragraph(
+        f"{company}  ·  Kundregister  ·  {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"))
+    ))
+
+    doc.build(elements)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'inline; filename="kundregister.pdf"'}
+    )
+
 @api_router.get("/customers/{customer_id}", response_model_by_alias=False)
 async def get_customer(customer_id: str, current=Depends(get_current_user)):
     doc = await db.customers.find_one({"_id": to_object_id(customer_id)})
