@@ -3799,17 +3799,21 @@ async def export_moms_pdf(month: str, current=Depends(get_current_user)):
     # ── INVOICE BREAKDOWN ──────────────────────────────────────────
     if invoices:
         section("FAKTUROR I PERIODEN", "#475569")
-        inv_data = [["Faktura #", "Kund", "Datum", "Exkl. moms", "Moms 25%", "Totalt"]]
+        inv_data = [["Faktura #", "Kund", "Datum", "Exkl. moms", "Påm.avg", "Moms 25%", "Att betala"]]
         for i in sorted(invoices, key=lambda x: x.get("created_at","")):
+            pam = sum(item.get("quantity",1)*item.get("unit_price",0)
+                for item in i.get("items",[])
+                if "Påminnelseavgift" in item.get("service",""))
             inv_data.append([
                 i.get("invoice_number",""),
-                i.get("customer_name","")[:25],
+                i.get("customer_name","")[:20],
                 i.get("created_at","")[:10],
                 f'{i.get("subtotal",0):.2f}',
+                f'{pam:.2f}' if pam > 0 else "-",
                 f'{i.get("vat_amount",0):.2f}',
                 f'{i.get("customer_pays",0):.2f}',
             ])
-        inv_tbl = Table(inv_data, colWidths=[20*mm, 60*mm, 22*mm, 28*mm, 22*mm, 28*mm])
+        inv_tbl = Table(inv_data, colWidths=[18*mm, 48*mm, 20*mm, 24*mm, 16*mm, 20*mm, 24*mm])
         inv_tbl.setStyle(TableStyle([
             ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#F1F5F9")),
             ("FONTSIZE",(0,0),(-1,-1),8),
