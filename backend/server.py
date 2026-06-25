@@ -4258,9 +4258,9 @@ async def rut_report_pdf(month: str, current=Depends(get_current_user)):
 
     # Summary boxes
     summary_data = [[
-        Paragraph(f"<b>Totalt RUT att ansöka</b><br/><font size='16'>{total_rut:,.2f} kr</font>".replace(",","."), ps("sb", fontSize=9, textColor=colors.HexColor("#15803d"))),
-        Paragraph(f"<b>Antal fakturor</b><br/><font size='16'>{len(invoices)} st</font>", ps("sb", fontSize=9, textColor=colors.HexColor("#141414"))),
-        Paragraph(f"<b>Ansökt (betalda)</b><br/><font size='16'>{total_paid:,.2f} kr</font>".replace(",","."), ps("sb", fontSize=9, textColor=colors.HexColor("#1e40af"))),
+        Paragraph(f"<b>Totalt RUT att ansöka</b><br/><br/>{total_rut:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#15803d"))),
+        Paragraph(f"<b>Antal fakturor</b><br/><br/>{len(invoices)} st", ps("sb", fontSize=9, textColor=colors.HexColor("#141414"))),
+        Paragraph(f"<b>Ansökt (betalda)</b><br/><br/>{total_paid:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#1e40af"))),
     ]]
     summary_tbl = Table(summary_data, colWidths=[(page_w-40*mm)/3]*3)
     summary_tbl.setStyle(TableStyle([
