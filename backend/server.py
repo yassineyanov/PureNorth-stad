@@ -2336,8 +2336,9 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
     prelskatt = round(gross_salary * PRELSKATT, 2)
     total_payroll_cost = round(gross_salary + arbetsgivaravgifter + semesterersattning, 2)
     utlagg_total = sum(r.get("expense_total", 0) for r in payroll_summary.values())
-    operating_profit = round(revenue_excl_vat - total_payroll_cost - utlagg_total, 2)
-    profit_margin = round((operating_profit / revenue_excl_vat * 100) if revenue_excl_vat > 0 else 0, 1)
+    total_intakter_pdf = revenue_excl_vat + paminnelse_fees
+    operating_profit = round(total_intakter_pdf - total_payroll_cost - utlagg_total, 2)
+    profit_margin = round((operating_profit / total_intakter_pdf * 100) if total_intakter_pdf > 0 else 0, 1)
     vat_to_pay = round(vat_collected, 2)
     agi_to_pay = round(arbetsgivaravgifter + prelskatt, 2)
 
@@ -2469,7 +2470,7 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
     profit_color = colors.HexColor("#166534") if operating_profit >= 0 else colors.HexColor("#be123c")
     table2([
         ["Post", "Belopp"],
-        ["Intäkter (exkl. moms)", f"{revenue_excl_vat:,.2f} kr"],
+        ["Intäkter (exkl. moms)", f"{total_intakter_pdf:,.2f} kr"],
         ["Personalkostnader", f"-{total_payroll_cost + utlagg_total:,.2f} kr"],
         ["RÖRELSERESULTAT", f"{operating_profit:,.2f} kr ({profit_margin}%)"],
     ])
