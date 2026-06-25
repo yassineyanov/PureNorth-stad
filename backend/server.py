@@ -3059,8 +3059,8 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
 
     # Profit
     total_costs = total_payroll + utlagg_total + (material_total_incl - ingaende_moms)
-    operating_profit = round(revenue_excl_vat - total_costs, 2)
-    margin = round((operating_profit / revenue_excl_vat * 100) if revenue_excl_vat > 0 else 0, 1)
+    operating_profit = round(total_intakter - total_costs, 2)
+    margin = round((operating_profit / total_intakter * 100) if total_intakter > 0 else 0, 1)
 
     # ── PDF Build ──────────────────────────────────────────────────
     buf = BytesIO()
