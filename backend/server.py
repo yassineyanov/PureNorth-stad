@@ -4446,6 +4446,185 @@ async def rut_report_pdf(month: str, current=Depends(get_current_user)):
         headers={"Content-Disposition": f'inline; filename="rut_rapport_{month}.pdf"'}
     )
 
+
+# ── Kostnader PDF Export ──────────────────────────────────────────────────────
+@api_router.get("/costs/report-pdf")
+async def costs_report_pdf(month: str, current=Depends(get_current_user)):
+    """Export Kostnader PDF with monthly comparison"""
+    import calendar
+    year, mon = month.split("-")
+    last_day = calendar.monthrange(int(year), int(mon))[1]
+    start = f"{month}-01"
+    end = f"{month}-{last_day:02d}"
+
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+    MONTHS_SV = ["","Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"]
+    month_name = MONTHS_SV[int(mon)]
+
+    # Current month costs
+    costs = await db.costs.find({"date": {"$gte": start, "$lte": end}}).to_list(1000)
+    total = sum(c.get("amount",0) for c in costs)
+    ingaende_moms = sum(c.get("amount",0) - c.get("amount",0)/(1+c.get("moms_rate",25)/100) for c in costs)
+    excl_moms = total - ingaende_moms
+    by_cat = {}
+    for c in costs:
+        cat = c.get("category","material")
+        by_cat[cat] = by_cat.get(cat,0) + c.get("amount",0)
+
+    # Last 6 months comparison
+    monthly_data = []
+    for i in range(5, -1, -1):
+        import datetime
+        d = datetime.date(int(year), int(mon), 1)
+        for _ in range(i):
+            d = (d.replace(day=1) - datetime.timedelta(days=1)).replace(day=1)
+        m_start = d.strftime("%Y-%m-01")
+        m_last = calendar.monthrange(d.year, d.month)[1]
+        m_end = f"{d.strftime('%Y-%m')}-{m_last:02d}"
+        m_costs = await db.costs.find({"date": {"$gte": m_start, "$lte": m_end}}).to_list(1000)
+        m_total = sum(c.get("amount",0) for c in m_costs)
+        monthly_data.append({
+            "month": MONTHS_SV[d.month][:3] + f" {d.year}",
+            "total": m_total,
+            "count": len(m_costs),
+        })
+
+    # Build PDF
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm,
+        title=f"Kostnadsrapport {month}",
+        author=company)
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+    page_w = A4[0]
+    elements = []
+
+    # Header
+    hdr = Table([[
+        Paragraph(f"<b>{company}</b>", ps("h", fontSize=14, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"<b>KOSTNADSRAPPORT</b><br/>{month_name} {year}", ps("s", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+    ]], colWidths=[100*mm, None])
+    hdr.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),
+        ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+        ("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+    ]))
+    elements.append(hdr)
+    elements.append(Spacer(1,4*mm))
+
+    # Summary boxes
+    sum_data = [[
+        Paragraph(f"<b>Totalt inkl. moms</b><br/>{total:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#141414"))),
+        Paragraph(f"<b>Ingående moms</b><br/>{ingaende_moms:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#15803d"))),
+        Paragraph(f"<b>Nettokostnad (exkl. moms)</b><br/>{excl_moms:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#1e40af"))),
+        Paragraph(f"<b>Antal poster</b><br/>{len(costs)} st", ps("sb", fontSize=9, textColor=colors.HexColor("#64748b"))),
+    ]]
+    sum_tbl = Table(sum_data, colWidths=[(page_w-40*mm)/4]*4)
+    sum_tbl.setStyle(TableStyle([
+        ("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),
+        ("INNERGRID",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),8),("RIGHTPADDING",(0,0),(-1,-1),8),
+        ("TOPPADDING",(0,0),(-1,-1),8),("BOTTOMPADDING",(0,0),(-1,-1),8),
+        ("BACKGROUND",(0,0),(0,0),colors.HexColor("#F8FAFC")),
+    ]))
+    elements.append(sum_tbl)
+    elements.append(Spacer(1,5*mm))
+
+    # Category breakdown
+    if by_cat:
+        elements.append(Paragraph("KOSTNADER PER KATEGORI", ps("sh", fontSize=9, fontName="Helvetica-Bold", spaceBefore=2, spaceAfter=2)))
+        cat_names = {"material":"Städmaterial","equipment":"Utrustning","transport":"Transport","parking":"Parkering","other":"Övrigt"}
+        cat_data = [["Kategori", "Belopp inkl. moms", "Andel %"]]
+        for cat, amt in sorted(by_cat.items(), key=lambda x: -x[1]):
+            pct = (amt/total*100) if total > 0 else 0
+            cat_data.append([cat_names.get(cat,cat), f"{amt:.2f} kr", f"{pct:.1f}%"])
+        cat_data.append(["TOTALT", f"{total:.2f} kr", "100%"])
+        cat_tbl = Table(cat_data, colWidths=[80*mm, 60*mm, 30*mm])
+        cat_tbl.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
+            ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+            ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+            ("FONTSIZE",(0,0),(-1,-1),9),
+            ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+            ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
+            ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+            ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),
+            ("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+            ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+        ]))
+        elements.append(cat_tbl)
+        elements.append(Spacer(1,5*mm))
+
+    # Detailed list
+    if costs:
+        elements.append(Paragraph("DETALJERAD KOSTNADSLISTA", ps("sh", fontSize=9, fontName="Helvetica-Bold", spaceBefore=2, spaceAfter=2)))
+        det_data = [["Datum", "Namn", "Kategori", "Moms %", "Belopp"]]
+        cat_names = {"material":"Material","equipment":"Utrustning","transport":"Transport","parking":"Parkering","other":"Övrigt"}
+        for c in sorted(costs, key=lambda x: x.get("date","")):
+            det_data.append([
+                c.get("date",""),
+                c.get("name","")[:30],
+                cat_names.get(c.get("category",""),""),
+                f"{c.get('moms_rate',25)}%",
+                f"{c.get('amount',0):.2f} kr",
+            ])
+        det_tbl = Table(det_data, colWidths=[25*mm, 70*mm, 30*mm, 20*mm, 30*mm])
+        det_tbl.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#475569")),
+            ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+            ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+            ("FONTSIZE",(0,0),(-1,-1),8),
+            ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+            ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+            ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
+            ("ALIGN",(4,0),(-1,-1),"RIGHT"),
+        ]))
+        elements.append(det_tbl)
+        elements.append(Spacer(1,5*mm))
+
+    # Monthly comparison
+    elements.append(Paragraph("JÄMFÖRELSE SENASTE 6 MÅNADER", ps("sh", fontSize=9, fontName="Helvetica-Bold", spaceBefore=2, spaceAfter=2)))
+    max_val = max(m["total"] for m in monthly_data) or 1
+    comp_data = [["Månad", "Kostnader", "Poster", "Graf"]]
+    for m in monthly_data:
+        bar_len = int((m["total"] / max_val) * 30) if max_val > 0 else 0
+        bar = "█" * bar_len
+        is_current = m["month"].startswith(month_name[:3])
+        comp_data.append([
+            m["month"],
+            f"{m['total']:.2f} kr",
+            f"{m['count']} st",
+            Paragraph(f'<font color="{"#141414" if is_current else "#94a3b8"}">{bar}</font>', ps("bar", fontSize=7)),
+        ])
+    comp_tbl = Table(comp_data, colWidths=[35*mm, 40*mm, 20*mm, None])
+    comp_tbl.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#475569")),
+        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+        ("FONTSIZE",(0,0),(-1,-1),8),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ALIGN",(1,0),(2,-1),"RIGHT"),
+    ]))
+    elements.append(comp_tbl)
+
+    elements.append(Spacer(1,4*mm))
+    elements.append(Paragraph(
+        f"{company}  ·  Kostnadsrapport {month_name} {year}  ·  Skapad {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"))
+    ))
+
+    doc.build(elements)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="kostnader_{month}.pdf"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
