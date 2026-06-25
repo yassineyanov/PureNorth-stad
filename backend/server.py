@@ -5351,7 +5351,7 @@ async def export_bookings_pdf(start: str = None, end: str = None, current=Depend
             b.get("phone","") or "-",
 (", ".join(b.get("services",[]) or [b.get("service","")]))[:25] or "-",
             b.get("address","")[:25] or "-",
-            (b.get("message","") or "-")[:30],
+            (b.get("other_description","") or b.get("message","") or "-")[:30],
             status_map.get(b.get("status","new"),""),
         ])
 
