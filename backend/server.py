@@ -5116,6 +5116,134 @@ async def export_invoices_pdf(start: str = None, end: str = None, current=Depend
     return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": 'inline; filename="fakturor.pdf"'})
 
 
+
+# ── Costs Excel Export ────────────────────────────────────────────────────────
+@api_router.get("/costs/export-xlsx")
+async def export_costs_xlsx(start: str = None, end: str = None, current=Depends(get_current_user)):
+    """Export costs to Excel with monthly comparison"""
+    import calendar
+    query = {}
+    if start and end:
+        query["date"] = {"$gte": start, "$lte": end}
+    elif start:
+        query["date"] = {"$gte": start}
+    elif end:
+        query["date"] = {"$lte": end}
+
+    costs = await db.costs.find(query).sort("date", -1).to_list(5000)
+
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+
+    # ── Sheet 1: Kostnader ─────────────────────────────────────────
+    ws = wb.active
+    ws.title = "Kostnader"
+
+    headers = ["Datum", "Namn", "Kategori", "Moms %", "Belopp inkl. moms (kr)", "Ingående moms (kr)", "Nettokostnad exkl. moms (kr)"]
+    ws.append(headers)
+
+    header_fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+
+    cat_names = {"material":"Städmaterial","equipment":"Utrustning","transport":"Transport","parking":"Parkering","other":"Övrigt"}
+
+    total_incl = total_moms = total_excl = 0
+    for c in costs:
+        amt = c.get("amount",0)
+        mrate = c.get("moms_rate",25)
+        moms = round(amt - amt/(1+mrate/100), 2) if mrate > 0 else 0
+        excl = round(amt - moms, 2)
+        total_incl += amt; total_moms += moms; total_excl += excl
+        ws.append([
+            c.get("date",""),
+            c.get("name",""),
+            cat_names.get(c.get("category",""),""),
+            f"{mrate}%",
+            round(amt,2),
+            moms,
+            excl,
+        ])
+        for cell in ws[ws.max_row]:
+            cell.font = Font(size=9)
+
+    # Totals
+    ws.append(["TOTALT","","","", round(total_incl,2), round(total_moms,2), round(total_excl,2)])
+    for cell in ws[ws.max_row]:
+        cell.font = Font(bold=True, size=9)
+        cell.fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+
+    col_widths = [14, 30, 16, 10, 24, 20, 24]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    # ── Sheet 2: Per kategori ──────────────────────────────────────
+    ws2 = wb.create_sheet("Per kategori")
+    ws2.append(["Kategori", "Antal poster", "Belopp inkl. moms (kr)", "Ingående moms (kr)", "Nettokostnad (kr)"])
+    for cell in ws2[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+
+    by_cat = {}
+    for c in costs:
+        cat = cat_names.get(c.get("category","material"),"Övrigt")
+        if cat not in by_cat:
+            by_cat[cat] = {"count":0,"total":0,"moms":0,"excl":0}
+        amt = c.get("amount",0)
+        mrate = c.get("moms_rate",25)
+        moms = round(amt - amt/(1+mrate/100), 2) if mrate > 0 else 0
+        by_cat[cat]["count"] += 1
+        by_cat[cat]["total"] += amt
+        by_cat[cat]["moms"] += moms
+        by_cat[cat]["excl"] += round(amt-moms, 2)
+
+    for cat, vals in sorted(by_cat.items()):
+        ws2.append([cat, vals["count"], round(vals["total"],2), round(vals["moms"],2), round(vals["excl"],2)])
+        for cell in ws2[ws2.max_row]: cell.font = Font(size=9)
+
+    for i, w in enumerate([20,14,24,20,20], 1):
+        ws2.column_dimensions[get_column_letter(i)].width = w
+
+    # ── Sheet 3: Månadsöversikt ────────────────────────────────────
+    ws3 = wb.create_sheet("Månadsöversikt")
+    ws3.append(["Månad", "Antal poster", "Totalt inkl. moms (kr)", "Ingående moms (kr)", "Nettokostnad (kr)"])
+    for cell in ws3[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+
+    by_month = {}
+    for c in costs:
+        month = c.get("date","")[:7]
+        if month not in by_month:
+            by_month[month] = {"count":0,"total":0,"moms":0,"excl":0}
+        amt = c.get("amount",0)
+        mrate = c.get("moms_rate",25)
+        moms = round(amt - amt/(1+mrate/100), 2) if mrate > 0 else 0
+        by_month[month]["count"] += 1
+        by_month[month]["total"] += amt
+        by_month[month]["moms"] += moms
+        by_month[month]["excl"] += round(amt-moms, 2)
+
+    for month in sorted(by_month.keys(), reverse=True):
+        vals = by_month[month]
+        ws3.append([month, vals["count"], round(vals["total"],2), round(vals["moms"],2), round(vals["excl"],2)])
+        for cell in ws3[ws3.max_row]: cell.font = Font(size=9)
+
+    for i, w in enumerate([14,14,24,20,20], 1):
+        ws3.column_dimensions[get_column_letter(i)].width = w
+
+    buf = BytesIO()
+    wb.save(buf)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="kostnader.xlsx"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
