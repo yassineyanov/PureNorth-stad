@@ -2381,20 +2381,37 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
         t.setStyle(TableStyle(style))
         elements.append(t)
 
+    # Calculate reminder fees and correct totals
+    paminnelse_fees = sum(
+        sum(item.get("quantity",1)*item.get("unit_price",0)
+            for item in inv.get("items",[])
+            if "Påminnelseavgift" in item.get("service",""))
+        for inv in invoices
+    )
+    kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
+    betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid","cancelled"])
+
     # Revenue
-    section("💰 Intäkter")
-    table2([
+    section("Intäkter")
+    rev_rows = [
         ["Post", "Belopp"],
-        ["Fakturerat (exkl. moms)", f"{revenue_excl_vat:,.2f} kr"],
+        ["Försäljning tjänster (exkl. moms)", f"{revenue_excl_vat:,.2f} kr"],
+    ]
+    if paminnelse_fees > 0:
+        rev_rows.append(["Påminnelseavgifter (ingen moms)", f"{paminnelse_fees:,.2f} kr"])
+    rev_rows += [
         ["Utgående moms (25%)", f"{vat_collected:,.2f} kr"],
         ["RUT-avdrag (betalas av Skatteverket)", f"{rut_deductions:,.2f} kr"],
-        ["Betalda fakturor", f"{paid_invoices:,.2f} kr"],
-        ["Obetalda fakturor", f"{unpaid_invoices:,.2f} kr"],
-        ["TOTALT FAKTURERAT", f"{total_invoiced:,.2f} kr"],
-    ])
+        ["Kund betalar totalt", f"{kund_betalar:,.2f} kr"],
+        ["Betalda fakturor", f"{betalda:,.2f} kr"],
+        ["Obetalda fakturor", f"{obetalda:,.2f} kr"],
+        ["TOTALA INTÄKTER (exkl. moms)", f"{revenue_excl_vat + paminnelse_fees:,.2f} kr"],
+    ]
+    table2(rev_rows)
 
     # Payroll
-    section("👥 Personalkostnader")
+    section("Personalkostnader")
     table2([
         ["Post", "Belopp"],
         ["Bruttolöner", f"{gross_salary:,.2f} kr"],
@@ -2406,7 +2423,7 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
 
     # Per employee
     if payroll_summary:
-        section("👤 Kostnad per anställd")
+        section("Kostnad per anställd")
         emp_rows = [["Anställd", "Typ", "Timmar", "Bruttolön", "Arb.avg", "Total"]]
         for row in payroll_summary.values():
             gross = row["normal_h"]*row["hourly_rate"] + row["ob1_h"]*payroll_settings.ob1_extra + row["ob2_h"]*payroll_settings.ob2_extra
