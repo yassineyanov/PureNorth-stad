@@ -4475,10 +4475,9 @@ async def costs_report_pdf(month: str, current=Depends(get_current_user)):
     # Last 6 months comparison
     monthly_data = []
     for i in range(5, -1, -1):
-        import datetime
-        d = datetime.date(int(year), int(mon), 1)
+        d = DateClass(int(year), int(mon), 1)
         for _ in range(i):
-            d = (d.replace(day=1) - datetime.timedelta(days=1)).replace(day=1)
+            d = (d.replace(day=1) - timedelta(days=1)).replace(day=1)
         m_start = d.strftime("%Y-%m-01")
         m_last = calendar.monthrange(d.year, d.month)[1]
         m_end = f"{d.strftime('%Y-%m')}-{m_last:02d}"
