@@ -1256,9 +1256,9 @@ async def payroll_export(start: str, end: str, format: str = "xlsx", current=Dep
         company = inv_settings.company_name or "PureNorth Städ"
         buf = BytesIO()
         from reportlab.lib.pagesizes import landscape
-        doc = SimpleDocTemplate(buf, pagesize=landscape(A4,
-        author="PureNorth Städ"),
-            topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm)
+        doc = SimpleDocTemplate(buf, pagesize=landscape(A4),
+            topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm,
+            author="PureNorth Städ")
         styles = getSampleStyleSheet()
         elements = []
         def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
