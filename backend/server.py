@@ -832,31 +832,63 @@ async def build_payroll_summary(start: str, end: str):
 
 
 def build_xlsx_bytes(summary: dict) -> bytes:
+    PRELSKATT = 0.30
+    ARBETSGIVARAVGIFT = 0.3142
+    SEMESTER = 0.12
     wb = Workbook()
     ws = wb.active
     ws.title = "Löneunderlag"
     headers = [
-        "Anställd", "Typ", "Personnummer", "Normaltid (h)", "OB1 (h)", "OB2 (h)",
-        "Grundlön (kr)", "OB1-tillägg (kr)", "OB2-tillägg (kr)",
-        "Utlägg (kr)", "Frånvarodagar (totalt)", "Frånvarodagar (bokade pass)",
-        "Förlorad lön (kr)", "Sjuklön brutto (kr)", "Karensavdrag (kr)",
-        "Sjuklön netto (kr)", "Summa (kr)",
+        "Anställd", "Typ", "Personnummer", "Lön/h (kr)",
+        "Normaltid (h)", "OB1 (h)", "OB2 (h)", "OB-tillägg (kr)",
+        "Grundlön (kr)", "Semesterersättning 12% (kr)", "Arbetsgivaravgift 31.42% (kr)",
+        "Bruttolön (kr)", "Prelskatt 30% (kr)", "Nettolön →Bank (kr)",
+        "Utlägg (kr)", "Frånvarodagar", "Förlorad lön (kr)",
+        "Sjuklön netto (kr)", "Total kostnad arbetsgivare (kr)",
     ]
     ws.append(headers)
+    # Style header row
+    from openpyxl.styles import Font, PatternFill, Alignment
+    header_fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center", wrap_text=True)
+
+    total_row = ["TOTALT", "", "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     for row in summary.values():
         type_label = "Vikarie" if row.get("employment_type") == "vikarie" else "Fast anställd"
+        brutto = round(row["normal_h"]*row["hourly_rate"] + row["ob1_h"]*row.get("ob1_extra",0) + row["ob2_h"]*row.get("ob2_extra",0) + row.get("sjuklon_net",0), 2)
+        ob_kr = round(row["ob1_h"]*row.get("ob1_extra",0) + row["ob2_h"]*row.get("ob2_extra",0), 2)
+        grundlon = round(row["normal_h"]*row["hourly_rate"], 2)
+        semester = round(brutto * SEMESTER, 2)
+        ag_avg = round(brutto * ARBETSGIVARAVGIFT, 2)
+        prelskatt = round(brutto * PRELSKATT, 2)
+        netto = round(brutto - prelskatt, 2)
+        utlagg = round(row.get("expense_total", 0), 2)
+        total_cost = round(brutto + ag_avg + semester, 2)
+
         ws.append([
-            row["name"], type_label, row["personnummer"],
-            round(row["normal_h"], 2), round(row["ob1_h"], 2), round(row["ob2_h"], 2),
-            round(row["base_pay"], 2), round(row["ob1_pay"], 2), round(row["ob2_pay"], 2),
-            round(row["expense_total"], 2), row["absence_days"], row["absence_scheduled_days"],
-            round(row["absence_lost_amount"], 2), round(row.get("sjuklon_gross", 0), 2),
-            round(row.get("karensavdrag", 0), 2), round(row.get("sjuklon_net", 0), 2),
-            round(row["total_pay"], 2),
+            row["name"], type_label, row.get("personnummer",""),
+            row["hourly_rate"],
+            round(row["normal_h"], 2), round(row["ob1_h"], 2), round(row["ob2_h"], 2), ob_kr,
+            grundlon, semester, ag_avg, brutto, -prelskatt, netto,
+            utlagg, row["absence_days"], round(row.get("absence_lost_amount",0), 2),
+            round(row.get("sjuklon_net",0), 2), total_cost,
         ])
+        for j, val in enumerate([4,5,6,7,8,9,10,11,12,13,14,16,17,18]):
+            total_row[val] = round(total_row[val] + [grundlon,round(row["normal_h"],2),round(row["ob1_h"],2),round(row["ob2_h"],2),ob_kr,semester,ag_avg,brutto,-prelskatt,netto,utlagg,round(row.get("absence_lost_amount",0),2),round(row.get("sjuklon_net",0),2),total_cost][j], 2)
+
+    ws.append(total_row)
+    # Style totals row
+    for cell in ws[ws.max_row]:
+        cell.font = Font(bold=True, size=9)
+        cell.fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+
     for col in ws.columns:
         max_len = max(len(str(c.value)) if c.value is not None else 0 for c in col)
-        ws.column_dimensions[col[0].column_letter].width = max(12, max_len + 2)
+        ws.column_dimensions[col[0].column_letter].width = max(12, min(max_len + 2, 25))
+
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
