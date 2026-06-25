@@ -1959,6 +1959,78 @@ async def list_customers(current=Depends(get_current_user)):
     return result
 
 
+# ── Customers Excel Export ────────────────────────────────────────────────────
+@api_router.get("/customers/export-xlsx")
+async def export_customers_xlsx(current=Depends(get_current_user)):
+    """Export customers to Excel"""
+    customers = await db.customers.find().sort("name", 1).to_list(5000)
+    invoices = await db.invoices.find().to_list(5000)
+
+    # Calculate stats per customer
+    inv_by_customer = {}
+    for inv in invoices:
+        name = inv.get("customer_name","")
+        if name not in inv_by_customer:
+            inv_by_customer[name] = {"count":0,"total":0,"paid":0,"last":""}
+        inv_by_customer[name]["count"] += 1
+        inv_by_customer[name]["total"] += inv.get("customer_pays",0)
+        if inv.get("status") == "paid":
+            inv_by_customer[name]["paid"] += inv.get("customer_pays",0)
+        date = inv.get("created_at","")[:10]
+        if date > inv_by_customer[name]["last"]:
+            inv_by_customer[name]["last"] = date
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Kunder"
+
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+
+    headers = [
+        "Namn", "E-post", "Telefon", "Adress", "Personnummer",
+        "Typ", "Antal fakturor", "Totalt fakturerat (kr)",
+        "Totalt betalt (kr)", "Senaste faktura",
+    ]
+    ws.append(headers)
+
+    header_fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+
+    for c in customers:
+        name = c.get("name","")
+        stats = inv_by_customer.get(name, {"count":0,"total":0,"paid":0,"last":"-"})
+        ws.append([
+            name,
+            c.get("email",""),
+            c.get("phone",""),
+            c.get("address",""),
+            c.get("personnummer",""),
+            "Företag" if c.get("customer_type") == "company" else "Privat",
+            stats["count"],
+            round(stats["total"],2),
+            round(stats["paid"],2),
+            stats["last"] or "-",
+        ])
+        for cell in ws[ws.max_row]:
+            cell.font = Font(size=9)
+
+    col_widths = [25, 25, 15, 30, 15, 10, 16, 22, 20, 15]
+    for i, width in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+    buf = BytesIO()
+    wb.save(buf)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="kunder.xlsx"'}
+    )
+
+
 @api_router.get("/customers/{customer_id}", response_model_by_alias=False)
 async def get_customer(customer_id: str, current=Depends(get_current_user)):
     doc = await db.customers.find_one({"_id": to_object_id(customer_id)})
@@ -4830,77 +4902,6 @@ async def export_invoices_pdf(start: str = None, end: str = None, current=Depend
     doc.build(elements)
     return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": 'inline; filename="fakturor.pdf"'})
 
-
-# ── Customers Excel Export ────────────────────────────────────────────────────
-@api_router.get("/customers/export-xlsx")
-async def export_customers_xlsx(current=Depends(get_current_user)):
-    """Export customers to Excel"""
-    customers = await db.customers.find().sort("name", 1).to_list(5000)
-    invoices = await db.invoices.find().to_list(5000)
-
-    # Calculate stats per customer
-    inv_by_customer = {}
-    for inv in invoices:
-        name = inv.get("customer_name","")
-        if name not in inv_by_customer:
-            inv_by_customer[name] = {"count":0,"total":0,"paid":0,"last":""}
-        inv_by_customer[name]["count"] += 1
-        inv_by_customer[name]["total"] += inv.get("customer_pays",0)
-        if inv.get("status") == "paid":
-            inv_by_customer[name]["paid"] += inv.get("customer_pays",0)
-        date = inv.get("created_at","")[:10]
-        if date > inv_by_customer[name]["last"]:
-            inv_by_customer[name]["last"] = date
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Kunder"
-
-    from openpyxl.styles import Font, PatternFill, Alignment
-    from openpyxl.utils import get_column_letter
-
-    headers = [
-        "Namn", "E-post", "Telefon", "Adress", "Personnummer",
-        "Typ", "Antal fakturor", "Totalt fakturerat (kr)",
-        "Totalt betalt (kr)", "Senaste faktura",
-    ]
-    ws.append(headers)
-
-    header_fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
-    for cell in ws[1]:
-        cell.font = Font(bold=True, color="FFFFFF", size=9)
-        cell.fill = header_fill
-        cell.alignment = Alignment(horizontal="center")
-
-    for c in customers:
-        name = c.get("name","")
-        stats = inv_by_customer.get(name, {"count":0,"total":0,"paid":0,"last":"-"})
-        ws.append([
-            name,
-            c.get("email",""),
-            c.get("phone",""),
-            c.get("address",""),
-            c.get("personnummer",""),
-            "Företag" if c.get("customer_type") == "company" else "Privat",
-            stats["count"],
-            round(stats["total"],2),
-            round(stats["paid"],2),
-            stats["last"] or "-",
-        ])
-        for cell in ws[ws.max_row]:
-            cell.font = Font(size=9)
-
-    col_widths = [25, 25, 15, 30, 15, 10, 16, 22, 20, 15]
-    for i, width in enumerate(col_widths, 1):
-        ws.column_dimensions[get_column_letter(i)].width = width
-
-    buf = BytesIO()
-    wb.save(buf)
-    return Response(
-        content=buf.getvalue(),
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": 'attachment; filename="kunder.xlsx"'}
-    )
 
 app.include_router(api_router)
 
