@@ -435,7 +435,6 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
         topMargin=15*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm,
-    ,
         author="PureNorth Städ")
     styles = getSampleStyleSheet()
 
