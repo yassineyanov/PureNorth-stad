@@ -5454,6 +5454,115 @@ async def export_bookings_xlsx(start: str = None, end: str = None, current=Depen
         headers={"Content-Disposition": 'attachment; filename="bokningar.xlsx"'}
     )
 
+
+# ── Schema PDF Export ─────────────────────────────────────────────────────────
+@api_router.get("/shifts/export-pdf")
+async def export_shifts_pdf(start: str, end: str, current=Depends(get_current_user)):
+    """Export schema/shifts to PDF"""
+    shifts = await db.shifts.find({"date": {"$gte": start, "$lte": end}}).sort("date", 1).to_list(5000)
+    employees = await db.employees.find().to_list(100)
+    emp_map = {str(e["_id"]): e for e in employees}
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+
+    # Group by employee
+    by_emp = {}
+    for s in shifts:
+        eid = s.get("employee_id","")
+        if eid not in by_emp:
+            emp = emp_map.get(eid, {})
+            by_emp[eid] = {"name": emp.get("name","Okänd"), "shifts": [], "total_h": 0}
+        # Calculate hours
+        try:
+            from datetime import datetime as DT
+            st = DT.strptime(s["start_time"], "%H:%M")
+            et = DT.strptime(s["end_time"], "%H:%M")
+            h = round((et - st).seconds / 3600, 2)
+        except:
+            h = 0
+        by_emp[eid]["shifts"].append({**s, "hours": h})
+        by_emp[eid]["total_h"] += h
+
+    from reportlab.lib.pagesizes import landscape
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=landscape(A4),
+        topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm,
+        title=f"Schema {start} - {end}", author=company)
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+    page_w = landscape(A4)[0]
+    elements = []
+
+    # Header
+    hdr = Table([[
+        Paragraph(f"<b>{company}</b>", ps("h", fontSize=14, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"<b>SCHEMA</b><br/>{start} – {end}", ps("s", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+    ]], colWidths=[120*mm, None])
+    hdr.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),("VALIGN",(0,0),(-1,-1),"MIDDLE")]))
+    elements.append(hdr)
+    elements.append(Spacer(1,3*mm))
+
+    # Summary
+    total_shifts = len(shifts)
+    total_hours = sum(e["total_h"] for e in by_emp.values())
+    sum_data = [[
+        Paragraph(f"<b>Antal pass</b><br/>{total_shifts} st", ps("sb", fontSize=9)),
+        Paragraph(f"<b>Antal anställda</b><br/>{len(by_emp)} st", ps("sb", fontSize=9, textColor=colors.HexColor("#1e40af"))),
+        Paragraph(f"<b>Totala timmar</b><br/>{total_hours:.1f} tim", ps("sb", fontSize=9, textColor=colors.HexColor("#15803d"))),
+    ]]
+    sum_tbl = Table(sum_data, colWidths=[(page_w-30*mm)/3]*3)
+    sum_tbl.setStyle(TableStyle([("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),("INNERGRID",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),("LEFTPADDING",(0,0),(-1,-1),8),("RIGHTPADDING",(0,0),(-1,-1),8),("TOPPADDING",(0,0),(-1,-1),8),("BOTTOMPADDING",(0,0),(-1,-1),8)]))
+    elements.append(sum_tbl)
+    elements.append(Spacer(1,5*mm))
+
+    # Shifts table
+    data = [["Datum", "Anställd", "Start", "Slut", "Timmar", "OB", "Notering"]]
+    for eid, emp_data in sorted(by_emp.items(), key=lambda x: x[1]["name"]):
+        for s in emp_data["shifts"]:
+            ob = "OB1" if s.get("is_ob1") else ("OB2" if s.get("is_ob2") else "-")
+            data.append([
+                s.get("date",""),
+                emp_data["name"],
+                s.get("start_time",""),
+                s.get("end_time",""),
+                f'{s["hours"]:.1f} tim',
+                ob,
+                s.get("note","") or "-",
+            ])
+        # Employee subtotal
+        data.append(["", f'SUMMA {emp_data["name"]}', "", "", f'{emp_data["total_h"]:.1f} tim', "", ""])
+
+    # Grand total
+    data.append(["TOTALT", "", "", "", f'{total_hours:.1f} tim', "", ""])
+
+    tbl = Table(data, colWidths=[25*mm, 55*mm, 20*mm, 20*mm, 22*mm, 16*mm, None])
+    ts = [
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
+        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+        ("FONTSIZE",(0,0),(-1,-1),8.5),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white, colors.HexColor("#F8FAFC")]),
+        ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),
+        ("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+    ]
+    # Style subtotal rows
+    for i, row in enumerate(data[1:], 1):
+        if row[1].startswith("SUMMA"):
+            ts.append(("BACKGROUND",(0,i),(-1,i),colors.HexColor("#EFF6FF")))
+            ts.append(("FONTNAME",(0,i),(-1,i),"Helvetica-Bold"))
+            ts.append(("TEXTCOLOR",(0,i),(-1,i),colors.HexColor("#1e40af")))
+
+    tbl.setStyle(TableStyle(ts))
+    elements.append(tbl)
+    elements.append(Spacer(1,3*mm))
+    elements.append(Paragraph(f"{company}  ·  Schema {start} – {end}  ·  {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"))))
+
+    doc.build(elements)
+    return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": f'inline; filename="schema_{start}_{end}.pdf"'})
+
 app.include_router(api_router)
 
 app.add_middleware(
