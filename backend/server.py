@@ -4808,7 +4808,13 @@ async def export_invoices_pdf(start: str = None, end: str = None, current=Depend
     for inv in invoices:
         items = inv.get("items",[])
         pam = sum(item.get("quantity",1)*item.get("unit_price",0) for item in items if "Påminnelseavgift" in item.get("service",""))
-        services = ", ".join(set(i.get("service","") or i.get("description","") for i in items if "Påminnelseavgift" not in i.get("service","")))[:25] or "Städtjänst"
+        svc_set = set()
+        for it in items:
+            if "Påminnelseavgift" not in it.get("service",""):
+                svc = it.get("service","") or it.get("description","")
+                svc = svc.split("(")[0].strip()  # Remove "(100 kvm → 5 tim)" part
+                if svc: svc_set.add(svc)
+        services = ", ".join(svc_set)[:30] or "Städtjänst"
         data.append([str(inv.get("invoice_number","")),inv.get("created_at","")[:10],inv.get("due_date",""),inv.get("customer_name","")[:20],services,f'{inv.get("subtotal",0):.2f}',f'{inv.get("vat_amount",0):.2f}',f'{inv.get("rut_deduction",0):.2f}',f'{pam:.2f}' if pam>0 else "-",f'{inv.get("customer_pays",0):.2f}',status_map.get(inv.get("status",""),""),str(inv.get("reminder_count",0))])
     data.append(["TOTALT","","","","",f"{total_excl:.2f}",f"{total_moms:.2f}",f"{total_rut:.2f}",f"{total_pam:.2f}",f"{total_pays:.2f}","",""])
 
