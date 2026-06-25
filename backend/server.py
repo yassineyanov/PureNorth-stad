@@ -2336,6 +2336,12 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
     prelskatt = round(gross_salary * PRELSKATT, 2)
     total_payroll_cost = round(gross_salary + arbetsgivaravgifter + semesterersattning, 2)
     utlagg_total = sum(r.get("expense_total", 0) for r in payroll_summary.values())
+    paminnelse_fees = sum(
+        sum(item.get("quantity",1)*item.get("unit_price",0)
+            for item in inv.get("items",[])
+            if "Påminnelseavgift" in item.get("service",""))
+        for inv in invoices
+    )
     total_intakter_pdf = revenue_excl_vat + paminnelse_fees
     operating_profit = round(total_intakter_pdf - total_payroll_cost - utlagg_total, 2)
     profit_margin = round((operating_profit / total_intakter_pdf * 100) if total_intakter_pdf > 0 else 0, 1)
@@ -2383,12 +2389,6 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
         elements.append(t)
 
     # Calculate reminder fees and correct totals
-    paminnelse_fees = sum(
-        sum(item.get("quantity",1)*item.get("unit_price",0)
-            for item in inv.get("items",[])
-            if "Påminnelseavgift" in item.get("service",""))
-        for inv in invoices
-    )
     kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
     betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
     obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid","cancelled"])
