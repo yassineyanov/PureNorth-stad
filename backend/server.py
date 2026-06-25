@@ -5563,6 +5563,118 @@ async def export_shifts_pdf(start: str, end: str, current=Depends(get_current_us
     doc.build(elements)
     return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": f'inline; filename="schema_{start}_{end}.pdf"'})
 
+
+# ── Schema Excel Export ───────────────────────────────────────────────────────
+@api_router.get("/shifts/export-xlsx")
+async def export_shifts_xlsx(start: str, end: str, current=Depends(get_current_user)):
+    """Export schema/shifts to Excel"""
+    shifts = await db.shifts.find({"date": {"$gte": start, "$lte": end}}).sort("date", 1).to_list(5000)
+    employees = await db.employees.find().to_list(100)
+    emp_map = {str(e["_id"]): e for e in employees}
+
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+
+    # ── Sheet 1: Alla pass ────────────────────────────────────────
+    ws = wb.active
+    ws.title = "Alla pass"
+
+    headers = ["Datum", "Veckodag", "Anställd", "Start", "Slut", "Timmar", "OB1", "OB2", "Notering"]
+    ws.append(headers)
+
+    header_fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+
+    DAYS_SV = ["Måndag","Tisdag","Onsdag","Torsdag","Fredag","Lördag","Söndag"]
+    total_hours = 0
+
+    for s in shifts:
+        eid = s.get("employee_id","")
+        emp = emp_map.get(eid, {})
+        try:
+            from datetime import datetime as DT, date as DateObj
+            d = DateObj.fromisoformat(s["date"])
+            weekday = DAYS_SV[d.weekday()]
+            st = DT.strptime(s["start_time"], "%H:%M")
+            et = DT.strptime(s["end_time"], "%H:%M")
+            h = round((et - st).seconds / 3600, 2)
+        except:
+            weekday = ""
+            h = 0
+        total_hours += h
+        ws.append([
+            s.get("date",""),
+            weekday,
+            emp.get("name","Okänd"),
+            s.get("start_time",""),
+            s.get("end_time",""),
+            h,
+            "✓" if s.get("is_ob1") else "",
+            "✓" if s.get("is_ob2") else "",
+            s.get("note","") or "",
+        ])
+        for cell in ws[ws.max_row]:
+            cell.font = Font(size=9)
+
+    # Totals
+    ws.append(["TOTALT","","","","", round(total_hours,2),"","",""])
+    for cell in ws[ws.max_row]:
+        cell.font = Font(bold=True, size=9)
+        cell.fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+
+    col_widths = [14, 12, 25, 10, 10, 10, 8, 8, 25]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    # ── Sheet 2: Per anställd ─────────────────────────────────────
+    ws2 = wb.create_sheet("Per anställd")
+    ws2.append(["Anställd", "Antal pass", "Totala timmar", "OB1 timmar", "OB2 timmar"])
+    for cell in ws2[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+
+    by_emp = {}
+    for s in shifts:
+        eid = s.get("employee_id","")
+        emp = emp_map.get(eid,{})
+        name = emp.get("name","Okänd")
+        if name not in by_emp:
+            by_emp[name] = {"count":0,"hours":0,"ob1":0,"ob2":0}
+        try:
+            st = DT.strptime(s["start_time"],"%H:%M")
+            et = DT.strptime(s["end_time"],"%H:%M")
+            h = round((et-st).seconds/3600,2)
+        except: h = 0
+        by_emp[name]["count"] += 1
+        by_emp[name]["hours"] += h
+        if s.get("is_ob1"): by_emp[name]["ob1"] += h
+        if s.get("is_ob2"): by_emp[name]["ob2"] += h
+
+    for name, vals in sorted(by_emp.items()):
+        ws2.append([name, vals["count"], round(vals["hours"],2), round(vals["ob1"],2), round(vals["ob2"],2)])
+        for cell in ws2[ws2.max_row]: cell.font = Font(size=9)
+
+    ws2.append(["TOTALT", sum(v["count"] for v in by_emp.values()), round(total_hours,2),"",""])
+    for cell in ws2[ws2.max_row]:
+        cell.font = Font(bold=True, size=9)
+        cell.fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+
+    for i, w in enumerate([25,14,16,14,14], 1):
+        ws2.column_dimensions[get_column_letter(i)].width = w
+
+    buf = BytesIO()
+    wb.save(buf)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="schema_{start}_{end}.xlsx"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
