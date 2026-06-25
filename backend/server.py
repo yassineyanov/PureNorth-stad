@@ -5377,6 +5377,83 @@ async def export_bookings_pdf(start: str = None, end: str = None, current=Depend
     doc.build(elements)
     return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": 'inline; filename="bokningar.pdf"'})
 
+
+# ── Bookings Excel Export ─────────────────────────────────────────────────────
+@api_router.get("/bookings/export-xlsx")
+async def export_bookings_xlsx(start: str = None, end: str = None, current=Depends(get_current_user)):
+    query = {}
+    if start and end:
+        query["created_at"] = {"$gte": start, "$lte": end + "T23:59:59"}
+    bookings = await db.bookings.find(query).sort("created_at", -1).to_list(5000)
+
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Bokningar"
+
+    headers = ["Datum", "Namn", "E-post", "Telefon", "Adress", "Tjänster", "Yta/Antal", "Önskat datum", "Anteckning", "Status"]
+    ws.append(headers)
+
+    header_fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+
+    status_map = {"new":"Ny","contacted":"Kontaktad","quoted":"Offert","done":"Klar","cancelled":"Avbruten"}
+    status_colors = {"new":"DBEAFE","contacted":"FEF3C7","quoted":"EDE9FE","done":"DCFCE7","cancelled":"FEE2E2"}
+
+    by_status = {}
+    for b in bookings:
+        s = b.get("status","new")
+        by_status[s] = by_status.get(s,0) + 1
+        services = ", ".join(b.get("services",[]) or [b.get("service","")])
+        status = status_map.get(s, s)
+        ws.append([
+            b.get("created_at","")[:10],
+            b.get("name",""),
+            b.get("email",""),
+            b.get("phone",""),
+            b.get("address","") or "-",
+            services,
+            b.get("kvm","") or "-",
+            b.get("preferred_date","") or "-",
+            b.get("other_description","") or "-",
+            status,
+        ])
+        fill_color = status_colors.get(b.get("status","new"), "FFFFFF")
+        for cell in ws[ws.max_row]:
+            cell.font = Font(size=9)
+            cell.fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
+
+    # Summary sheet
+    ws2 = wb.create_sheet("Sammanfattning")
+    ws2.append(["Status", "Antal"])
+    for cell in ws2[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+    for s, label in status_map.items():
+        ws2.append([label, by_status.get(s,0)])
+        for cell in ws2[ws2.max_row]: cell.font = Font(size=9)
+    ws2.append(["TOTALT", len(bookings)])
+    for cell in ws2[ws2.max_row]: cell.font = Font(bold=True, size=9)
+
+    col_widths = [14, 22, 28, 16, 25, 30, 12, 16, 30, 14]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws2.column_dimensions["A"].width = 16
+    ws2.column_dimensions["B"].width = 10
+
+    buf = BytesIO()
+    wb.save(buf)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="bokningar.xlsx"'}
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
