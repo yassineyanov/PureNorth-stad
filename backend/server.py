@@ -2112,7 +2112,7 @@ async def export_customers_pdf(current=Depends(get_current_user)):
             stats["last"] or "-",
         ])
 
-    tbl = Table(data, colWidths=[45*mm, 50*mm, 28*mm, 18*mm, 18*mm, 26*mm, 30*mm])
+    tbl = Table(data, colWidths=[50*mm, 55*mm, 28*mm, 16*mm, 16*mm, 24*mm, 26*mm])
     tbl.setStyle(TableStyle([
         ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
         ("TEXTCOLOR",(0,0),(-1,0),colors.white),
