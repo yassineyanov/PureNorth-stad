@@ -5709,6 +5709,103 @@ async def export_shifts_xlsx(start: str, end: str, current=Depends(get_current_u
         headers={"Content-Disposition": f'attachment; filename="schema_{start}_{end}.xlsx"'}
     )
 
+
+# ── Utlägg PDF Export ─────────────────────────────────────────────────────────
+@api_router.get("/expenses/export-pdf")
+async def export_expenses_pdf(start: str = None, end: str = None, current=Depends(get_current_user)):
+    """Export expenses/utlägg to PDF"""
+    query = {}
+    if start and end:
+        query["date"] = {"$gte": start, "$lte": end}
+    expenses = await db.expenses.find(query).sort("date", -1).to_list(5000)
+    employees = await db.employees.find().to_list(100)
+    emp_map = {str(e["_id"]): e["name"] for e in employees}
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+
+    total = sum(e.get("amount",0) for e in expenses)
+    total_moms = sum(e.get("amount",0) - e.get("amount",0)/(1+e.get("moms_rate",0)/100) for e in expenses if e.get("moms_rate",0) > 0)
+    by_status = {"approved":0,"pending":0,"rejected":0}
+    for e in expenses:
+        s = e.get("status","pending")
+        by_status[s] = by_status.get(s,0) + e.get("amount",0)
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm,
+        title="Utlägg", author=company)
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+    page_w = A4[0]
+    elements = []
+
+    # Header
+    hdr = Table([[
+        Paragraph(f"<b>{company}</b>", ps("h", fontSize=14, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"<b>UTLÄGG</b><br/>Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ps("s", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+    ]], colWidths=[100*mm, None])
+    hdr.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),("VALIGN",(0,0),(-1,-1),"MIDDLE")]))
+    elements.append(hdr)
+    elements.append(Spacer(1,3*mm))
+
+    # Summary
+    sum_data = [[
+        Paragraph(f"<b>Totalt belopp</b><br/>{total:.2f} kr", ps("sb", fontSize=9)),
+        Paragraph(f"<b>Godkänt</b><br/>{by_status['approved']:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#15803d"))),
+        Paragraph(f"<b>Väntar</b><br/>{by_status['pending']:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#b45309"))),
+        Paragraph(f"<b>Ingående moms</b><br/>{total_moms:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#1e40af"))),
+    ]]
+    sum_tbl = Table(sum_data, colWidths=[(page_w-40*mm)/4]*4)
+    sum_tbl.setStyle(TableStyle([("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),("INNERGRID",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),("LEFTPADDING",(0,0),(-1,-1),8),("RIGHTPADDING",(0,0),(-1,-1),8),("TOPPADDING",(0,0),(-1,-1),8),("BOTTOMPADDING",(0,0),(-1,-1),8)]))
+    elements.append(sum_tbl)
+    elements.append(Spacer(1,5*mm))
+
+    # Expenses table
+    status_map = {"approved":"Godkänd","pending":"Väntar","rejected":"Avvisad"}
+    status_colors_map = {"approved":colors.HexColor("#15803d"),"pending":colors.HexColor("#b45309"),"rejected":colors.HexColor("#dc2626")}
+
+    data = [["Datum","Anställd","Kategori","Beskrivning","Moms %","Belopp","Status"]]
+    for e in expenses:
+        eid = e.get("employee_id","")
+        emp_name = emp_map.get(eid, e.get("employee_name","Okänd"))
+        data.append([
+            e.get("date",""),
+            emp_name[:20],
+            e.get("category","") or "-",
+            (e.get("description","") or "-")[:30],
+            f'{e.get("moms_rate",0)}%',
+            f'{e.get("amount",0):.2f} kr',
+            status_map.get(e.get("status","pending"),""),
+        ])
+
+    data.append(["TOTALT","","","","",f'{total:.2f} kr',""])
+
+    tbl = Table(data, colWidths=[22*mm, 38*mm, 25*mm, 45*mm, 16*mm, 25*mm, 22*mm])
+    ts = [
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
+        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+        ("FONTSIZE",(0,0),(-1,-1),8.5),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ROWBACKGROUNDS",(0,1),(-1,-2),[colors.white, colors.HexColor("#F8FAFC")]),
+        ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),
+        ("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+        ("ALIGN",(5,0),(5,-1),"RIGHT"),
+    ]
+    for row_idx, e in enumerate(expenses, 1):
+        col = status_colors_map.get(e.get("status","pending"))
+        if col: ts.append(("TEXTCOLOR",(6,row_idx),(6,row_idx),col))
+    tbl.setStyle(TableStyle(ts))
+    elements.append(tbl)
+
+    elements.append(Spacer(1,4*mm))
+    elements.append(Paragraph(f"{company}  ·  Utlägg  ·  {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"))))
+
+    doc.build(elements)
+    return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": 'inline; filename="utlagg.pdf"'})
+
 app.include_router(api_router)
 
 app.add_middleware(
