@@ -3677,6 +3677,13 @@ async def export_moms_pdf(month: str, current=Depends(get_current_user)):
     # Calculate moms
     # Utgående moms (from invoices)
     sales_excl = sum(i.get("subtotal", 0) for i in invoices)
+    paminnelse_fees = sum(
+        sum(item.get("quantity",1)*item.get("unit_price",0)
+            for item in inv.get("items",[])
+            if "Påminnelseavgift" in item.get("service",""))
+        for inv in invoices
+    )
+    total_sales = sales_excl + paminnelse_fees
     vat_out_25 = sum(i.get("vat_amount", 0) for i in invoices)
 
     # Ingående moms (from costs + expenses)
@@ -3751,6 +3758,8 @@ async def export_moms_pdf(month: str, current=Depends(get_current_user)):
     # ── A. MOMS ATT REDOVISA ────────────────────────────────────────
     section("A. MOMS ATT REDOVISA (UTGÅENDE MOMS)", "#1e40af")
     row("05", "Momspliktig försäljning (exkl. moms)", sales_excl)
+    if paminnelse_fees > 0:
+        row("06", "Påminnelseavgifter (momsfria intäkter)", paminnelse_fees)
     row("10", "Utgående moms 25%", vat_out_25)
     row("11", "Utgående moms 12%", 0)
     row("12", "Utgående moms 6%", 0)
