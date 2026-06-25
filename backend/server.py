@@ -3229,20 +3229,26 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
     # ── FAKTURA LIST ───────────────────────────────────────────────
     if invoices:
         section_header("7. FAKTURALISTA", "#475569")
-        inv_header = [["Faktura #", "Kund", "Datum", "Exkl. moms", "Moms", "Att betala", "Status"]]
+        inv_header = [["Faktura #", "Kund", "Datum", "Exkl. moms", "Påm.avg", "Moms", "Att betala", "Status"]]
         inv_rows = inv_header.copy()
         for i in sorted(invoices, key=lambda x: x.get("created_at","")):
             status_map = {"paid":"Betald","draft":"Utkast","sent":"Skickad","overdue":"Förfallen"}
+            pam_fee = sum(
+                item.get("quantity",1)*item.get("unit_price",0)
+                for item in i.get("items",[])
+                if "Påminnelseavgift" in item.get("service","")
+            )
             inv_rows.append([
                 i.get("invoice_number",""),
                 i.get("customer_name","")[:20],
                 i.get("created_at","")[:10],
                 f'{i.get("subtotal",0):.2f}',
+                f'{pam_fee:.2f}' if pam_fee > 0 else "-",
                 f'{i.get("vat_amount",0):.2f}',
                 f'{i.get("customer_pays",0):.2f}',
                 status_map.get(i.get("status",""),""),
             ])
-        inv_tbl = Table(inv_rows, colWidths=[20*mm, 45*mm, 20*mm, 25*mm, 20*mm, 25*mm, 20*mm])
+        inv_tbl = Table(inv_rows, colWidths=[18*mm, 38*mm, 18*mm, 20*mm, 16*mm, 18*mm, 22*mm, 18*mm])
         inv_tbl.setStyle(TableStyle([
             ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#F1F5F9")),
             ("FONTSIZE",(0,0),(-1,-1),7.5),("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
