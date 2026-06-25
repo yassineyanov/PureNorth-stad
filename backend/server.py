@@ -3401,7 +3401,7 @@ async def export_sie(month: str, current=Depends(get_current_user)):
     MONTHS_SV = ["","Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"]
     sie_lines = [
         f'#FLAGGA 0',
-        f'#FORMAT PC8',
+        f'#FORMAT UTF-8',
         f'#SIETYP 4',
         f'#PROGRAM "PureNorth Admin" "1.0"',
         f'#GEN {gen_date} "PureNorth Admin"',
