@@ -3310,6 +3310,12 @@ async def export_sie(month: str, current=Depends(get_current_user)):
 
     # Calculate totals
     revenue = sum(i.get("subtotal", 0) for i in invoices)
+    paminnelse_fees = sum(
+        sum(item.get("quantity",1)*item.get("unit_price",0)
+            for item in inv.get("items",[])
+            if "Påminnelseavgift" in item.get("service",""))
+        for inv in invoices
+    )
     vat_out = sum(i.get("vat_amount", 0) for i in invoices)
     rut = sum(i.get("rut_deduction", 0) for i in invoices)
 
@@ -3408,6 +3414,7 @@ async def export_sie(month: str, current=Depends(get_current_user)):
         f'#KONTO 2731 "Arbetsgivaravgifter"',
         f'#KONTO 3000 "Försäljning tjänster"',
         f'#KONTO 3001 "RUT-avdrag"',
+        f'#KONTO 3590 "Påminnelseavgifter"',
         f'#KONTO 5410 "Förbrukningsinventarier"',
         f'#KONTO 5612 "Bränsle och drivmedel"',
         f'#KONTO 6990 "Övriga kostnader"',
