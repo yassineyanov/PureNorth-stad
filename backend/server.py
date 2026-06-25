@@ -3021,7 +3021,14 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
     # ── Calculations ───────────────────────────────────────────────
     # Revenue
     revenue_excl_vat = sum(i.get("subtotal", 0) for i in invoices)
-    vat_collected = sum(i.get("vat_amount", 0) for i in invoices)  # utgående moms
+    paminnelse_fees = sum(
+        sum(item.get("quantity",1)*item.get("unit_price",0)
+            for item in inv.get("items",[])
+            if "Påminnelseavgift" in item.get("service",""))
+        for inv in invoices
+    )
+    total_intakter = revenue_excl_vat + paminnelse_fees
+    vat_collected = sum(i.get("vat_amount", 0) for i in invoices)
     rut_deductions = sum(i.get("rut_deduction", 0) for i in invoices)
     paid_amount = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
     unpaid_amount = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") != "paid")
@@ -3133,6 +3140,9 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
     data_row(f"Antal fakturor", str(len(invoices)))
     data_row(f"Antal bokningar", str(len(bookings)))
     data_row(f"Försäljning tjänster  {konto('3000')}", kr(revenue_excl_vat))
+        if paminnelse_fees > 0:
+            data_row(f"Påminnelseavgifter  {konto('3590')}", kr(paminnelse_fees))
+            data_row("TOTALA INTÄKTER", kr(total_intakter), is_total=True, color="#1e40af")
     data_row(f"Utgående moms 25%  {konto('2610')}", kr(vat_collected))
     data_row(f"RUT-avdrag  {konto('3001')}", kr(rut_deductions))
     data_row("Betalt av kunder", kr(paid_amount))
@@ -3204,7 +3214,7 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
 
     # ── 6. RESULTAT ────────────────────────────────────────────────
     section_header("6. RÖRELSERESULTAT", "#15803d")
-    data_row(f"Intäkter exkl. moms  {konto('3000')}", kr(revenue_excl_vat))
+    data_row(f"Intäkter exkl. moms  {konto('3000')}", kr(total_intakter))
     data_row(f"Personalkostnader  {konto('7210/7510')}", f"-{kr(total_payroll + utlagg_total)}")
     data_row(f"Materialkostnader exkl. moms  {konto('5410')}", f"-{kr(material_total_incl - ingaende_moms)}")
     profit_color = "#15803d" if operating_profit >= 0 else "#dc2626"
