@@ -3140,7 +3140,6 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
     data_row(f"Antal fakturor", str(len(invoices)))
     data_row(f"Antal bokningar", str(len(bookings)))
     data_row(f"Försäljning tjänster  {konto('3000')}", kr(revenue_excl_vat))
-    data_row(f"Försäljning tjänster  {konto('3000')}", kr(revenue_excl_vat))
     if paminnelse_fees > 0:
         data_row(f"Påminnelseavgifter  {konto('3590')}", kr(paminnelse_fees))
     data_row(f"Utgående moms 25%  {konto('2610')}", kr(vat_collected))
