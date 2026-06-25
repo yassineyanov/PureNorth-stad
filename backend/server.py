@@ -3444,11 +3444,8 @@ async def export_sie(month: str, current=Depends(get_current_user)):
 
     sie_content = "\n".join(sie_lines)
 
-    # Encode to CP437 (SIE standard encoding)
-    try:
-        sie_bytes = sie_content.encode("cp437", errors="replace")
-    except:
-        sie_bytes = sie_content.encode("latin-1", errors="replace")
+    # Encode to UTF-8
+    sie_bytes = sie_content.encode("utf-8")
 
     return Response(
         content=sie_bytes,
