@@ -1255,8 +1255,9 @@ async def payroll_export(start: str, end: str, format: str = "xlsx", current=Dep
         inv_settings = await get_invoice_settings_obj()
         company = inv_settings.company_name or "PureNorth Städ"
         buf = BytesIO()
-        doc = SimpleDocTemplate(buf, pagesize=A4,
-            topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm)
+        from reportlab.lib.pagesizes import landscape
+        doc = SimpleDocTemplate(buf, pagesize=landscape(A4),
+            topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm)
         styles = getSampleStyleSheet()
         elements = []
         def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
@@ -1317,7 +1318,7 @@ async def payroll_export(start: str, end: str, format: str = "xlsx", current=Dep
             ])
         data.append(["TOTALT", "", "", "", "", f'{total_brutto:.2f}', f'{total_sem:.2f}',
                      f'{total_ag:.2f}', f'-{total_prel:.2f}', f'{total_netto:.2f}', f'{total_utlagg:.2f}', "", "", ""])
-        tbl = Table(data, colWidths=[28*mm, 12*mm, 13*mm, 14*mm, 14*mm, 18*mm, 16*mm, 18*mm, 16*mm, 17*mm, 14*mm, 13*mm, 16*mm, 14*mm])
+        tbl = Table(data, colWidths=[32*mm, 14*mm, 14*mm, 16*mm, 15*mm, 19*mm, 18*mm, 19*mm, 17*mm, 19*mm, 15*mm, 14*mm, 18*mm, 15*mm])
         tbl.setStyle(TableStyle([
             ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
             ("TEXTCOLOR",(0,0),(-1,0),colors.white),
