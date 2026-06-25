@@ -1292,7 +1292,7 @@ async def payroll_export(start: str, end: str, format: str = "xlsx", current=Dep
         PRELSKATT = 0.30
         ARBETSGIVARAVGIFT = 0.3142
         SEMESTER = 0.12
-        data = [["Namn", "Lön/h", "Normal(h)", "OB(kr)", "Brutto", "Semester", "AG-avgift", "Prelskatt", "Netto →Bank", "Utlägg"]]
+        data = [["Namn", "Typ", "Lön/h", "Normal(h)", "OB(kr)", "Brutto", "Semester", "AG-avgift", "Prelskatt", "Nettolön", "Utlägg", "Frånvaro", "Förlorad lön", "Sjuklön"]]
         total_brutto = total_netto = total_utlagg = total_ag = total_sem = total_prel = 0
         for r in summary.values():
             brutto = r["normal_h"]*r["hourly_rate"] + r["ob1_h"]*settings.ob1_extra + r["ob2_h"]*settings.ob2_extra + r.get("sjuklon_net",0)
@@ -1302,24 +1302,30 @@ async def payroll_export(start: str, end: str, format: str = "xlsx", current=Dep
             ag = round(brutto * ARBETSGIVARAVGIFT, 2)
             sem = round(brutto * SEMESTER, 2)
             utlagg = r.get("expense_total", 0)
+            franvaro = r.get("absence_days", 0)
+            forlorad = round(r.get("absence_lost_amount", 0), 2)
+            sjuklon = round(r.get("sjuklon_net", 0), 2)
+            typ = "Vikarie" if r.get("employment_type") == "vikarie" else "Fast"
             total_brutto += brutto; total_netto += netto; total_utlagg += utlagg
             total_ag += ag; total_sem += sem; total_prel += prelskatt
             data.append([
-                r["name"], f'{r["hourly_rate"]:.0f} kr', f'{r["normal_h"]:.1f}',
+                r["name"], typ, f'{r["hourly_rate"]:.0f} kr', f'{r["normal_h"]:.1f}',
                 f'{ob_kr:.2f}', f'{brutto:.2f}', f'{sem:.2f}',
-                f'{ag:.2f}', f'-{prelskatt:.2f}', f'{netto:.2f}', f'{utlagg:.2f}'
+                f'{ag:.2f}', f'-{prelskatt:.2f}', f'{netto:.2f}', f'{utlagg:.2f}',
+                str(franvaro), f'-{forlorad:.2f}' if forlorad > 0 else "-",
+                f'{sjuklon:.2f}' if sjuklon > 0 else "-"
             ])
-        data.append(["TOTALT", "", "", "", f'{total_brutto:.2f}', f'{total_sem:.2f}',
-                     f'{total_ag:.2f}', f'-{total_prel:.2f}', f'{total_netto:.2f}', f'{total_utlagg:.2f}'])
-        tbl = Table(data, colWidths=[30*mm, 14*mm, 16*mm, 16*mm, 20*mm, 18*mm, 20*mm, 18*mm, 20*mm, 16*mm])
+        data.append(["TOTALT", "", "", "", "", f'{total_brutto:.2f}', f'{total_sem:.2f}',
+                     f'{total_ag:.2f}', f'-{total_prel:.2f}', f'{total_netto:.2f}', f'{total_utlagg:.2f}', "", "", ""])
+        tbl = Table(data, colWidths=[28*mm, 12*mm, 13*mm, 14*mm, 14*mm, 18*mm, 16*mm, 18*mm, 16*mm, 17*mm, 14*mm, 13*mm, 16*mm, 14*mm])
         tbl.setStyle(TableStyle([
             ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
             ("TEXTCOLOR",(0,0),(-1,0),colors.white),
-            ("FONTSIZE",(0,0),(-1,-1),8),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+            ("FONTSIZE",(0,0),(-1,-1),7),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
             ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
-            ("LEFTPADDING",(0,0),(-1,-1),3),("RIGHTPADDING",(0,0),(-1,-1),3),
-            ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
-            ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+            ("LEFTPADDING",(0,0),(-1,-1),2),("RIGHTPADDING",(0,0),(-1,-1),2),
+            ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
+            ("ALIGN",(2,0),(-1,-1),"RIGHT"),
             ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),
             ("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
         ]))
