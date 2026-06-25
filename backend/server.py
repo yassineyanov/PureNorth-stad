@@ -3009,7 +3009,7 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
     # ── Data collection ────────────────────────────────────────────
     inv_settings = await get_invoice_settings_obj()
     company = inv_settings.company_name or "PureNorth Städ"
-    orgnr = inv_settings.company_orgnr or ""
+    orgnr = inv_settings.company_orgnr or "—"
 
     invoices_raw = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(2000)
     invoices = [recalc_invoice(i) for i in invoices_raw]
@@ -4295,25 +4295,30 @@ async def rut_report_pdf(month: str, current=Depends(get_current_user)):
     else:
         inv_data = [["Faktura #", "Kund", "Personnummer", "Tjänst", "Arbetskostnad", "RUT 50%", "Status"]]
         for inv in sorted(invoices, key=lambda x: x.get("created_at","")):
-            services = ", ".join(set(i.get("service","") for i in inv.get("items",[]) if i.get("service") != "Påminnelseavgift"))
+            work_items = [i for i in inv.get("items",[]) if "Påminnelseavgift" not in i.get("service","")]
+            svc_names = set()
+            for it in work_items:
+                svc = it.get("service","") or it.get("description","")
+                if svc: svc_names.add(svc.split("(")[0].strip())
+            services = ", ".join(svc_names) or "Städtjänst"
             rut = inv.get("rut_deduction", 0)
-            labor = rut * 2  # RUT is 50% of labor
-            personnr = inv.get("customer_personnummer", "Saknas")
-            status = "Betald ✓" if inv.get("status") == "paid" else "Obetald"
+            labor = rut * 2
+            personnr = inv.get("customer_personnummer", "") or "—"
+            status = "Betald" if inv.get("status") == "paid" else "Obetald"
             inv_data.append([
                 str(inv.get("invoice_number","")),
-                inv.get("customer_name","")[:20],
+                inv.get("customer_name","")[:18],
                 personnr,
-                services[:25],
-                f"{labor:,.2f}".replace(",","."),
-                f"{rut:,.2f}".replace(",","."),
+                services[:22],
+                f"{labor:.2f}",
+                f"{rut:.2f}",
                 status,
             ])
 
         # Totals row
         inv_data.append(["", "TOTALT", "", "", f"{total_rut*2:,.2f}".replace(",","."), f"{total_rut:,.2f}".replace(",","."), ""])
 
-        inv_tbl = Table(inv_data, colWidths=[18*mm, 38*mm, 28*mm, 35*mm, 28*mm, 22*mm, 20*mm])
+        inv_tbl = Table(inv_data, colWidths=[15*mm, 35*mm, 28*mm, 32*mm, 24*mm, 20*mm, 18*mm])
         inv_tbl.setStyle(TableStyle([
             ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#15803d")),
             ("TEXTCOLOR",(0,0),(-1,0),colors.white),
