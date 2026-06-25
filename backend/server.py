@@ -1557,6 +1557,16 @@ async def payroll_slip(start: str, end: str, employee_id: str, current=Depends(g
     # ── Summary box ───────────────────────────────────────────────────
     elements.append(Paragraph("Sammanfattning", styles["Heading3"]))
     summary_data = []
+    PRELSKATT = 0.30
+    ARBETSGIVARAVGIFT = 0.3142
+    SEMESTER = 0.12
+    brutto = row["normal_h"]*row["hourly_rate"] + row["ob1_pay"] + row["ob2_pay"] + row.get("sjuklon_net",0)
+    semester_kr = round(brutto * SEMESTER, 2)
+    ag_avg = round(brutto * ARBETSGIVARAVGIFT, 2)
+    prelskatt = round(brutto * PRELSKATT, 2)
+    netto = round(brutto - prelskatt, 2)
+    total_cost_employer = round(brutto + ag_avg + semester_kr, 2)
+
     summary_data.append(["Grundlön (normaltid):", f'{row["base_pay"]:.2f} kr'])
     if row["ob1_pay"] > 0:
         summary_data.append([f'OB1-tillägg:', f'{row["ob1_pay"]:.2f} kr'])
@@ -1568,21 +1578,32 @@ async def payroll_slip(start: str, end: str, employee_id: str, current=Depends(g
         summary_data.append(["Sjuklön netto:", f'{row["sjuklon_net"]:.2f} kr'])
         summary_data.append(["  (varav karensavdrag):", f'-{row["karensavdrag"]:.2f} kr'])
     if row.get("absence_days", 0) > 0:
-        summary_data.append(["Frånvarodagar totalt:", f'{row["absence_days"]} dagar'])
-    if row.get("absence_scheduled_days", 0) > 0:
-        summary_data.append(["Pass under frånvaro:", f'{row["absence_scheduled_days"]} pass'])
+        summary_data.append(["Frånvarodagar:", f'{row["absence_days"]} dagar'])
     summary_data.append(["", ""])
-    summary_data.append(["TOTALT ATT BETALA:", f'{row["total_pay"]:.2f} kr'])
+    summary_data.append(["Bruttolön:", f'{brutto:.2f} kr'])
+    summary_data.append(["Preliminärskatt (30%):", f'-{prelskatt:.2f} kr'])
+    summary_data.append(["", ""])
+    summary_data.append(["NETTOLÖN →BANK:", f'{netto:.2f} kr'])
+    summary_data.append(["", ""])
+    summary_data.append(["── Arbetsgivarkostnader ──────", ""])
+    summary_data.append(["Semesterersättning (12%):", f'{semester_kr:.2f} kr'])
+    summary_data.append(["Arbetsgivaravgift (31.42%):", f'{ag_avg:.2f} kr'])
+    summary_data.append(["Total kostnad för arbetsgivare:", f'{total_cost_employer:.2f} kr'])
 
-    total_table = Table(summary_data, colWidths=[100*mm, 45*mm])
+    total_table = Table(summary_data, colWidths=[110*mm, 45*mm])
     total_table.setStyle(TableStyle([
         ("FONTSIZE", (0,0),(-1,-1), 10),
         ("ALIGN", (1,0),(-1,-1), "RIGHT"),
-        ("LINEABOVE", (0,-1),(-1,-1), 1.5, colors.HexColor("#141414")),
-        ("FONTNAME", (0,-1),(-1,-1), "Helvetica-Bold"),
-        ("FONTSIZE", (0,-1),(-1,-1), 12),
-        ("TOPPADDING", (0,-1),(-1,-1), 8),
-        ("BOTTOMPADDING", (0,0),(-1,-2), 4),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 4),
+        ("TOPPADDING", (0,0),(-1,-1), 3),
+        ("LINEABOVE", (0,-5),(-1,-5), 0.5, colors.HexColor("#E2E8F0")),
+        ("BACKGROUND", (0,-5),(-1,-3), colors.HexColor("#F8FAFC")),
+        ("FONTSIZE", (0,-5),(-1,-3), 8),
+        ("TEXTCOLOR", (0,-5),(-1,-3), colors.HexColor("#64748b")),
+        ("LINEABOVE", (0,-6),(-1,-6), 1.5, colors.HexColor("#141414")),
+        ("FONTNAME", (0,-6),(-1,-6), "Helvetica-Bold"),
+        ("FONTSIZE", (0,-6),(-1,-6), 12),
+        ("TOPPADDING", (0,-6),(-1,-6), 8),
     ]))
     elements.append(total_table)
 
