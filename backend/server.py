@@ -3359,6 +3359,11 @@ async def export_sie(month: str, current=Depends(get_current_user)):
         ver += f'  #TRANS 2610 {{}} {-vat:.2f} {date} "Utgående moms"\n'
         if rut_d > 0:
             ver += f'  #TRANS 3001 {{}} {rut_d:.2f} {date} "RUT-avdrag"\n'
+        pam_fee = sum(item.get("quantity",1)*item.get("unit_price",0)
+            for item in inv.get("items",[])
+            if "Påminnelseavgift" in item.get("service",""))
+        if pam_fee > 0:
+            ver += f'  #TRANS 3590 {{}} {-pam_fee:.2f} {date} "Påminnelseavgift"\n'
         ver += f'  #TRANS 1510 {{}} {pays:.2f} {date} "Kundfordran"\n'
         verifikationer.append(ver)
         ver_num += 1
