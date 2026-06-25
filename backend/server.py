@@ -4750,6 +4750,80 @@ async def export_invoices_xlsx(start: str = None, end: str = None, current=Depen
         headers={"Content-Disposition": f'attachment; filename="fakturor.xlsx"'}
     )
 
+
+# ── Invoices List PDF Export ──────────────────────────────────────────────────
+@api_router.get("/invoices/export-pdf")
+async def export_invoices_pdf(start: str = None, end: str = None, current=Depends(get_current_user)):
+    query = {}
+    if start and end:
+        query["created_at"] = {"$gte": start, "$lte": end + "T23:59:59"}
+    invoices = await db.invoices.find(query).sort("created_at", -1).to_list(5000)
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+
+    total_excl = sum(i.get("subtotal",0) for i in invoices)
+    total_moms = sum(i.get("vat_amount",0) for i in invoices)
+    total_rut = sum(i.get("rut_deduction",0) for i in invoices)
+    total_pam = sum(sum(item.get("quantity",1)*item.get("unit_price",0) for item in i.get("items",[]) if "Påminnelseavgift" in item.get("service","")) for i in invoices)
+    total_pays = sum(i.get("customer_pays",0) for i in invoices)
+    paid = sum(1 for i in invoices if i.get("status") == "paid")
+
+    from reportlab.lib.pagesizes import landscape
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=landscape(A4),
+        topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm,
+        title="Fakturalista", author=company)
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+    page_w = landscape(A4)[0]
+    elements = []
+
+    # Header
+    hdr = Table([[
+        Paragraph(f"<b>{company}</b>", ps("h", fontSize=14, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"<b>FAKTURALISTA</b><br/>Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ps("s", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+    ]], colWidths=[120*mm, None])
+    hdr.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),("VALIGN",(0,0),(-1,-1),"MIDDLE")]))
+    elements.append(hdr)
+    elements.append(Spacer(1,3*mm))
+
+    # Summary
+    sum_data = [[
+        Paragraph(f"<b>Antal</b><br/>{len(invoices)} st", ps("sb", fontSize=9)),
+        Paragraph(f"<b>Betalda</b><br/>{paid} st", ps("sb", fontSize=9, textColor=colors.HexColor("#15803d"))),
+        Paragraph(f"<b>Obetalda</b><br/>{len(invoices)-paid} st", ps("sb", fontSize=9, textColor=colors.HexColor("#dc2626"))),
+        Paragraph(f"<b>Exkl. moms</b><br/>{total_excl:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#1e40af"))),
+        Paragraph(f"<b>RUT-avdrag</b><br/>{total_rut:.2f} kr", ps("sb", fontSize=9, textColor=colors.HexColor("#7c3aed"))),
+        Paragraph(f"<b>Att betala</b><br/>{total_pays:.2f} kr", ps("sb", fontSize=9)),
+    ]]
+    sum_tbl = Table(sum_data, colWidths=[(page_w-30*mm)/6]*6)
+    sum_tbl.setStyle(TableStyle([("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),("INNERGRID",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),("TOPPADDING",(0,0),(-1,-1),6),("BOTTOMPADDING",(0,0),(-1,-1),6)]))
+    elements.append(sum_tbl)
+    elements.append(Spacer(1,4*mm))
+
+    status_map = {"paid":"Betald","draft":"Utkast","sent":"Skickad","overdue":"Förfallen","cancelled":"Avbruten"}
+    status_colors = {"paid":colors.HexColor("#15803d"),"overdue":colors.HexColor("#dc2626"),"sent":colors.HexColor("#1e40af"),"draft":colors.HexColor("#64748b")}
+
+    data = [["#","Datum","Förfaller","Kund","Tjänst","Exkl. moms","Moms","RUT","Påm.avg","Att betala","Status","Påm."]]
+    for inv in invoices:
+        items = inv.get("items",[])
+        pam = sum(item.get("quantity",1)*item.get("unit_price",0) for item in items if "Påminnelseavgift" in item.get("service",""))
+        services = ", ".join(set(i.get("service","") or i.get("description","") for i in items if "Påminnelseavgift" not in i.get("service","")))[:25] or "Städtjänst"
+        data.append([str(inv.get("invoice_number","")),inv.get("created_at","")[:10],inv.get("due_date",""),inv.get("customer_name","")[:20],services,f'{inv.get("subtotal",0):.2f}',f'{inv.get("vat_amount",0):.2f}',f'{inv.get("rut_deduction",0):.2f}',f'{pam:.2f}' if pam>0 else "-",f'{inv.get("customer_pays",0):.2f}',status_map.get(inv.get("status",""),""),str(inv.get("reminder_count",0))])
+    data.append(["TOTALT","","","","",f"{total_excl:.2f}",f"{total_moms:.2f}",f"{total_rut:.2f}",f"{total_pam:.2f}",f"{total_pays:.2f}","",""])
+
+    tbl = Table(data, colWidths=[16*mm,22*mm,22*mm,38*mm,38*mm,24*mm,18*mm,18*mm,18*mm,24*mm,20*mm,12*mm])
+    ts = [("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),("TEXTCOLOR",(0,0),(-1,0),colors.white),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,-1),7.5),("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),("LEFTPADDING",(0,0),(-1,-1),3),("RIGHTPADDING",(0,0),(-1,-1),3),("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),("ALIGN",(5,0),(-1,-1),"RIGHT"),("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold")]
+    for row_idx, inv in enumerate(invoices, 1):
+        col = status_colors.get(inv.get("status",""))
+        if col: ts.append(("TEXTCOLOR",(10,row_idx),(10,row_idx),col))
+    tbl.setStyle(TableStyle(ts))
+    elements.append(tbl)
+    elements.append(Spacer(1,3*mm))
+    elements.append(Paragraph(f"{company}  ·  Fakturalista  ·  {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"))))
+    doc.build(elements)
+    return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": 'inline; filename="fakturor.pdf"'})
+
 app.include_router(api_router)
 
 app.add_middleware(
