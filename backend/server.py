@@ -5761,7 +5761,7 @@ async def export_expenses_pdf(start: str = None, end: str = None, current=Depend
     elements.append(Spacer(1,5*mm))
 
     # Expenses table
-    status_map = {"approved":"Godkänd","pending":"Väntar","rejected":"Avvisad"}
+    status_map = {"approved":"Godkänd","pending":"Väntar","rejected":"Avvisad","paid":"Utbetald"}
     status_colors_map = {"approved":colors.HexColor("#15803d"),"pending":colors.HexColor("#b45309"),"rejected":colors.HexColor("#dc2626")}
 
     data = [["Datum","Anställd","Kategori","Beskrivning","Moms %","Belopp","Status"]]
