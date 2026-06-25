@@ -435,7 +435,8 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
         topMargin=15*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm,
-    )
+    ,
+        author="PureNorth Städ")
     styles = getSampleStyleSheet()
 
     def ps(name, **kw):
@@ -1256,7 +1257,8 @@ async def payroll_export(start: str, end: str, format: str = "xlsx", current=Dep
         company = inv_settings.company_name or "PureNorth Städ"
         buf = BytesIO()
         from reportlab.lib.pagesizes import landscape
-        doc = SimpleDocTemplate(buf, pagesize=landscape(A4),
+        doc = SimpleDocTemplate(buf, pagesize=landscape(A4,
+        author="PureNorth Städ"),
             topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm)
         styles = getSampleStyleSheet()
         elements = []
@@ -1475,7 +1477,8 @@ async def payroll_slip(start: str, end: str, employee_id: str, current=Depends(g
 
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4,
-        topMargin=20*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm)
+        topMargin=20*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm,
+        author="PureNorth Städ")
     styles = getSampleStyleSheet()
     elements = []
 
@@ -2437,7 +2440,8 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
 
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4,
-        topMargin=20*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm)
+        topMargin=20*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm,
+        author="PureNorth Städ")
     styles = getSampleStyleSheet()
     elements = []
 
@@ -3151,7 +3155,8 @@ async def monthly_report_pdf(month: str, current=Depends(get_current_user)):
     buf = BytesIO()
     page_w, page_h = A4
     doc = SimpleDocTemplate(buf, pagesize=A4,
-        topMargin=15*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm)
+        topMargin=15*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm,
+        author="PureNorth Städ")
 
     styles = getSampleStyleSheet()
     def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
@@ -3791,7 +3796,8 @@ async def export_moms_pdf(month: str, current=Depends(get_current_user)):
     buf = BytesIO()
     page_w, page_h = A4
     doc = SimpleDocTemplate(buf, pagesize=A4,
-        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm)
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm,
+        author="PureNorth Städ")
 
     styles = getSampleStyleSheet()
     def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
@@ -3961,7 +3967,8 @@ async def export_bokforing_pdf(month: str, current=Depends(get_current_user)):
 
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4,
-        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm)
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm,
+        author="PureNorth Städ")
     styles = getSampleStyleSheet()
     def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
     page_w = A4[0]
@@ -4315,7 +4322,8 @@ async def rut_report_pdf(month: str, current=Depends(get_current_user)):
 
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4,
-        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm)
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm,
+        author="PureNorth Städ")
     styles = getSampleStyleSheet()
     def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
     page_w = A4[0]
