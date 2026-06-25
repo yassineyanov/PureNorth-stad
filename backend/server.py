@@ -1262,6 +1262,7 @@ async def payroll_export(start: str, end: str, format: str = "xlsx", current=Dep
         from reportlab.lib.pagesizes import landscape
         doc = SimpleDocTemplate(buf, pagesize=landscape(A4),
             topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm,
+            title=f"Lönesammanställning {start} - {end}",
             author="PureNorth Städ")
         styles = getSampleStyleSheet()
         elements = []
