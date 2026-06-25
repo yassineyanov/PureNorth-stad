@@ -2031,6 +2031,7 @@ async def export_customers_xlsx(current=Depends(get_current_user)):
     )
 
 
+
 @api_router.get("/customers/{customer_id}", response_model_by_alias=False)
 async def get_customer(customer_id: str, current=Depends(get_current_user)):
     doc = await db.customers.find_one({"_id": to_object_id(customer_id)})
