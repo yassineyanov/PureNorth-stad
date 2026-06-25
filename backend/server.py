@@ -5462,6 +5462,13 @@ async def export_shifts_pdf(start: str, end: str, current=Depends(get_current_us
     shifts = await db.shifts.find({"date": {"$gte": start, "$lte": end}}).sort("date", 1).to_list(5000)
     employees = await db.employees.find().to_list(100)
     emp_map = {str(e["_id"]): e for e in employees}
+    # Get absences for this period
+    absences = await db.absences.find({"start_date": {"$lte": end}, "end_date": {"$gte": start}}).to_list(1000)
+    absence_map = {}
+    for ab in absences:
+        eid = ab.get("employee_id","")
+        if eid not in absence_map: absence_map[eid] = []
+        absence_map[eid].append({"type": ab.get("absence_type","sjuk"), "start": ab.get("start_date",""), "end": ab.get("end_date","")})
     inv_settings = await get_invoice_settings_obj()
     company = inv_settings.company_name or "PureNorth Städ"
 
