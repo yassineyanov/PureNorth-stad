@@ -432,10 +432,14 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
 
     buf = BytesIO()
     page_w, page_h = A4
+    inv_num = inv.get("invoice_number", "")
+    customer = inv.get("customer_name", "")
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
         topMargin=15*mm, bottomMargin=20*mm, leftMargin=20*mm, rightMargin=20*mm,
-        author="PureNorth Städ")
+        title=f"Faktura #{inv_num} - {customer}",
+        author=settings.company_name or "PureNorth Städ",
+        subject="Faktura")
     styles = getSampleStyleSheet()
 
     def ps(name, **kw):
