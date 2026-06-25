@@ -108,6 +108,7 @@ class BookingCreate(BaseModel):
     name: str = Field(..., min_length=1)
     email: EmailStr
     phone: str = Field(..., min_length=1)
+    address: Optional[str] = None
     kvm: Optional[str] = None
     services: List[str] = Field(default_factory=list)
     preferred_date: Optional[str] = None
@@ -121,6 +122,7 @@ class Booking(BaseModel):
     name: str
     email: str
     phone: str
+    address: Optional[str] = None
     kvm: Optional[str] = None
     services: List[str] = Field(default_factory=list)
     preferred_date: Optional[str] = None
