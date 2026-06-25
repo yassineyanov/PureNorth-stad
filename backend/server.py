@@ -5608,6 +5608,14 @@ async def export_shifts_xlsx(start: str, end: str, current=Depends(get_current_u
     DAYS_SV = ["Måndag","Tisdag","Onsdag","Torsdag","Fredag","Lördag","Söndag"]
     total_hours = 0
 
+    # Load absences
+    absences_list = await db.absences.find({"start_date": {"$lte": end}, "end_date": {"$gte": start}}).to_list(1000)
+    absence_map_xl = {}
+    for ab in absences_list:
+        eid = ab.get("employee_id","")
+        if eid not in absence_map_xl: absence_map_xl[eid] = []
+        absence_map_xl[eid].append({"type": ab.get("absence_type","sjuk"), "start": ab.get("start_date",""), "end": ab.get("end_date","")})
+
     for s in shifts:
         eid = s.get("employee_id","")
         emp = emp_map.get(eid, {})
@@ -5622,6 +5630,13 @@ async def export_shifts_xlsx(start: str, end: str, current=Depends(get_current_u
             weekday = ""
             h = 0
         total_hours += h
+        # Check absence
+        sick_note = ""
+        for ab in absence_map_xl.get(eid, []):
+            if ab["start"] <= s.get("date","") <= ab["end"]:
+                atype_map = {"sjuk":"Sjuk","semester":"Semester","vab":"VAB","permission":"Permission"}
+                sick_note = atype_map.get(ab["type"], ab["type"])
+                break
         ws.append([
             s.get("date",""),
             weekday,
@@ -5631,8 +5646,12 @@ async def export_shifts_xlsx(start: str, end: str, current=Depends(get_current_u
             h,
             "✓" if s.get("is_ob1") else "",
             "✓" if s.get("is_ob2") else "",
-            s.get("note","") or "",
+            sick_note or s.get("note","") or "",
         ])
+        # Highlight sick rows
+        if sick_note:
+            for cell in ws[ws.max_row]:
+                cell.fill = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")
         for cell in ws[ws.max_row]:
             cell.font = Font(size=9)
 
