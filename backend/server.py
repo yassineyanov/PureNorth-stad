@@ -5699,6 +5699,54 @@ async def export_expenses_xlsx(start: str = None, end: str = None, current=Depen
         headers={"Content-Disposition": 'attachment; filename="utlagg.xlsx"'}
     )
 
+
+# ── Website Settings ──────────────────────────────────────────────────────────
+class WebsiteSettings(BaseModel):
+    hero_title: Optional[str] = "Renhet med norrländsk precision i Umeå."
+    hero_subtitle: Optional[str] = "Vi definierar premiumstädning genom certifierad expertis och hållbara metoder."
+    hero_badge: Optional[str] = "Svanenmärkt & miljöcertifierat"
+    hero_image: Optional[str] = ""
+    phone: Optional[str] = "070-624 04 03"
+    email: Optional[str] = ""
+    address: Optional[str] = ""
+    opening_hours: Optional[str] = "Mån–Fre: 08:00–18:00"
+    about_text: Optional[str] = ""
+    company_name: Optional[str] = "PureNorth Städ"
+    logo_url: Optional[str] = ""
+    facebook_url: Optional[str] = ""
+    instagram_url: Optional[str] = ""
+    cta_text: Optional[str] = "Boka tid online"
+    badge1: Optional[str] = "SRY-kvalifikation"
+    badge2: Optional[str] = "Pur-Eco produkter"
+
+@api_router.get("/settings/website")
+async def get_website_settings():
+    doc = await db.website_settings.find_one({"_id": "main"})
+    if not doc:
+        return WebsiteSettings().dict()
+    doc.pop("_id", None)
+    return doc
+
+@api_router.patch("/settings/website")
+async def update_website_settings(payload: WebsiteSettings, current=Depends(get_current_user)):
+    data = {k: v for k, v in payload.dict().items() if v is not None}
+    await db.website_settings.update_one(
+        {"_id": "main"},
+        {"$set": data},
+        upsert=True
+    )
+    return {"success": True}
+
+@api_router.post("/settings/website/upload-image")
+async def upload_website_image(file: UploadFile = File(...), current=Depends(get_current_user)):
+    """Upload image and return base64 URL"""
+    import base64
+    content = await file.read()
+    b64 = base64.b64encode(content).decode()
+    media_type = file.content_type or "image/jpeg"
+    data_url = f"data:{media_type};base64,{b64}"
+    return {"url": data_url}
+
 app.include_router(api_router)
 
 app.add_middleware(
