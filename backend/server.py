@@ -3929,12 +3929,13 @@ async def export_bokforing_pdf(month: str, current=Depends(get_current_user)):
         rut = inv.get("rut_deduction", 0)
         reminder_count = inv.get("reminder_count", 0)
 
-        # Recalculate from items (includes påminnelseavgift if added)
-        sub = sum(i.get("quantity",1) * i.get("unit_price",0) for i in items)
+        # Calculate excl. Påminnelseavgift (which has no moms)
+        work_items = [i for i in items if i.get("service") != "Påminnelseavgift"]
+        sub = sum(i.get("quantity",1) * i.get("unit_price",0) for i in work_items)
         vat_rate = 25
         vat = round(sub * vat_rate / 100, 2)
-        total = round(sub + vat, 2)
-        pays = round(total - rut, 2)
+        pam_fee_total = sum(i.get("quantity",1)*i.get("unit_price",0) for i in items if i.get("service") == "Påminnelseavgift")
+        pays = round(sub + vat - rut + pam_fee_total, 2)
 
         # Check for reminder fee
         reminder_fee_item = next((i for i in items if i.get("service") == "Påminnelseavgift"), None)
