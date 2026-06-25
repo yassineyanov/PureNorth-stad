@@ -5767,7 +5767,7 @@ async def export_expenses_pdf(start: str = None, end: str = None, current=Depend
     data = [["Datum","Anställd","Kategori","Beskrivning","Moms %","Belopp","Status"]]
     for e in expenses:
         eid = e.get("employee_id","")
-        emp_name = emp_map.get(eid, e.get("employee_name","Okänd"))
+        emp_name = emp_map.get(eid) or e.get("employee_name","") or "Okänd"
         data.append([
             e.get("date",""),
             emp_name[:20],
