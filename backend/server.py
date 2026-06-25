@@ -842,7 +842,7 @@ def build_xlsx_bytes(summary: dict) -> bytes:
         "Anställd", "Typ", "Personnummer", "Lön/h (kr)",
         "Normaltid (h)", "OB1 (h)", "OB2 (h)", "OB-tillägg (kr)",
         "Grundlön (kr)", "Semesterersättning 12% (kr)", "Arbetsgivaravgift 31.42% (kr)",
-        "Bruttolön (kr)", "Prelskatt 30% (kr)", "Nettolön →Bank (kr)",
+        "Bruttolön (kr)", "Prelskatt 30% (kr)", "Nettolön (kr)",
         "Utlägg (kr)", "Frånvarodagar", "Förlorad lön (kr)",
         "Sjuklön netto (kr)", "Total kostnad arbetsgivare (kr)",
     ]
@@ -1555,7 +1555,7 @@ async def payroll_slip(start: str, end: str, employee_id: str, current=Depends(g
     elements.append(Spacer(1, 6*mm))
 
     # ── Summary box ───────────────────────────────────────────────────
-    elements.append(Paragraph("Sammanfattning", styles["Heading3"]))
+    elements.append(Spacer(1, 4*mm))
     summary_data = []
     PRELSKATT = 0.30
     ARBETSGIVARAVGIFT = 0.3142
@@ -1583,28 +1583,44 @@ async def payroll_slip(start: str, end: str, employee_id: str, current=Depends(g
     summary_data.append(["Bruttolön:", f'{brutto:.2f} kr'])
     summary_data.append(["Preliminärskatt (30%):", f'-{prelskatt:.2f} kr'])
     summary_data.append(["", ""])
-    summary_data.append(["NETTOLÖN →BANK:", f'{netto:.2f} kr'])
+    summary_data.append(["NETTOLÖN:", f'{netto:.2f} kr'])
     summary_data.append(["", ""])
-    summary_data.append(["── Arbetsgivarkostnader ──────", ""])
+    summary_data.append(["", ""])
     summary_data.append(["Semesterersättning (12%):", f'{semester_kr:.2f} kr'])
     summary_data.append(["Arbetsgivaravgift (31.42%):", f'{ag_avg:.2f} kr'])
     summary_data.append(["Total kostnad för arbetsgivare:", f'{total_cost_employer:.2f} kr'])
 
+    # Split into two sections: employee view and employer view
+    # Find nettolön index
+    netto_idx = next((i for i,r in enumerate(summary_data) if "NETTOLÖN" in str(r[0])), len(summary_data)-1)
+    employer_idx = next((i for i,r in enumerate(summary_data) if "Semesterersättning" in str(r[0])), None)
+
     total_table = Table(summary_data, colWidths=[110*mm, 45*mm])
-    total_table.setStyle(TableStyle([
+    ts = [
         ("FONTSIZE", (0,0),(-1,-1), 10),
         ("ALIGN", (1,0),(-1,-1), "RIGHT"),
         ("BOTTOMPADDING", (0,0),(-1,-1), 4),
         ("TOPPADDING", (0,0),(-1,-1), 3),
-        ("LINEABOVE", (0,-5),(-1,-5), 0.5, colors.HexColor("#E2E8F0")),
-        ("BACKGROUND", (0,-5),(-1,-3), colors.HexColor("#F8FAFC")),
-        ("FONTSIZE", (0,-5),(-1,-3), 8),
-        ("TEXTCOLOR", (0,-5),(-1,-3), colors.HexColor("#64748b")),
-        ("LINEABOVE", (0,-6),(-1,-6), 1.5, colors.HexColor("#141414")),
-        ("FONTNAME", (0,-6),(-1,-6), "Helvetica-Bold"),
-        ("FONTSIZE", (0,-6),(-1,-6), 12),
-        ("TOPPADDING", (0,-6),(-1,-6), 8),
-    ]))
+        # Brutto line
+        ("LINEABOVE", (0,netto_idx-2),(1,netto_idx-2), 0.5, colors.HexColor("#E2E8F0")),
+        # Netto line - highlight
+        ("BACKGROUND", (0,netto_idx),(-1,netto_idx), colors.HexColor("#141414")),
+        ("TEXTCOLOR", (0,netto_idx),(-1,netto_idx), colors.white),
+        ("FONTNAME", (0,netto_idx),(-1,netto_idx), "Helvetica-Bold"),
+        ("FONTSIZE", (0,netto_idx),(-1,netto_idx), 12),
+        ("TOPPADDING", (0,netto_idx),(-1,netto_idx), 8),
+        ("BOTTOMPADDING", (0,netto_idx),(-1,netto_idx), 8),
+    ]
+    if employer_idx:
+        ts += [
+            ("LINEABOVE", (0,employer_idx),(1,employer_idx), 0.5, colors.HexColor("#E2E8F0")),
+            ("FONTSIZE", (0,employer_idx),(-1,-1), 9),
+            ("TEXTCOLOR", (0,employer_idx),(-1,-1), colors.HexColor("#64748b")),
+            ("FONTNAME", (0,-1),(-1,-1), "Helvetica-Bold"),
+            ("TEXTCOLOR", (0,-1),(-1,-1), colors.HexColor("#141414")),
+            ("FONTSIZE", (0,-1),(-1,-1), 10),
+        ]
+    total_table.setStyle(TableStyle(ts))
     elements.append(total_table)
 
     # ── Legal note ────────────────────────────────────────────────────
