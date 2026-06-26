@@ -6023,16 +6023,20 @@ async def fskatt_kontroll(current=Depends(get_current_user)):
             status = "ok"
             status_text = "A-skatt (prelskatt dras av arbetsgivare)"
         
+        pnr = e.get("personnummer", "")
+        pnr_result = validate_personnummer(pnr) if pnr else {"valid": None, "error": "Personnummer saknas"}
         result.append({
             "id": eid,
             "name": e.get("name", ""),
-            "personnummer": e.get("personnummer", ""),
+            "personnummer": pnr,
             "employment_type": e.get("employment_type", ""),
             "skatt_typ": skatt_typ,
             "fskatt_nr": fskatt_nr,
             "fskatt_verified": verified,
             "status": status,
             "status_text": status_text,
+            "pnr_valid": pnr_result["valid"],
+            "pnr_error": pnr_result.get("error"),
         })
     
     return {
