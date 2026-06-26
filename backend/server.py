@@ -380,6 +380,13 @@ class InvoiceCreate(BaseModel):
     items: List[InvoiceItemModel]
     note: Optional[str] = None
     due_date: Optional[str] = None
+    due_days: Optional[int] = None
+    notes: Optional[str] = None
+    subtotal: Optional[float] = None
+    rut_deduction: Optional[float] = None
+    vat_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    customer_pays: Optional[float] = None
 
 
 class InvoiceStatusUpdate(BaseModel):
