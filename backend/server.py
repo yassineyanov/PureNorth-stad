@@ -6025,6 +6025,17 @@ async def fskatt_kontroll(current=Depends(get_current_user)):
         
         pnr = e.get("personnummer", "")
         pnr_result = validate_personnummer(pnr) if pnr else {"valid": None, "error": "Personnummer saknas"}
+        pnr_valid = pnr_result["valid"]
+        pnr_error = pnr_result.get("error")
+
+        # Override status if personnummer is invalid
+        if pnr_valid == False:
+            status = "error"
+            status_text = f"Ogiltigt personnummer: {pnr_error}"
+        elif pnr_valid is None:
+            status = "warning"
+            status_text = "Personnummer saknas"
+
         result.append({
             "id": eid,
             "name": e.get("name", ""),
@@ -6035,8 +6046,8 @@ async def fskatt_kontroll(current=Depends(get_current_user)):
             "fskatt_verified": verified,
             "status": status,
             "status_text": status_text,
-            "pnr_valid": pnr_result["valid"],
-            "pnr_error": pnr_result.get("error"),
+            "pnr_valid": pnr_valid,
+            "pnr_error": pnr_error,
         })
     
     return {
