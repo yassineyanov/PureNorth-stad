@@ -6119,21 +6119,40 @@ async def validate_pnr(payload: dict, current=Depends(get_current_user)):
 
 @api_router.patch("/invoices/by-booking/{booking_id}")
 async def update_invoice_by_booking(booking_id: str, payload: dict, current=Depends(get_current_user)):
-    """Update invoice linked to a booking"""
+    """Update invoice linked to a booking - tries booking_id first, then customer_name"""
+    
+    updates = {k: v for k, v in payload.items() 
+               if k in {"customer_name","customer_email","customer_phone","customer_address","notes"} and v}
+    
+    if not updates:
+        return {"updated": False, "message": "No valid fields"}
+
+    # Try by booking_id first
     invoice = await db.invoices.find_one({"booking_id": booking_id})
-    if not invoice:
-        return {"updated": False, "message": "No invoice found for this booking"}
     
-    allowed = {"customer_name", "customer_email", "customer_phone", "customer_address", "notes"}
-    updates = {k: v for k, v in payload.items() if k in allowed}
-    
-    if updates:
-        await db.invoices.update_one(
-            {"booking_id": booking_id},
-            {"$set": updates}
+    # Fallback: match by customer_name from payload
+    if not invoice and payload.get("customer_name"):
+        invoice = await db.invoices.find_one(
+            {"customer_name": payload["customer_name"]}
         )
-        return {"updated": True}
-    return {"updated": False, "message": "No valid fields to update"}
+    
+    # Fallback: match by original_name (booking name before edit)
+    if not invoice and payload.get("original_name"):
+        invoice = await db.invoices.find_one(
+            {"customer_name": payload["original_name"]}
+        )
+
+    if not invoice:
+        return {"updated": False, "message": "No invoice found"}
+    
+    # Also save booking_id for future updates
+    updates["booking_id"] = booking_id
+    
+    await db.invoices.update_many(
+        {"_id": invoice["_id"]},
+        {"$set": updates}
+    )
+    return {"updated": True}
 
 app.include_router(api_router)
 
