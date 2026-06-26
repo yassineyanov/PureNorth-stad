@@ -5724,22 +5724,63 @@ async def export_expenses_xlsx(start: str = None, end: str = None, current=Depen
 
 # ── Website Settings ──────────────────────────────────────────────────────────
 class WebsiteSettings(BaseModel):
+    # Hero
     hero_title: Optional[str] = "Renhet med norrländsk precision i Umeå."
     hero_subtitle: Optional[str] = "Vi definierar premiumstädning genom certifierad expertis och hållbara metoder."
     hero_badge: Optional[str] = "Svanenmärkt & miljöcertifierat"
     hero_image: Optional[str] = ""
+    cta_text: Optional[str] = "Boka tid online"
+    badge1: Optional[str] = "SRY-kvalifikation"
+    badge2: Optional[str] = "Pur-Eco produkter"
+    # Kontakt
     phone: Optional[str] = "070-624 04 03"
     email: Optional[str] = ""
     address: Optional[str] = ""
     opening_hours: Optional[str] = "Mån–Fre: 08:00–18:00"
-    about_text: Optional[str] = ""
+    # Företag
     company_name: Optional[str] = "PureNorth Städ"
     logo_url: Optional[str] = ""
+    about_text: Optional[str] = ""
+    # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
-    cta_text: Optional[str] = "Boka tid online"
-    badge1: Optional[str] = "SRY-kvalifikation"
-    badge2: Optional[str] = "Pur-Eco produkter"
+    # Kontaktsektion
+    contact_title: Optional[str] = ""
+    contact_subtitle: Optional[str] = ""
+    contact_description: Optional[str] = ""
+    contact_box_title: Optional[str] = ""
+    contact_box_text: Optional[str] = ""
+    contact_box_btn: Optional[str] = ""
+    # Varför oss
+    whyus_label: Optional[str] = ""
+    whyus_title: Optional[str] = ""
+    sry_title: Optional[str] = ""
+    sry_text: Optional[str] = ""
+    sry_tags: Optional[str] = ""
+    eco_title: Optional[str] = ""
+    eco_text: Optional[str] = ""
+    rut_title: Optional[str] = ""
+    rut_text: Optional[str] = ""
+    # Tjänster
+    services_label: Optional[str] = ""
+    services_title: Optional[str] = ""
+    services: Optional[list] = []
+    # Navbar
+    nav_company: Optional[str] = ""
+    nav_boka_text: Optional[str] = ""
+    nav_links: Optional[list] = []
+    # SEO
+    seo_title: Optional[str] = ""
+    seo_description: Optional[str] = ""
+    seo_keywords: Optional[str] = ""
+    seo_og_image: Optional[str] = ""
+    # Färger
+    primary_color: Optional[str] = "#166534"
+    secondary_color: Optional[str] = "#141414"
+    # Omdömen
+    testimonials_label: Optional[str] = ""
+    testimonials_title: Optional[str] = ""
+    featured_reviews: Optional[list] = []
 
 @api_router.get("/settings/website")
 async def get_website_settings():
@@ -5751,7 +5792,7 @@ async def get_website_settings():
 
 @api_router.patch("/settings/website")
 async def update_website_settings(payload: WebsiteSettings, current=Depends(get_current_user)):
-    data = {k: v for k, v in payload.dict().items() if v is not None}
+    data = {k: v for k, v in payload.dict().items() if v is not None or isinstance(v, list)}
     await db.website_settings.update_one(
         {"_id": "main"},
         {"$set": data},
