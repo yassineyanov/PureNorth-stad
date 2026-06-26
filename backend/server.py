@@ -403,8 +403,8 @@ class Invoice(BaseModel):
     note: Optional[str] = None
     due_date: str
     status: str = "draft"
-    labor_total: float
-    material_total: float
+    labor_total: float = 0.0
+    material_total: float = 0.0
     subtotal: float
     vat_amount: float
     total_amount: float
