@@ -2441,6 +2441,7 @@ class RecurringBookingCreate(BaseModel):
     services: List[str] = Field(default_factory=list)
     preferred_date: str  # first occurrence YYYY-MM-DD
     other_description: Optional[str] = None
+    invoice_id: Optional[str] = None
     recurrence: str = "weekly"  # weekly, biweekly, monthly
     occurrences: int = Field(default=6, ge=2, le=52)
 
@@ -6165,6 +6166,47 @@ async def update_invoice_by_booking(booking_id: str, payload: dict, current=Depe
         {"$set": updates}
     )
     return {"updated": True}
+
+
+@api_router.patch("/bookings/{booking_id}/link-invoice")
+async def link_invoice_to_booking(booking_id: str, payload: dict, current=Depends(get_current_user)):
+    """Save invoice_id to booking after invoice creation"""
+    invoice_id = payload.get("invoice_id")
+    await db.bookings.update_one(
+        {"_id": to_object_id(booking_id)},
+        {"$set": {"invoice_id": invoice_id}}
+    )
+    return {"success": True}
+
+@api_router.patch("/bookings/{booking_id}/update-invoice")
+async def update_invoice_from_booking(booking_id: str, payload: dict, current=Depends(get_current_user)):
+    """Update linked invoice when booking is edited"""
+    booking = await db.bookings.find_one({"_id": to_object_id(booking_id)})
+    if not booking or not booking.get("invoice_id"):
+        return {"updated": False, "message": "No linked invoice"}
+    
+    invoice_id = booking["invoice_id"]
+    updates = {}
+    
+    if payload.get("name"): updates["customer_name"] = payload["name"]
+    if payload.get("email"): updates["customer_email"] = payload["email"]
+    if payload.get("phone"): updates["customer_phone"] = payload["phone"]
+    if payload.get("address"): updates["customer_address"] = payload["address"]
+    if payload.get("notes"): updates["notes"] = payload["notes"]
+    
+    # Update prices if provided
+    if payload.get("subtotal"): updates["subtotal"] = payload["subtotal"]
+    if payload.get("rut_deduction"): updates["rut_deduction"] = payload["rut_deduction"]
+    if payload.get("vat_amount"): updates["vat_amount"] = payload["vat_amount"]
+    if payload.get("total_amount"): updates["total_amount"] = payload["total_amount"]
+    if payload.get("customer_pays"): updates["customer_pays"] = payload["customer_pays"]
+    if payload.get("items"): updates["items"] = payload["items"]
+    
+    await db.invoices.update_one(
+        {"_id": to_object_id(invoice_id)},
+        {"$set": updates}
+    )
+    return {"updated": True, "invoice_id": invoice_id}
 
 app.include_router(api_router)
 
