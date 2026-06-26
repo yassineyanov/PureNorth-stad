@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { LogOut, Trash2, Phone, Mail, Calendar, Maximize, Hash, RefreshCw, Check, X, Clock, LayoutDashboard, CalendarDays, Star, CalendarRange, UserMinus, Receipt, Banknote, FileText, Tag, TrendingUp, TrendingDown, Users, BarChart2, Search } from "lucide-react";
+import { LogOut, Trash2, Phone, Mail, Calendar, Maximize, Hash, RefreshCw, Check, X, Clock, LayoutDashboard, CalendarDays, Star, CalendarRange, UserMinus, Receipt, Banknote, FileText, Tag, TrendingUp, TrendingDown, Users, BarChart2, Search, MapPin, FileSpreadsheet, Settings, Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/lib/api";
 import { Logo } from "@/components/Logo";
 import { StarRating } from "@/components/StarRating";
@@ -20,6 +22,7 @@ import CalendarPanel from "@/components/CalendarPanel";
 import StatsPanel from "@/components/StatsPanel";
 import UsersPanel from "@/components/UsersPanel";
 import CostsPanel from "@/components/CostsPanel";
+import SettingsPanel from "@/components/SettingsPanel";
 import DashboardPanel from "@/components/DashboardPanel";
 import BookingCalculator from "@/components/BookingCalculator";
 
@@ -139,7 +142,7 @@ function BookingsPanel() {
   const [recurringOpen, setRecurringOpen] = useState(false);
   const [recurringForm, setRecurringForm] = useState({ name:"", email:"", phone:"", kvm:"", services:[], preferred_date:"", other_description:"", recurrence:"biweekly", occurrences:6 });
   const [recurringSaving, setRecurringSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", kvm: "", services: [], preferred_date: "", other_description: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", kvm: "", services: [], preferred_date: "", other_description: "" });
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -237,6 +240,7 @@ function BookingsPanel() {
         due_days: 30,
         notes: `Bokning: ${booking.services?.join(", ")}`,
         status: "draft",
+        booking_id: booking.id,
       };
       await api.post("/invoices", payload);
       toast.success("Faktura skapad! Gå till Fakturor för att se den.");
@@ -251,6 +255,7 @@ function BookingsPanel() {
       name: b.name || "",
       email: b.email || "",
       phone: b.phone || "",
+      address: b.address || "",
       kvm: b.kvm || "",
       preferred_date: b.preferred_date || "",
       other_description: b.other_description || "",
@@ -264,6 +269,9 @@ function BookingsPanel() {
     try {
       await api.patch(`/bookings/${editingBooking}`, editBookingForm);
       setBookings(prev => prev.map(b => b.id === editingBooking ? {...b, ...editBookingForm} : b));
+      
+
+
       toast.success("Bokning uppdaterad!");
       setEditingBooking(null);
     } catch {
@@ -284,13 +292,31 @@ function BookingsPanel() {
     }
   };
 
+
   return (
     <>
       <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
         <h2 className="font-display font-bold text-xl text-slate-900">Bokningar</h2>
         <div className="flex gap-2">
           <button onClick={() => setRecurringOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 hover:border-[#141414] rounded-full px-4 py-2 transition-colors">
-            🔁 Återkommande
+            <RefreshCw size={14}/> Återkommande
+          </button>
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            window.open(`${base}/api/bookings/export-pdf?token=${token}`, "_blank");
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> PDF
+          </button>
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/bookings/export-xlsx?token=${token}`;
+            a.download = "bokningar.xlsx";
+            a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
           </button>
           <button onClick={() => setNewBookingOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] hover:bg-black rounded-full px-4 py-2 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -339,6 +365,7 @@ function BookingsPanel() {
                   <a href={`mailto:${b.email}`} className="inline-flex items-center gap-1.5 hover:text-[#141414]"><Mail size={14} /> {b.email}</a>
                   {b.kvm && <span className="inline-flex items-center gap-1.5">{b.services?.some(s=>["Fönsterputs","Ugnstvätt","Kyl/frys rengöring","Trappstädning"].includes(s)) ? <Hash size={14}/> : <Maximize size={14}/>} {b.kvm} {b.services?.some(s=>["Fönsterputs","Ugnstvätt","Kyl/frys rengöring","Trappstädning"].includes(s)) ? "st" : "kvm"}</span>}
                   {b.preferred_date && <span className="inline-flex items-center gap-1.5"><Calendar size={14} /> {b.preferred_date}</span>}
+                  {b.address && <span className="inline-flex items-center gap-1.5"><MapPin size={14} /> {b.address}</span>}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {b.services.map((s) => (
@@ -346,7 +373,7 @@ function BookingsPanel() {
                   ))}
                 </div>
                 {b.other_description && (
-                  <p className="mt-3 text-sm text-slate-600 bg-slate-50 rounded-xl p-3"><strong>Annat:</strong> {b.other_description}</p>
+                  <p className="mt-3 text-sm text-slate-600 bg-slate-50 rounded-xl p-3"><strong>Anteckning:</strong> {b.other_description}</p>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -419,6 +446,10 @@ function BookingsPanel() {
                     </button>
                   ))}
                 </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700">Adress (städobjekt)</label>
+                <input value={editBookingForm.address || ""} onChange={(e) => setEditBookingForm((f) => ({...f, address: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="Storgatan 1, Umeå" />
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
@@ -562,6 +593,7 @@ function BookingsPanel() {
           </div>
         </div>
       )}
+
     </>
   );
 }
@@ -664,13 +696,177 @@ function ReviewsPanel() {
           ))}
         </div>
       )}
+      {/* ── Settings Modal ─────────────────────────────────────────────── */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-7">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Settings size={20} className="text-slate-700"/>
+                <h2 className="font-display font-bold text-xl text-slate-900">Inställningar</h2>
+              </div>
+              <button onClick={()=>setSettingsOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">
+                <X size={16}/>
+              </button>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Företagsuppgifter</h3>
+              <div className="space-y-3">
+                {[
+                  {label:"Företagsnamn", key:"company_name", placeholder:"PureNorth Städ"},
+                  {label:"Organisationsnummer", key:"company_orgnr", placeholder:"556123-4567"},
+                  {label:"Adress", key:"company_address", placeholder:"Storgatan 1, 903 25 Umeå"},
+                  {label:"Telefon", key:"company_phone", placeholder:"070-000 00 00"},
+                  {label:"E-post", key:"company_email", placeholder:"info@purenorth.se"},
+                  {label:"Webbplats", key:"company_website", placeholder:"www.purenorth.se"},
+                ].map(({label, key, placeholder}) => (
+                  <div key={key}>
+                    <label className="text-xs font-medium text-slate-600">{label}</label>
+                    <input value={settingsData[key]} onChange={e=>setSettingsData(d=>({...d,[key]:e.target.value}))} placeholder={placeholder} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Fakturainställningar</h3>
+              <div>
+                <label className="text-xs font-medium text-slate-600">Betalningsvillkor (dagar)</label>
+                <input type="number" value={settingsData.payment_terms_days} onChange={e=>setSettingsData(d=>({...d,payment_terms_days:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">OB-tillägg (kr/tim)</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB1 (kväll)</label>
+                  <input type="number" value={settingsData.ob1_extra} onChange={e=>setSettingsData(d=>({...d,ob1_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB2 (natt/helg)</label>
+                  <input type="number" value={settingsData.ob2_extra} onChange={e=>setSettingsData(d=>({...d,ob2_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+              </div>
+            </div>
+            <button onClick={saveSettings} disabled={settingsSaving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+              {settingsSaving ? "Sparar..." : "Spara inställningar"}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
 function Dashboard() {
   const { logout, user } = useAuth();
-  const [tab, setTab] = useState("dashboard");
+  const { t, i18n } = useTranslation();
+  const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
+  const [notifs, setNotifs] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const loadNotifs = async () => {
+    try {
+      const [bookRes, invRes, revRes] = await Promise.all([
+        api.get("/bookings"),
+        api.get("/invoices"),
+        api.get("/reviews/pending"),
+      ]);
+      const newBookings = (bookRes.data || []).filter(b => b.status === "new");
+      const overdueInvs = (invRes.data || []).filter(i => i.status === "overdue");
+      const pendingRevs = (revRes.data || []);
+      const all = [
+        ...newBookings.map(b => ({ type: "booking", icon: "📅", title: `Ny bokning: ${b.name}`, sub: b.service || "", tab: "bookings" })),
+        ...overdueInvs.map(i => ({ type: "invoice", icon: "🔴", title: `Förfallen faktura #${i.invoice_number}`, sub: `${i.customer_name} · ${i.customer_pays?.toFixed(0)} kr`, tab: "invoices" })),
+        ...pendingRevs.map(r => ({ type: "review", icon: "⭐", title: `Nytt omdöme: ${r.name}`, sub: r.text?.substring(0, 50), tab: "reviews" })),
+      ];
+      setNotifs(all);
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadNotifs();
+    const interval = setInterval(loadNotifs, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const toggleLang = () => {
+    const newLang = lang === "sv" ? "en" : "sv";
+    setLang(newLang);
+    i18n.changeLanguage(newLang);
+    localStorage.setItem("pn_language", newLang);
+  };
+  const { tab: urlTab } = useParams();
+  const navigate = useNavigate();
+  const [tab, setTabState] = useState(urlTab || "dashboard");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsData, setSettingsData] = useState({
+    company_name: "", company_orgnr: "", company_address: "",
+    company_phone: "", company_email: "", company_website: "",
+    ob1_extra: 50, ob2_extra: 100, payment_terms_days: 30,
+  });
+  const [settingsSaving, setSettingsSaving] = useState(false);
+
+  const loadSettings = async () => {
+    try {
+      const [inv, pay] = await Promise.all([
+        api.get("/settings/invoice"),
+        api.get("/settings/payroll"),
+      ]);
+      setSettingsData({
+        company_name: inv.data.company_name || "",
+        company_orgnr: inv.data.company_orgnr || "",
+        company_address: inv.data.company_address || "",
+        company_phone: inv.data.company_phone || "",
+        company_email: inv.data.company_email || "",
+        company_website: inv.data.company_website || "",
+        ob1_extra: pay.data.ob1_extra || 50,
+        ob2_extra: pay.data.ob2_extra || 100,
+        payment_terms_days: inv.data.payment_terms_days || 30,
+      });
+    } catch {}
+  };
+
+  const saveSettings = async () => {
+    setSettingsSaving(true);
+    try {
+      await Promise.all([
+        api.patch("/settings/invoice", {
+          company_name: settingsData.company_name,
+          company_orgnr: settingsData.company_orgnr,
+          company_address: settingsData.company_address,
+          company_phone: settingsData.company_phone,
+          company_email: settingsData.company_email,
+          company_website: settingsData.company_website,
+          payment_terms_days: Number(settingsData.payment_terms_days),
+        }),
+        api.patch("/settings/payroll", {
+          ob1_extra: Number(settingsData.ob1_extra),
+          ob2_extra: Number(settingsData.ob2_extra),
+        }),
+      ]);
+      toast.success("Inställningar sparade!");
+      setSettingsOpen(false);
+    } catch { toast.error("Kunde inte spara."); }
+    finally { setSettingsSaving(false); }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  React.useEffect(() => { if (settingsOpen) loadSettings(); }, [settingsOpen]);
+
+
+
+
+
+
+  const setTab = (newTab) => {
+    setTabState(newTab);
+    navigate(`/admin/${newTab}`, { replace: true });
+  };
+
+  React.useEffect(() => {
+    if (urlTab && urlTab !== tab) setTabState(urlTab);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTab]);
   const [searchQ, setSearchQ] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -749,110 +945,157 @@ function Dashboard() {
               </div>
             )}
           </div>
-          <button onClick={logout} data-testid="admin-logout" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-[#141414] hover:text-[#141414] transition-colors">
-            <LogOut size={15} /> Logga ut
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={toggleLang} className="h-9 px-2.5 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors text-sm font-semibold" title="Byt språk">
+              {lang === "sv" ? "🇸🇪" : "🇬🇧"}
+            </button>
+            <button onClick={()=>setTab("settings")} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+              <Settings size={16}/>
+            </button>
+            <div className="relative">
+              <button onClick={()=>setNotifOpen(o=>!o)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+                <Bell size={16}/>
+                {notifs.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    {notifs.length > 9 ? "9+" : notifs.length}
+                  </span>
+                )}
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden" onClick={e=>e.stopPropagation()}>
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <p className="font-semibold text-sm text-slate-900">Notifikationer</p>
+                    <button onClick={()=>setNotifOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={14}/></button>
+                  </div>
+                  {notifs.length === 0 ? (
+                    <p className="p-4 text-sm text-slate-400 text-center">Inga nya notifikationer</p>
+                  ) : (
+                    <div className="max-h-72 overflow-y-auto">
+                      {notifs.map((n, i) => (
+                        <button key={i} onClick={()=>{ setTab(n.tab); setNotifOpen(false); }}
+                          className="w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 text-left transition-colors">
+                          <span className="text-lg shrink-0 mt-0.5">{n.icon}</span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
+                            <p className="text-xs text-slate-500 truncate">{n.sub}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="px-4 py-2 border-t border-slate-100">
+                    <button onClick={loadNotifs} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">
+                      <RefreshCw size={11}/> Uppdatera
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <button onClick={logout} data-testid="admin-logout" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-[#141414] hover:text-[#141414] transition-colors">
+              <LogOut size={15} /> Logga ut
+            </button>
+          </div>
         </div>
         <div className="border-b border-slate-200"><div className="max-w-7xl mx-auto px-2 sm:px-8 flex gap-0.5 overflow-x-auto scrollbar-hide" style={{WebkitOverflowScrolling:"touch"}}>
 
-          <button
+                    <button
             onClick={() => setTab("dashboard")}
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "dashboard" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
-            <LayoutDashboard size={14}/> Översikt
+            <LayoutDashboard size={14}/> {t("tabs.dashboard")}
           </button>
           <button
             onClick={() => setTab("bookings")}
             data-testid="admin-tab-bookings"
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "bookings" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
-            <CalendarDays size={14}/> Bokningar
-          </button>
-          <button
-            onClick={() => setTab("reviews")}
-            data-testid="admin-tab-reviews"
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "reviews" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
-          >
-            <Star size={14}/> Omdömen
-          </button>
-          <button
-            onClick={() => setTab("schema")}
-            data-testid="admin-tab-schema"
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "schema" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
-          >
-            <CalendarRange size={14}/> Schema
-          </button>
-          <button
-            onClick={() => setTab("absences")}
-            data-testid="admin-tab-absences"
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "absences" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
-          >
-            <UserMinus size={14}/> Frånvaro
-          </button>
-          <button
-            onClick={() => setTab("expenses")}
-            data-testid="admin-tab-expenses"
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "expenses" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
-          >
-            <Receipt size={14}/> Utlägg
-          </button>
-          <button
-            onClick={() => setTab("payroll")}
-            data-testid="admin-tab-payroll"
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "payroll" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
-          >
-            <Banknote size={14}/> Lön
+            <CalendarDays size={14}/> {t("tabs.bookings")}
           </button>
           <button
             onClick={() => setTab("invoices")}
             data-testid="admin-tab-invoices"
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "invoices" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
-            <FileText size={14}/> Fakturor
-          </button>
-          <button
-            onClick={() => setTab("pricelist")}
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "pricelist" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
-          >
-            <Tag size={14}/> Prislista
-          </button>
-          <button
-            onClick={() => setTab("economy")}
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "economy" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
-          >
-            <TrendingUp size={14}/> Ekonomi
+            <FileText size={14}/> {t("tabs.invoices")}
           </button>
           <button
             onClick={() => setTab("customers")}
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "customers" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
-            <Users size={14}/> Kunder
+            <Users size={14}/> {t("tabs.customers")}
           </button>
           <button
-            onClick={() => setTab("calendar")}
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "calendar" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+            onClick={() => setTab("schema")}
+            data-testid="admin-tab-schema"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "schema" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
-            <Calendar size={14}/> Kalender
+            <CalendarRange size={14}/> {t("tabs.schema")}
           </button>
           <button
-            onClick={() => setTab("stats")}
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "stats" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+            onClick={() => setTab("payroll")}
+            data-testid="admin-tab-payroll"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "payroll" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
-            <BarChart2 size={14}/> Statistik
+            <Banknote size={14}/> {t("tabs.payroll")}
           </button>
           <button
-            onClick={() => setTab("users")}
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "users" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+            onClick={() => setTab("absences")}
+            data-testid="admin-tab-absences"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "absences" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
-            <Users size={14}/> Användare
+            <UserMinus size={14}/> {t("tabs.absences")}
+          </button>
+          <button
+            onClick={() => setTab("expenses")}
+            data-testid="admin-tab-expenses"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "expenses" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Receipt size={14}/> {t("tabs.expenses")}
           </button>
           <button
             onClick={() => setTab("costs")}
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "costs" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
-            <TrendingDown size={14}/> Kostnader
+            <TrendingDown size={14}/> {t("tabs.costs")}
           </button>
-        </div></div>
+          <button
+            onClick={() => setTab("economy")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "economy" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <TrendingUp size={14}/> {t("tabs.economy")}
+          </button>
+          <button
+            onClick={() => setTab("pricelist")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "pricelist" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Tag size={14}/> {t("tabs.pricelist")}
+          </button>
+          <button
+            onClick={() => setTab("calendar")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "calendar" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Calendar size={14}/> {t("tabs.calendar")}
+          </button>
+          <button
+            onClick={() => setTab("stats")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "stats" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <BarChart2 size={14}/> {t("tabs.stats")}
+          </button>
+          <button
+            onClick={() => setTab("reviews")}
+            data-testid="admin-tab-reviews"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "reviews" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Star size={14}/> {t("tabs.reviews")}
+          </button>
+          <button
+            onClick={() => setTab("users")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "users" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Users size={14}/> {t("tabs.users")}
+          </button>
+</div></div>
       </header>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-8 py-5 sm:py-10 w-full overflow-x-hidden">
@@ -866,8 +1109,65 @@ function Dashboard() {
           tab === "customers" ? <CustomerPanel /> : tab === "calendar" ? <CalendarPanel /> :
           <DashboardPanel onNavigate={setTab} />
         ) : (
-          tab === "dashboard" ? <DashboardPanel onNavigate={setTab} /> : tab === "bookings" ? <BookingsPanel /> : tab === "reviews" ? <ReviewsPanel /> : tab === "schema" ? <SchedulePanel /> : tab === "absences" ? <AbsencePanel /> : tab === "expenses" ? <ExpensePanel /> : tab === "payroll" ? <PayrollPanel /> : tab === "invoices" ? <InvoicePanel /> : tab === "pricelist" ? <PriceListPanel /> : tab === "economy" ? <EconomyPanel /> : tab === "customers" ? <CustomerPanel /> : tab === "calendar" ? <CalendarPanel /> : tab === "stats" ? <StatsPanel /> : tab === "users" ? <UsersPanel /> : tab === "costs" ? <CostsPanel /> : <DashboardPanel onNavigate={setTab} />
+          tab === "dashboard" ? <DashboardPanel onNavigate={setTab} /> : tab === "bookings" ? <BookingsPanel /> : tab === "reviews" ? <ReviewsPanel /> : tab === "schema" ? <SchedulePanel /> : tab === "absences" ? <AbsencePanel /> : tab === "expenses" ? <ExpensePanel /> : tab === "payroll" ? <PayrollPanel /> : tab === "invoices" ? <InvoicePanel /> : tab === "pricelist" ? <PriceListPanel /> : tab === "economy" ? <EconomyPanel /> : tab === "customers" ? <CustomerPanel /> : tab === "calendar" ? <CalendarPanel /> : tab === "stats" ? <StatsPanel /> : tab === "users" ? <UsersPanel /> : tab === "costs" ? <CostsPanel /> : tab === "settings" ? <SettingsPanel /> : <DashboardPanel onNavigate={setTab} />
         )}
+      {/* ── Settings Modal ─────────────────────────────────────────────── */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-7">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Settings size={20} className="text-slate-700"/>
+                <h2 className="font-display font-bold text-xl text-slate-900">Inställningar</h2>
+              </div>
+              <button onClick={()=>setSettingsOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">
+                <X size={16}/>
+              </button>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Företagsuppgifter</h3>
+              <div className="space-y-3">
+                {[
+                  {label:"Företagsnamn", key:"company_name", placeholder:"PureNorth Städ"},
+                  {label:"Organisationsnummer", key:"company_orgnr", placeholder:"556123-4567"},
+                  {label:"Adress", key:"company_address", placeholder:"Storgatan 1, 903 25 Umeå"},
+                  {label:"Telefon", key:"company_phone", placeholder:"070-000 00 00"},
+                  {label:"E-post", key:"company_email", placeholder:"info@purenorth.se"},
+                  {label:"Webbplats", key:"company_website", placeholder:"www.purenorth.se"},
+                ].map(({label, key, placeholder}) => (
+                  <div key={key}>
+                    <label className="text-xs font-medium text-slate-600">{label}</label>
+                    <input value={settingsData[key]} onChange={e=>setSettingsData(d=>({...d,[key]:e.target.value}))} placeholder={placeholder} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Fakturainställningar</h3>
+              <div>
+                <label className="text-xs font-medium text-slate-600">Betalningsvillkor (dagar)</label>
+                <input type="number" value={settingsData.payment_terms_days} onChange={e=>setSettingsData(d=>({...d,payment_terms_days:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">OB-tillägg (kr/tim)</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB1 (kväll)</label>
+                  <input type="number" value={settingsData.ob1_extra} onChange={e=>setSettingsData(d=>({...d,ob1_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB2 (natt/helg)</label>
+                  <input type="number" value={settingsData.ob2_extra} onChange={e=>setSettingsData(d=>({...d,ob2_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+              </div>
+            </div>
+            <button onClick={saveSettings} disabled={settingsSaving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+              {settingsSaving ? "Sparar..." : "Spara inställningar"}
+            </button>
+          </div>
+        </div>
+      )}
       </main>
     </div>
   );
