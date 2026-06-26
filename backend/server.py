@@ -4403,6 +4403,211 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
         raise HTTPException(status_code=500, detail=f"Kunde inte skicka påminnelse: {str(e)}")
 
 
+
+
+# ── Auto Reminder Cron ────────────────────────────────────────────────────────
+@api_router.post("/invoices/auto-remind")
+async def auto_remind_overdue(request: Request):
+    """
+    Cron endpoint - call daily to auto-send reminders.
+    Protected by CRON_SECRET env var.
+    Logic:
+      - 1 dag efter due_date        → Påminnelse #1 (ingen avgift)
+      - payment_terms_days efter #1 → Påminnelse #2 (60 kr avgift)
+      - payment_terms_days efter #2 → Påminnelse #3 (inkasso-varning)
+    """
+    # Verify secret
+    secret = os.environ.get("CRON_SECRET", "")
+    auth = request.headers.get("x-cron-secret", "")
+    if secret and auth != secret:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    inv_settings = await get_invoice_settings_obj()
+    payment_days = inv_settings.payment_terms_days or 30
+    today = datetime.now(timezone.utc).date()
+    today_str = today.isoformat()
+
+    # Find all unpaid invoices (sent or overdue) with email
+    invoices = await db.invoices.find({
+        "status": {"$in": ["sent", "overdue"]},
+        "customer_email": {"$exists": True, "$ne": ""}
+    }).to_list(1000)
+
+    sent_count = 0
+    skipped_count = 0
+    results = []
+
+    for inv in invoices:
+        due_date_str = inv.get("due_date", "")
+        if not due_date_str:
+            continue
+
+        try:
+            from datetime import date as DateObj
+            due = DateObj.fromisoformat(due_date_str)
+        except:
+            continue
+
+        days_overdue = (today - due).days
+        if days_overdue < 1:
+            # Not yet overdue
+            skipped_count += 1
+            continue
+
+        reminder_count = inv.get("reminder_count", 0)
+        last_reminder = inv.get("last_reminder_at", "")
+
+        # Calculate when next reminder should be sent
+        if reminder_count == 0:
+            # First reminder: 1 day after due_date
+            should_remind = days_overdue >= 1
+        elif reminder_count == 1:
+            # Second reminder: payment_days after first reminder
+            if last_reminder:
+                try:
+                    last_dt = DateObj.fromisoformat(last_reminder[:10])
+                    should_remind = (today - last_dt).days >= payment_days
+                except:
+                    should_remind = False
+            else:
+                should_remind = days_overdue >= payment_days
+        elif reminder_count == 2:
+            # Third reminder: payment_days after second reminder
+            if last_reminder:
+                try:
+                    last_dt = DateObj.fromisoformat(last_reminder[:10])
+                    should_remind = (today - last_dt).days >= payment_days
+                except:
+                    should_remind = False
+            else:
+                should_remind = days_overdue >= payment_days * 2
+        else:
+            # Already sent 3+ reminders, skip
+            skipped_count += 1
+            continue
+
+        if not should_remind:
+            skipped_count += 1
+            continue
+
+        # Send reminder using existing logic
+        invoice_id = str(inv["_id"])
+        company = inv_settings.company_name or "PureNorth Stad"
+        inv_num = inv.get("invoice_number", "")
+        customer_name = inv.get("customer_name", "")
+        customer_email = inv.get("customer_email", "")
+        due_date = inv.get("due_date", "")
+        amount = inv.get("customer_pays", 0)
+        new_reminder_count = reminder_count + 1
+        reminder_fee = 60 if new_reminder_count >= 2 else 0
+        total_with_fee = amount + reminder_fee
+
+        resend.api_key = os.environ.get("RESEND_API_KEY", "")
+        if not resend.api_key:
+            results.append({"invoice": inv_num, "status": "skipped", "reason": "no resend key"})
+            continue
+
+        admin_email = os.environ.get("ADMIN_EMAIL", "")
+        subject = f"Paminnelse #{new_reminder_count}: Faktura #{inv_num} – {company}"
+        if new_reminder_count >= 3:
+            subject = f"Sista betalningspaminnelse: Faktura #{inv_num} – {company}"
+
+        html = f"""
+        <div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:520px;margin:0 auto;background:#fff;">
+          <div style="background:#dc2626;padding:28px 36px;">
+            <h1 style="color:#fff;font-size:20px;margin:0;font-weight:700;">{company}</h1>
+            <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;text-transform:uppercase;">
+              {"Paminnelse #" + str(new_reminder_count) if new_reminder_count < 3 else "Sista betalningspaminnelse"}
+            </p>
+          </div>
+          <div style="padding:36px;border:1px solid #e2e8f0;border-top:none;">
+            <p style="font-size:17px;color:#141414;font-weight:600;">Hej {customer_name},</p>
+            <p style="color:#64748b;font-size:15px;line-height:1.7;">
+              Vi har inte mottagit betalning for faktura <strong>#{inv_num}</strong>
+              som forfoll for <strong style="color:#dc2626;">{days_overdue} dagar sedan</strong>.
+            </p>
+            <div style="background:#fef2f2;border-radius:8px;padding:20px;margin:24px 0;border-left:3px solid #dc2626;">
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Fakturanummer</span> &nbsp; <strong>#{inv_num}</strong></p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Forfallodatum</span> &nbsp; <strong>{due_date}</strong></p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Ursprungligt belopp</span> &nbsp; <strong>{amount:.2f} kr</strong></p>
+              {"<p style=margin:0 0 8px;font-size:14px;><span style=color:#64748b;>Paminnelseavgift</span> &nbsp; <strong>" + str(reminder_fee) + " kr</strong></p>" if reminder_fee > 0 else ""}
+              <p style="margin:0;font-size:16px;font-weight:700;color:#dc2626;">Att betala: {total_with_fee:.2f} kr</p>
+            </div>
+            {"<div style=background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px 16px;margin:0 0 16px;><p style=color:#dc2626;font-size:13px;font-weight:600;margin:0;>Om betalning inte inkommer inom 10 dagar lamnas arendet till inkassobolag.</p></div>" if new_reminder_count >= 2 else ""}
+            <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+            <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">{company} · Automatisk paminnelse</p>
+          </div>
+        </div>
+        """
+
+        try:
+            pdf_bytes = build_invoice_pdf(inv, inv_settings)
+            import base64
+            pdf_b64 = base64.b64encode(pdf_bytes).decode()
+
+            resend.Emails.send({
+                "from": f"{company} <onboarding@resend.dev>",
+                "to": admin_email,
+                "subject": subject,
+                "html": html,
+                "attachments": [{
+                    "filename": f"faktura_{inv_num}.pdf",
+                    "content": pdf_b64,
+                }]
+            })
+
+            # Update invoice
+            update_fields = {
+                "status": "overdue",
+                "reminder_count": new_reminder_count,
+                "last_reminder_at": datetime.now(timezone.utc).isoformat()
+            }
+
+            if reminder_fee > 0:
+                items = inv.get("items", [])
+                items = [i for i in items if i.get("service") != "Paminnelseavgift"]
+                items.append({
+                    "service": "Paminnelseavgift",
+                    "description": "Paminnelseavgift enligt inkassolagen (ingen moms)",
+                    "quantity": 1,
+                    "unit_price": reminder_fee,
+                    "is_material": False,
+                })
+                work_items = [i for i in items if i.get("service") != "Paminnelseavgift"]
+                subtotal = sum(i["quantity"] * i["unit_price"] for i in work_items)
+                vat_amount = round(subtotal * 0.25, 2)
+                rut_deduction = inv.get("rut_deduction", 0)
+                customer_pays = round(subtotal + vat_amount - rut_deduction + reminder_fee, 2)
+                update_fields["items"] = items
+                update_fields["subtotal"] = round(subtotal, 2)
+                update_fields["vat_amount"] = vat_amount
+                update_fields["customer_pays"] = customer_pays
+
+            await db.invoices.update_one(
+                {"_id": to_object_id(invoice_id)},
+                {"$set": update_fields}
+            )
+
+            sent_count += 1
+            results.append({
+                "invoice": inv_num,
+                "customer": customer_name,
+                "reminder_count": new_reminder_count,
+                "reminder_fee": reminder_fee,
+                "status": "sent"
+            })
+
+        except Exception as e:
+            results.append({"invoice": inv_num, "status": "error", "reason": str(e)})
+
+    return {
+        "date": today_str,
+        "sent": sent_count,
+        "skipped": skipped_count,
+        "payment_terms_days": payment_days,
+        "results": results
+    }
+
 # ── RUT Report ────────────────────────────────────────────────────────────────
 @api_router.get("/reports/rut")
 async def rut_report_pdf(month: str, current=Depends(get_current_user)):
