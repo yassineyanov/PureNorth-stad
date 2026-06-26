@@ -164,6 +164,9 @@ class EmployeeCreate(BaseModel):
     hourly_rate: float = 0
     personnummer: Optional[str] = None
     employment_type: str = "fastanstalld"  # "fastanstalld" or "vikarie"
+    skatt_typ: Optional[str] = "A-skatt"  # A-skatt | F-skatt
+    fskatt_nr: Optional[str] = None
+    fskatt_verified: Optional[bool] = False
 
 
 class Employee(BaseModel):
@@ -173,6 +176,9 @@ class Employee(BaseModel):
     name: str
     phone: Optional[str] = None
     color: str = "#166534"
+    skatt_typ: Optional[str] = "A-skatt"
+    fskatt_nr: Optional[str] = None
+    fskatt_verified: Optional[bool] = False
     hourly_rate: float = 0
     personnummer: Optional[str] = None
     employment_type: str = "fastanstalld"
@@ -183,6 +189,9 @@ class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     color: Optional[str] = None
+    skatt_typ: Optional[str] = None
+    fskatt_nr: Optional[str] = None
+    fskatt_verified: Optional[bool] = None
     hourly_rate: Optional[float] = None
     personnummer: Optional[str] = None
     employment_type: Optional[str] = None
