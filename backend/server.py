@@ -5995,6 +5995,65 @@ async def arsredovisning_pdf(year: str, current=Depends(get_current_user)):
     return Response(content=buf.getvalue(), media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="arsredovisning_{year}.pdf"'})
 
+
+# ── F-skatt Kontroll ──────────────────────────────────────────────────────────
+@api_router.get("/employees/fskatt-kontroll")
+async def fskatt_kontroll(current=Depends(get_current_user)):
+    """Get F-skatt status for all employees"""
+    employees = await db.employees.find().to_list(100)
+    result = []
+    for e in employees:
+        eid = str(e["_id"])
+        skatt_typ = e.get("skatt_typ", "A-skatt")
+        fskatt_nr = e.get("fskatt_nr", "")
+        verified = e.get("fskatt_verified", False)
+        
+        # Determine status
+        if skatt_typ == "F-skatt":
+            if verified and fskatt_nr:
+                status = "ok"
+                status_text = "F-skatt verifierad"
+            elif fskatt_nr and not verified:
+                status = "warning"
+                status_text = "F-skatt ej verifierad"
+            else:
+                status = "error"
+                status_text = "F-skattsedel saknas"
+        else:
+            status = "ok"
+            status_text = "A-skatt (prelskatt dras av arbetsgivare)"
+        
+        result.append({
+            "id": eid,
+            "name": e.get("name", ""),
+            "personnummer": e.get("personnummer", ""),
+            "employment_type": e.get("employment_type", ""),
+            "skatt_typ": skatt_typ,
+            "fskatt_nr": fskatt_nr,
+            "fskatt_verified": verified,
+            "status": status,
+            "status_text": status_text,
+        })
+    
+    return {
+        "employees": result,
+        "total": len(result),
+        "ok": sum(1 for r in result if r["status"] == "ok"),
+        "warnings": sum(1 for r in result if r["status"] == "warning"),
+        "errors": sum(1 for r in result if r["status"] == "error"),
+    }
+
+@api_router.patch("/employees/{employee_id}/fskatt")
+async def update_fskatt(employee_id: str, payload: dict, current=Depends(get_current_user)):
+    """Update F-skatt info for employee"""
+    allowed = {"skatt_typ", "fskatt_nr", "fskatt_verified"}
+    updates = {k: v for k, v in payload.items() if k in allowed}
+    await db.employees.update_one(
+        {"_id": to_object_id(employee_id)},
+        {"$set": updates}
+    )
+    return {"success": True}
+
 app.include_router(api_router)
 
 app.add_middleware(
