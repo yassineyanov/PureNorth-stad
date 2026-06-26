@@ -133,6 +133,9 @@ function LoginScreen({ onLogin }) {
 
 function BookingsPanel() {
   const [bookings, setBookings] = useState([]);
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [invoiceSearch, setInvoiceSearch] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [newBookingOpen, setNewBookingOpen] = useState(false);
   const [expandedCalc, setExpandedCalc] = useState(null);
@@ -324,6 +327,14 @@ function BookingsPanel() {
           </button>
         </div>
       </div>
+      <div className="mb-4">
+        <div className="relative">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+          <input value={bookingSearch} onChange={e=>setBookingSearch(e.target.value)}
+            placeholder="Sök namn, tjänst, adress..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-[#141414] bg-white"/>
+        </div>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Totalt", value: bookings.length },
@@ -346,7 +357,7 @@ function BookingsPanel() {
         </div>
       ) : (
         <div className="grid gap-4" data-testid="admin-bookings-list">
-          {bookings.map((b) => (<React.Fragment key={b.id}>
+          {bookings.filter(b => !bookingSearch || [b.name,b.service,b.address,b.phone,b.email].some(v=>v?.toLowerCase().includes(bookingSearch.toLowerCase()))).map((b) => (<React.Fragment key={b.id}>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Trash2, Download, Settings, ChevronDown, ChevronUp, FileText, Link2, Pencil, Eye, Upload } from "lucide-react";
+import { Plus, FileSpreadsheet, X, Trash2, Download, Settings, ChevronDown, ChevronUp, FileText, Link2, Pencil, Eye, Upload } from "lucide-react";
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,10 +26,17 @@ function inferItems(initialItems, defaultService = "Hemstädning", defaultPrice 
     return [{ service: defaultService, description: defaultService, quantity: 1, unit_price: defaultPrice, is_material: false }];
   }
   return initialItems.map((it) => {
-    const isKnownService = true; // all services from priceList are valid
+    // Clean service name - remove kvm/tim info added by calculator
+    const cleanService = (s) => s ? s.replace(/\s*\(.*?\)\s*/g, "").trim() : s;
+    const svc = cleanService(it.service || it.description || defaultService);
+    const desc = it.description || it.service || defaultService;
+    // Detect Påminnelseavgift from either field
+    const isPaminnelse = svc.includes("Påminnelse") || desc.includes("Påminnelse") ||
+                         (it.unit_price === 60 && it.quantity === 1 && !it.is_material && 
+                          (it.description || "").includes("inkasso"));
     return {
-      service: isKnownService ? it.description : "Annat",
-      description: it.description,
+      service: isPaminnelse ? "Påminnelseavgift" : svc,
+      description: isPaminnelse ? "Påminnelseavgift enligt inkassolagen" : desc,
       quantity: it.quantity,
       unit_price: it.unit_price,
       is_material: it.is_material,
@@ -237,6 +244,9 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
   const isCustomService = (svc) => !priceList.find((p) => p.service === svc);
 
   const updateService = (i, service) => {
+    const nonReminder = items.map((item, oIdx) => ({...item, originalIdx: oIdx})).filter(item => item.service !== "Påminnelseavgift");
+    const originalIdx = nonReminder[i]?.originalIdx;
+    if (originalIdx === undefined) return;
     setItems((arr) => arr.map((it, idx) => {
       if (idx !== i) return it;
       const priceMatch = priceList.find((p) => p.service === service && p.is_active);
@@ -248,8 +258,18 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
     }));
   };
 
-  const addItem = () => setItems((arr) => [...arr, { service: "Hemstädning", description: "Hemstädning", quantity: 1, unit_price: 0, is_material: false }]);
-  const removeItem = (i) => setItems((arr) => arr.filter((_, idx) => idx !== i));
+  const addItem = () => {
+    const first = priceList.find(p => p.is_active);
+    const svc = first ? first.service : "Hemstädning";
+    const price = first ? first.price : 0;
+    setItems((arr) => [...arr, { service: svc, description: svc, quantity: 1, unit_price: price, is_material: false }]);
+  };
+  const removeItem = (i) => {
+    // i is index in non-reminder items
+    const nonReminder = items.map((item, idx) => ({...item, originalIdx: idx})).filter(item => item.service !== "Påminnelseavgift");
+    const originalIdx = nonReminder[i]?.originalIdx;
+    if (originalIdx !== undefined) setItems(arr => arr.filter((_, idx) => idx !== originalIdx));
+  };
 
   const laborTotal = items.filter((i) => !i.is_material).reduce((s, i) => s + (parseFloat(i.quantity) || 0) * (parseFloat(i.unit_price) || 0), 0);
   const materialTotal = items.filter((i) => i.is_material).reduce((s, i) => s + (parseFloat(i.quantity) || 0) * (parseFloat(i.unit_price) || 0), 0);
@@ -376,14 +396,29 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
               <button type="button" onClick={addItem} className="text-xs font-semibold text-[#141414] inline-flex items-center gap-1"><Plus size={13} /> Lägg till rad</button>
             </div>
             <div className="space-y-2">
-              {items.map((it, i) => (
+              {/* Show Påminnelseavgift as read-only */}
+              {items.filter(it => it.service === "Påminnelseavgift").map((it, i) => (
+                <div key={`reminder-${i}`} className="rounded-xl bg-amber-50 border border-amber-200 p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">Påminnelseavgift (ingen moms)</p>
+                    <p className="text-xs text-amber-600">Tillagd automatiskt enligt inkassolagen</p>
+                  </div>
+                  <p className="text-sm font-bold text-amber-800">+{it.unit_price.toFixed(2)} kr</p>
+                </div>
+              ))}
+              {items.filter(it => it.service !== "Påminnelseavgift").map((it, i) => (
                 <div key={i} className="rounded-xl bg-slate-50 p-3 space-y-2">
                   <div className="flex items-center gap-2">
-                    <select value={it.service} onChange={(e) => updateService(i, e.target.value)} className="flex-1 rounded-lg border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] bg-white">
-                      {[...priceList.filter((p) => p.is_active).map((p) => p.service), "Annat"]
+                    <div className="flex-1">
+                      <Label className="text-[10px] text-slate-400 mb-1 block">Tjänster</Label>
+                    <select value={it.service} onChange={(e) => updateService(i, e.target.value)} className="w-full rounded-lg border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] bg-white">
+                      {[...priceList.filter((p) => p.is_active).map((p) => p.service),
+                        ...(priceList.some(p => p.service === it.service) ? [] : [it.service]),
+                        "Annat"]
                         .filter((s, idx, arr) => arr.indexOf(s) === idx)
                         .map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
+                    </div>
                     {priceList.find((p) => p.service === it.service) && (
                       <span className="text-xs text-slate-400 whitespace-nowrap">
                         {priceList.find((p) => p.service === it.service)?.price} kr/{priceList.find((p) => p.service === it.service)?.unit}
@@ -422,15 +457,51 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
           </div>
 
           <div className="rounded-xl bg-slate-50 p-4 space-y-1.5 text-sm">
-            <div className="flex justify-between text-slate-600"><span>Delsumma (exkl. moms)</span><span>{subtotal.toFixed(2)} kr</span></div>
-            <div className="flex justify-between text-slate-600"><span>Moms ({(settings?.vat_rate ?? 25).toFixed(0)}%)</span><span>{vatAmount.toFixed(2)} kr</span></div>
-            <div className="flex justify-between font-semibold text-slate-900"><span>Totalt</span><span>{totalAmount.toFixed(2)} kr</span></div>
-            {rutDeduction > 0 && (
-              <>
-                <div className="flex justify-between text-green-700"><span>RUT-avdrag</span><span>-{rutDeduction.toFixed(2)} kr</span></div>
-                <div className="flex justify-between font-bold text-slate-900 pt-1.5 border-t border-slate-200"><span>Att betala</span><span>{customerPays.toFixed(2)} kr</span></div>
-              </>
-            )}
+            {(() => {
+              // Separate reminder fee (no moms) from regular items
+              const reminderItem = items.find(i => i.service === "Påminnelseavgift");
+              const reminderFee = reminderItem ? (parseFloat(reminderItem.quantity)||1) * (parseFloat(reminderItem.unit_price)||0) : 0;
+              const workItems = items.filter(i => i.service !== "Påminnelseavgift");
+
+              // Step 1: Calculate original invoice
+              const laborItems = workItems.filter(i => !i.is_material);
+              const matItems = workItems.filter(i => i.is_material);
+              const laborSum = laborItems.reduce((s,i) => s + (parseFloat(i.quantity)||0)*(parseFloat(i.unit_price)||0), 0);
+              const matSum = matItems.reduce((s,i) => s + (parseFloat(i.quantity)||0)*(parseFloat(i.unit_price)||0), 0);
+              const delsumma = laborSum + matSum;
+              const moms = delsumma * ((settings?.vat_rate ?? 25) / 100);
+              const totaltInklMoms = delsumma + moms;
+              const rutAvdrag = rutEligible && customerType === "private" ? laborSum * 0.5 : 0;
+              const afterRut = totaltInklMoms - rutAvdrag;
+
+              // Step 2: Add Påminnelseavgift AFTER (no moms on it)
+              const attBetala = afterRut + reminderFee;
+
+              return (<>
+                <div className="flex justify-between text-slate-600">
+                  <span>Delsumma (exkl. moms)</span><span>{delsumma.toFixed(2)} kr</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Moms ({(settings?.vat_rate ?? 25).toFixed(0)}%)</span><span>{moms.toFixed(2)} kr</span>
+                </div>
+                <div className="flex justify-between font-semibold text-slate-900">
+                  <span>Totalt inkl. moms</span><span>{totaltInklMoms.toFixed(2)} kr</span>
+                </div>
+                {rutAvdrag > 0 && (
+                  <div className="flex justify-between text-green-700">
+                    <span>RUT-avdrag (50%)</span><span>-{rutAvdrag.toFixed(2)} kr</span>
+                  </div>
+                )}
+                {reminderFee > 0 && (
+                  <div className="flex justify-between text-amber-700 border-t border-slate-200 pt-1.5">
+                    <span>Påminnelseavgift (ingen moms)</span><span>+{reminderFee.toFixed(2)} kr</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-slate-900 pt-1.5 border-t border-slate-200 text-base">
+                  <span>ATT BETALA</span><span className="text-green-700">{attBetala.toFixed(2)} kr</span>
+                </div>
+              </>);
+            })()}
           </div>
 
           <button type="submit" disabled={saving || !customerName.trim()} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
@@ -450,6 +521,7 @@ export default function InvoicePanel() {
   const [modalOpen, setModalOpen] = useState(false);
   const [priceList, setPriceList] = useState([]);
   const [editingInvoice, setEditingInvoice] = useState(null);
+  const [search, setSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -525,6 +597,38 @@ export default function InvoicePanel() {
     }
   };
 
+  const sendInvoice = async (inv) => {
+    if (!inv.customer_email) {
+      toast.error("Kunden har ingen e-postadress.");
+      return;
+    }
+    if (!window.confirm(`Skicka faktura #${inv.invoice_number} till ${inv.customer_email}?`)) return;
+    try {
+      await api.post(`/invoices/${inv.id}/send`);
+      toast.success(`Faktura skickad till ${inv.customer_email}!`);
+      load();
+    } catch(err) {
+      toast.error(err.response?.data?.detail || "Kunde inte skicka faktura.");
+    }
+  };
+
+  const sendReminder = async (inv) => {
+    if (!inv.customer_email) {
+      toast.error("Kunden har ingen e-postadress.");
+      return;
+    }
+    const count = (inv.reminder_count || 0) + 1;
+    const fee = count >= 2 ? " (inkl. 60 kr påminnelseavgift)" : "";
+    if (!window.confirm(`Skicka påminnelse #${count} till ${inv.customer_email}?${fee}`)) return;
+    try {
+      const res = await api.post(`/invoices/${inv.id}/remind`);
+      toast.success(res.data.message || "Påminnelse skickad!");
+      await load();
+    } catch(err) {
+      toast.error(err.response?.data?.detail || "Kunde inte skicka påminnelse.");
+    }
+  };
+
   const viewPdf = (inv) => {
     const token = localStorage.getItem("pn_token") || "";
     const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
@@ -540,12 +644,37 @@ export default function InvoicePanel() {
           <h2 className="font-display font-bold text-xl text-slate-900">Fakturor</h2>
           <p className="text-sm text-slate-500 mt-0.5">Obetalt: {totalOutstanding.toFixed(2)} kr</p>
         </div>
-        <button onClick={openCreate} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] rounded-full px-4 py-2 hover:bg-black transition-colors">
+        <div className="flex items-center gap-2">
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/invoices/export-xlsx?token=${token}`;
+            a.download = "fakturor.xlsx";
+            a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
+          </button>
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            window.open(`${base}/api/invoices/export-pdf?token=${token}`, "_blank");
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> PDF
+          </button>
+          <button onClick={openCreate} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] rounded-full px-4 py-2 hover:bg-black transition-colors">
           <Plus size={15} /> Ny faktura
         </button>
+        </div>
       </div>
 
       {settings && <InvoiceSettingsPanel settings={settings} onSave={saveSettings} />}
+      <div className="mb-4 relative">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input value={search} onChange={e=>setSearch(e.target.value)}
+          placeholder="Sök kund, fakturanummer..."
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-[#141414] bg-white"/>
+      </div>
 
       {loading ? (
         <p className="text-slate-500">Laddar...</p>
@@ -556,7 +685,7 @@ export default function InvoicePanel() {
         </div>
       ) : (
         <div className="grid gap-3">
-          {invoices.map((inv) => (
+          {invoices.filter(inv => !search || [inv.customer_name, String(inv.invoice_number), inv.customer_email, inv.customer_phone].some(v=>v?.toLowerCase().includes(search.toLowerCase()))).map((inv) => (
             <motion.div key={inv.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-white border border-slate-100 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 mb-1.5">
@@ -578,6 +707,17 @@ export default function InvoicePanel() {
                 <button onClick={() => openEdit(inv)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#141414] transition-colors" title="Redigera">
                   <Pencil size={16} />
                 </button>
+                <button onClick={() => sendInvoice(inv)} title="Skicka till kund"
+                  className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+                {(inv.status === "sent" || inv.status === "overdue") && (
+                  <button onClick={() => sendReminder(inv)} title={`Skicka påminnelse ${(inv.reminder_count||0)+1}`}
+                    className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    {inv.reminder_count > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{inv.reminder_count}</span>}
+                  </button>
+                )}
                 <button onClick={() => viewPdf(inv)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#141414] transition-colors" title="Visa faktura">
                   <Eye size={16} />
                 </button>
