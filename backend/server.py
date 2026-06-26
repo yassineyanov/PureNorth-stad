@@ -6208,6 +6208,98 @@ async def update_invoice_from_booking(booking_id: str, payload: dict, current=De
     )
     return {"updated": True, "invoice_id": invoice_id}
 
+
+@api_router.post("/bookings/{booking_id}/sync-invoice")
+async def sync_invoice_from_booking(booking_id: str, payload: dict, current=Depends(get_current_user)):
+    """Sync invoice with booking changes"""
+    booking = await db.bookings.find_one({"_id": to_object_id(booking_id)})
+    if not booking or not booking.get("invoice_id"):
+        return {"updated": False, "message": "No linked invoice"}
+    
+    invoice_id = booking["invoice_id"]
+    invoice = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if not invoice:
+        return {"updated": False, "message": "Invoice not found"}
+    
+    updates = {}
+    
+    # Contact info updates
+    if "name" in payload: updates["customer_name"] = payload["name"]
+    if "email" in payload: updates["customer_email"] = payload["email"]
+    if "phone" in payload: updates["customer_phone"] = payload["phone"]
+    if "address" in payload: updates["customer_address"] = payload["address"]
+    if "notes" in payload: updates["notes"] = payload["notes"]
+    
+    # Price recalculation if kvm or services changed
+    if "kvm" in payload or "services" in payload:
+        kvm = float(payload.get("kvm") or booking.get("kvm") or 0)
+        services = payload.get("services") or booking.get("services") or []
+        
+        pricelist = await db.price_lists.find_one({}) or {}
+        items_db = pricelist.get("items", [])
+        active_items = [i for i in items_db if i.get("is_active")]
+        
+        KVM_KEYWORDS = ["städning", "storstäd", "flytt", "kontors", "fönster"]
+        
+        new_items = []
+        labor_total = 0
+        
+        for svc in services:
+            svc_lower = svc.lower()
+            match = next((i for i in active_items if 
+                i["service"].lower() in svc_lower or 
+                svc_lower in i["service"].lower()), None)
+            if not match:
+                continue
+            
+            unit = match.get("unit", "tim")
+            rate = match.get("price", 0)
+            is_rut = match.get("is_rut_eligible", True)
+            
+            if unit == "kvm":
+                qty = kvm or 1
+                line_total = qty * rate
+            elif unit == "tim":
+                qty = max(1, round(kvm / 20)) if kvm else 1
+                line_total = qty * rate
+            else:
+                qty = 1
+                line_total = rate
+            
+            labor_total += line_total
+            new_items.append({
+                "service": match["service"],
+                "description": match["service"],
+                "quantity": qty,
+                "unit_price": rate,
+                "is_material": False,
+                "is_rut_eligible": is_rut,
+            })
+        
+        if new_items:
+            inv_settings = await get_invoice_settings_obj()
+            vat = labor_total * inv_settings.vat_rate / 100
+            total = labor_total + vat
+            rut = round(labor_total * 0.5, 2) if invoice.get("rut_eligible") else 0
+            customer_pays = total - rut
+            
+            updates["items"] = new_items
+            updates["labor_total"] = round(labor_total, 2)
+            updates["subtotal"] = round(labor_total, 2)
+            updates["vat_amount"] = round(vat, 2)
+            updates["total_amount"] = round(total, 2)
+            updates["rut_deduction"] = rut
+            updates["customer_pays"] = round(customer_pays, 2)
+    
+    if updates:
+        await db.invoices.update_one(
+            {"_id": to_object_id(invoice_id)},
+            {"$set": updates}
+        )
+        return {"updated": True, "invoice_id": invoice_id}
+    
+    return {"updated": False, "message": "Nothing to update"}
+
 app.include_router(api_router)
 
 app.add_middleware(
