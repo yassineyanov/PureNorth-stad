@@ -6054,6 +6054,53 @@ async def update_fskatt(employee_id: str, payload: dict, current=Depends(get_cur
     )
     return {"success": True}
 
+
+# ── Personnummer Validering ───────────────────────────────────────────────────
+def validate_personnummer(pnr: str) -> dict:
+    """Validate Swedish personnummer using Luhn algorithm"""
+    import re
+    
+    # Clean input
+    clean = re.sub(r'[-\s]', '', pnr)
+    
+    # Handle 12-digit (YYYYMMDD + 4)
+    if len(clean) == 12:
+        clean = clean[2:]  # Remove century
+    
+    if len(clean) != 10:
+        return {"valid": False, "error": "Personnummer måste ha 10 siffror (YYMMDD-XXXX)"}
+    
+    if not clean.isdigit():
+        return {"valid": False, "error": "Personnummer får bara innehålla siffror"}
+    
+    # Validate date part
+    yy, mm, dd = int(clean[0:2]), int(clean[2:4]), int(clean[4:6])
+    if mm < 1 or mm > 12:
+        return {"valid": False, "error": f"Ogiltigt månadstal: {mm:02d}"}
+    if dd < 1 or dd > 31:
+        return {"valid": False, "error": f"Ogiltigt dagtal: {dd:02d}"}
+    
+    # Luhn algorithm
+    digits = [int(d) for d in clean[:9]]
+    total = 0
+    for i, d in enumerate(digits):
+        if i % 2 == 0:
+            v = d * 2
+            total += v - 9 if v > 9 else v
+        else:
+            total += d
+    
+    check = (10 - (total % 10)) % 10
+    if check != int(clean[9]):
+        return {"valid": False, "error": f"Kontrollsiffran är fel (ska vara {check}, fick {clean[9]})"}
+    
+    return {"valid": True, "error": None, "formatted": f"{clean[:6]}-{clean[6:]}"}
+
+@api_router.post("/employees/validate-personnummer")
+async def validate_pnr(payload: dict, current=Depends(get_current_user)):
+    pnr = payload.get("personnummer", "")
+    return validate_personnummer(pnr)
+
 app.include_router(api_router)
 
 app.add_middleware(
