@@ -16,16 +16,20 @@ const DEFAULT = {
   company_name: "PureNorth Städ",
 };
 
-export const Contact = () => {
+export const Contact = ({ ws: wsProp }) => {
   const [ws, setWs] = useState(DEFAULT);
 
   useEffect(() => {
+    if (wsProp && Object.keys(wsProp).length > 0) {
+      setWs({ ...DEFAULT, ...wsProp });
+      return;
+    }
     const base = process.env.REACT_APP_BACKEND_URL || "";
     fetch(`${base}/api/settings/website`)
       .then(r => r.json())
       .then(d => setWs({ ...DEFAULT, ...d }))
       .catch(() => {});
-  }, []);
+  }, [wsProp]);
 
   return (
     <section id="kontakt" className="py-24 sm:py-28 bg-white">
