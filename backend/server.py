@@ -5747,6 +5747,245 @@ async def upload_website_image(file: UploadFile = File(...), current=Depends(get
     data_url = f"data:{media_type};base64,{b64}"
     return {"url": data_url}
 
+
+# ── Årsredovisning Underlag ───────────────────────────────────────────────────
+@api_router.get("/reports/arsredovisning")
+async def arsredovisning_pdf(year: str, current=Depends(get_current_user)):
+    """Annual report for accountant/konsult"""
+    import calendar as cal_mod
+
+    start = f"{year}-01-01"
+    end = f"{year}-12-31"
+    start_dt = f"{start}T00:00:00"
+    end_dt = f"{end}T23:59:59"
+
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
+    orgnr = inv_settings.company_orgnr or ""
+
+    # ── Fetch all data ────────────────────────────────────────────────────────
+    invoices = await db.invoices.find({"created_at": {"$gte": start_dt, "$lte": end_dt}}).to_list(5000)
+    paid_invoices = [i for i in invoices if i.get("status") == "paid"]
+    costs = await db.costs.find({"date": {"$gte": start, "$lte": end}}).to_list(5000)
+    expenses = await db.expenses.find({"date": {"$gte": start, "$lte": end}}).to_list(5000)
+    employees = await db.employees.find().to_list(100)
+
+    # ── Revenue calculations ──────────────────────────────────────────────────
+    total_revenue_excl = sum(i.get("subtotal", 0) for i in invoices)
+    total_vat_out = sum(i.get("vat_amount", 0) for i in invoices)
+    total_rut = sum(i.get("rut_deduction", 0) for i in invoices)
+    pam_fees = sum(sum(it.get("quantity",1)*it.get("unit_price",0) for it in i.get("items",[]) if "Påminnelseavgift" in it.get("service","")) for i in invoices)
+    total_paid = sum(i.get("customer_pays", 0) for i in paid_invoices)
+    total_unpaid = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") != "paid")
+
+    # ── Cost calculations ─────────────────────────────────────────────────────
+    material_total = sum(c.get("amount", 0) for c in costs)
+    material_vat_in = sum(c.get("amount",0) - c.get("amount",0)/(1+c.get("moms_rate",25)/100) for c in costs)
+    expense_total = sum(e.get("amount", 0) for e in expenses)
+    expense_vat_in = sum(e.get("amount",0) - e.get("amount",0)/(1+e.get("moms_rate",0)/100) for e in expenses if e.get("moms_rate",0) > 0)
+    total_vat_in = round(material_vat_in + expense_vat_in, 2)
+
+    # ── Payroll calculations ──────────────────────────────────────────────────
+    PRELSKATT = 0.30
+    ARBETSGIVARAVGIFT = 0.3142
+    SEMESTER = 0.12
+    payroll_summary, payroll_settings = await build_payroll_summary(start, end)
+    total_brutto = sum(r["normal_h"]*r["hourly_rate"] + r["ob1_h"]*payroll_settings.ob1_extra + r["ob2_h"]*payroll_settings.ob2_extra + r.get("sjuklon_net",0) for r in payroll_summary.values())
+    total_ag = round(total_brutto * ARBETSGIVARAVGIFT, 2)
+    total_prel = round(total_brutto * PRELSKATT, 2)
+    total_sem = round(total_brutto * SEMESTER, 2)
+    total_netto = round(total_brutto - total_prel, 2)
+
+    # ── Monthly breakdown ─────────────────────────────────────────────────────
+    monthly = {}
+    MONTHS_SV = ["","Jan","Feb","Mar","Apr","Maj","Jun","Jul","Aug","Sep","Okt","Nov","Dec"]
+    for i in range(1, 13):
+        monthly[i] = {"revenue": 0, "costs": 0, "invoices": 0}
+    for inv in invoices:
+        try:
+            m = int(inv.get("created_at","")[:7].split("-")[1])
+            monthly[m]["revenue"] += inv.get("subtotal", 0)
+            monthly[m]["invoices"] += 1
+        except: pass
+    for c in costs:
+        try:
+            m = int(c.get("date","")[:7].split("-")[1])
+            monthly[m]["costs"] += c.get("amount", 0)
+        except: pass
+
+    # ── Build PDF ─────────────────────────────────────────────────────────────
+    from reportlab.lib.pagesizes import A4
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        topMargin=15*mm, bottomMargin=15*mm, leftMargin=20*mm, rightMargin=20*mm,
+        title=f"Årsredovisning {year}",
+        author=company)
+    styles = getSampleStyleSheet()
+    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
+    elements = []
+    page_w = A4[0] - 40*mm
+
+    # Header
+    hdr = Table([[
+        Paragraph(f"<b>{company}</b>", ps("h", fontSize=16, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"<b>ÅRSREDOVISNING UNDERLAG</b><br/>Räkenskapsår: {year}<br/>Org.nr: {orgnr}", ps("s", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+    ]], colWidths=[100*mm, None])
+    hdr.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),("LEFTPADDING",(0,0),(-1,-1),12),("RIGHTPADDING",(0,0),(-1,-1),12),("TOPPADDING",(0,0),(-1,-1),12),("BOTTOMPADDING",(0,0),(-1,-1),12),("VALIGN",(0,0),(-1,-1),"MIDDLE")]))
+    elements.append(hdr)
+    elements.append(Spacer(1,5*mm))
+
+    # ── Section 1: Intäkter ───────────────────────────────────────────────────
+    elements.append(Paragraph("1. INTÄKTER", ps("h2", fontSize=11, fontName="Helvetica-Bold", spaceBefore=4, spaceAfter=3)))
+    int_data = [
+        ["Post", "Konto", "Belopp (kr)"],
+        ["Försäljning tjänster (exkl. moms)", "3000", f"{total_revenue_excl:.2f}"],
+        ["Påminnelseavgifter (ingen moms)", "3590", f"{pam_fees:.2f}"],
+        ["Utgående moms 25%", "2610", f"{total_vat_out:.2f}"],
+        ["RUT-avdrag (betalas av Skatteverket)", "3001", f"{total_rut:.2f}"],
+        ["TOTALA INTÄKTER", "", f"{total_revenue_excl + pam_fees:.2f}"],
+        ["Varav betalda", "", f"{total_paid:.2f}"],
+        ["Varav obetalda (kundfordringar)", "1510", f"{total_unpaid:.2f}"],
+    ]
+    t1 = Table(int_data, colWidths=[100*mm, 25*mm, None])
+    t1.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#1e3a5f")),("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,-1),9),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),5),("RIGHTPADDING",(0,0),(-1,-1),5),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ALIGN",(2,0),(-1,-1),"RIGHT"),
+        ("BACKGROUND",(0,5),(-1,5),colors.HexColor("#F1F5F9")),("FONTNAME",(0,5),(-1,5),"Helvetica-Bold"),
+    ]))
+    elements.append(t1)
+    elements.append(Spacer(1,4*mm))
+
+    # ── Section 2: Kostnader ──────────────────────────────────────────────────
+    elements.append(Paragraph("2. KOSTNADER", ps("h2", fontSize=11, fontName="Helvetica-Bold", spaceBefore=4, spaceAfter=3)))
+    kost_data = [
+        ["Post", "Konto", "Belopp (kr)"],
+        ["Bruttolöner", "7210", f"{total_brutto:.2f}"],
+        ["Semesterersättning (12%)", "7290", f"{total_sem:.2f}"],
+        ["Arbetsgivaravgift (31.42%)", "7510", f"{total_ag:.2f}"],
+        ["Materialkostnader (inkl. moms)", "5410", f"{material_total:.2f}"],
+        ["Utlägg anställda", "7331", f"{expense_total:.2f}"],
+        ["TOTALA KOSTNADER", "", f"{total_brutto + total_sem + total_ag + material_total + expense_total:.2f}"],
+    ]
+    t2 = Table(kost_data, colWidths=[100*mm, 25*mm, None])
+    t2.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#7c3aed")),("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,-1),9),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),5),("RIGHTPADDING",(0,0),(-1,-1),5),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ALIGN",(2,0),(-1,-1),"RIGHT"),
+        ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+    ]))
+    elements.append(t2)
+    elements.append(Spacer(1,4*mm))
+
+    # ── Section 3: Moms ───────────────────────────────────────────────────────
+    elements.append(Paragraph("3. MOMSREDOVISNING", ps("h2", fontSize=11, fontName="Helvetica-Bold", spaceBefore=4, spaceAfter=3)))
+    moms_att_betala = round(total_vat_out - total_vat_in, 2)
+    moms_data = [
+        ["Post", "Konto", "Belopp (kr)"],
+        ["Utgående moms (25% på försäljning)", "2610", f"{total_vat_out:.2f}"],
+        ["Ingående moms (material + utlägg)", "2640", f"-{total_vat_in:.2f}"],
+        ["NETTOMOMS ATT BETALA SKATTEVERKET", "", f"{moms_att_betala:.2f}"],
+    ]
+    t3 = Table(moms_data, colWidths=[100*mm, 25*mm, None])
+    t3.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#0f766e")),("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,-1),9),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),5),("RIGHTPADDING",(0,0),(-1,-1),5),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ALIGN",(2,0),(-1,-1),"RIGHT"),
+        ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+    ]))
+    elements.append(t3)
+    elements.append(Spacer(1,4*mm))
+
+    # ── Section 4: Lön ────────────────────────────────────────────────────────
+    elements.append(Paragraph("4. LÖNESAMMANSTÄLLNING", ps("h2", fontSize=11, fontName="Helvetica-Bold", spaceBefore=4, spaceAfter=3)))
+    lon_data = [["Anställd", "Brutto (kr)", "Prelskatt (kr)", "Netto (kr)", "AG-avgift (kr)"]]
+    for r in payroll_summary.values():
+        brutto = r["normal_h"]*r["hourly_rate"] + r["ob1_h"]*payroll_settings.ob1_extra + r["ob2_h"]*payroll_settings.ob2_extra + r.get("sjuklon_net",0)
+        prel = round(brutto * PRELSKATT, 2)
+        netto = round(brutto - prel, 2)
+        ag = round(brutto * ARBETSGIVARAVGIFT, 2)
+        lon_data.append([r["name"], f"{brutto:.2f}", f"{prel:.2f}", f"{netto:.2f}", f"{ag:.2f}"])
+    lon_data.append(["TOTALT", f"{total_brutto:.2f}", f"{total_prel:.2f}", f"{total_netto:.2f}", f"{total_ag:.2f}"])
+    t4 = Table(lon_data, colWidths=[60*mm, 28*mm, 28*mm, 28*mm, 28*mm])
+    t4.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#b45309")),("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,-1),9),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),5),("RIGHTPADDING",(0,0),(-1,-1),5),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+        ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+    ]))
+    elements.append(t4)
+    elements.append(Spacer(1,4*mm))
+
+    # ── Section 5: Månadsöversikt ─────────────────────────────────────────────
+    elements.append(Paragraph("5. MÅNADSÖVERSIKT", ps("h2", fontSize=11, fontName="Helvetica-Bold", spaceBefore=4, spaceAfter=3)))
+    mån_data = [["Månad", "Fakturor", "Intäkter (kr)", "Kostnader (kr)", "Resultat (kr)"]]
+    for m in range(1, 13):
+        rev = monthly[m]["revenue"]
+        cost = monthly[m]["costs"]
+        res = round(rev - cost, 2)
+        mån_data.append([MONTHS_SV[m], str(monthly[m]["invoices"]), f"{rev:.2f}", f"{cost:.2f}", f"{res:.2f}"])
+    total_res = sum(monthly[m]["revenue"] - monthly[m]["costs"] for m in range(1,13))
+    mån_data.append(["TOTALT", str(len(invoices)), f"{total_revenue_excl:.2f}", f"{material_total:.2f}", f"{total_res:.2f}"])
+    t5 = Table(mån_data, colWidths=[20*mm, 20*mm, 38*mm, 38*mm, 38*mm])
+    t5.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#166534")),("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,-1),8.5),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),4),("RIGHTPADDING",(0,0),(-1,-1),4),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+        ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F1F5F9")),("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+    ]))
+    elements.append(t5)
+    elements.append(Spacer(1,5*mm))
+
+    # ── Resultaträkning ───────────────────────────────────────────────────────
+    total_costs_all = total_brutto + total_sem + total_ag + material_total + expense_total
+    resultat = round(total_revenue_excl + pam_fees - total_costs_all, 2)
+    elements.append(Paragraph("RESULTATRÄKNING", ps("h2", fontSize=11, fontName="Helvetica-Bold", spaceBefore=4, spaceAfter=3)))
+    res_data = [
+        ["Post", "Belopp (kr)"],
+        ["Nettoomsättning (exkl. moms)", f"{total_revenue_excl + pam_fees:.2f}"],
+        ["Personalkostnader", f"-{total_brutto + total_sem + total_ag:.2f}"],
+        ["Övriga externa kostnader", f"-{material_total + expense_total:.2f}"],
+        ["RÖRELSERESULTAT (EBIT)", f"{resultat:.2f}"],
+    ]
+    t6 = Table(res_data, colWidths=[120*mm, None])
+    t6.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,-1),9),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("LEFTPADDING",(0,0),(-1,-1),5),("RIGHTPADDING",(0,0),(-1,-1),5),
+        ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ALIGN",(1,0),(-1,-1),"RIGHT"),
+        ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#DCFCE7") if resultat >= 0 else colors.HexColor("#FEE2E2")),
+        ("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+        ("TEXTCOLOR",(1,-1),(1,-1),colors.HexColor("#15803d") if resultat >= 0 else colors.HexColor("#dc2626")),
+    ]))
+    elements.append(t6)
+
+    elements.append(Spacer(1,5*mm))
+    elements.append(Paragraph(
+        f"{company}  ·  Årsredovisning underlag {year}  ·  Skapad {datetime.now(timezone.utc).strftime('%Y-%m-%d')}  ·  Konfidentiellt",
+        ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"))
+    ))
+
+    doc.build(elements)
+    return Response(content=buf.getvalue(), media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="arsredovisning_{year}.pdf"'})
+
 app.include_router(api_router)
 
 app.add_middleware(
