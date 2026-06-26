@@ -1402,7 +1402,10 @@ async def set_invoice_logo(request: Request, current=Depends(get_current_user)):
 async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_user)):
     inv_settings = await get_invoice_settings_obj()
     items = [i.model_dump() for i in payload.items]
-    amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
+    if not payload.subtotal:
+        amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
+    else:
+        amounts = {}
     number = await get_next_invoice_number()
     due_date = payload.due_date or (DateClass.today() + timedelta(days=inv_settings.payment_terms_days)).isoformat()
 
@@ -1413,7 +1416,9 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     doc["status"] = "draft"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["paid_at"] = None
-    doc.update(amounts)
+    # Use frontend amounts if provided, otherwise recalculate
+    if not payload.subtotal:
+        doc.update(amounts)
 
     result = await db.invoices.insert_one(doc)
     doc["_id"] = str(result.inserted_id)
