@@ -6116,6 +6116,25 @@ async def validate_pnr(payload: dict, current=Depends(get_current_user)):
     pnr = payload.get("personnummer", "")
     return validate_personnummer(pnr)
 
+
+@api_router.patch("/invoices/by-booking/{booking_id}")
+async def update_invoice_by_booking(booking_id: str, payload: dict, current=Depends(get_current_user)):
+    """Update invoice linked to a booking"""
+    invoice = await db.invoices.find_one({"booking_id": booking_id})
+    if not invoice:
+        return {"updated": False, "message": "No invoice found for this booking"}
+    
+    allowed = {"customer_name", "customer_email", "customer_phone", "customer_address", "notes"}
+    updates = {k: v for k, v in payload.items() if k in allowed}
+    
+    if updates:
+        await db.invoices.update_one(
+            {"booking_id": booking_id},
+            {"$set": updates}
+        )
+        return {"updated": True}
+    return {"updated": False, "message": "No valid fields to update"}
+
 app.include_router(api_router)
 
 app.add_middleware(
