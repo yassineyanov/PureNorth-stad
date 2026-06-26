@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Calendar, Users, FileText, AlertCircle, Clock, TrendingUp, Phone, Mail, RefreshCw, CalendarClock, ClipboardList, CalendarDays, Wallet } from "lucide-react";
+import { Calendar, Users, FileText, AlertCircle, Clock, TrendingUp, TrendingDown, Phone, Mail, RefreshCw, CalendarClock, ClipboardList, CalendarDays, Wallet, Landmark, Banknote, Receipt } from "lucide-react";
 import { api } from "@/lib/api";
 
 function kr(v) { return `${(v||0).toLocaleString("sv-SE",{minimumFractionDigits:2,maximumFractionDigits:2})} kr`; }
@@ -48,12 +48,14 @@ function Section({ title, children, action }) {
 export default function DashboardPanel({ onNavigate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   const load = async () => {
     setLoading(true);
     try {
       const res = await api.get("/dashboard");
       setData(res.data);
+      setLastUpdated(new Date());
     } catch { toast.error("Kunde inte hämta dashboard."); }
     finally { setLoading(false); }
   };
@@ -82,9 +84,12 @@ export default function DashboardPanel({ onNavigate }) {
           <h2 className="font-display font-bold text-xl text-slate-900">Översikt</h2>
           <p className="text-sm text-slate-500 capitalize">{todayStr}</p>
         </div>
-        <button onClick={load} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
-          <RefreshCw size={15}/>
-        </button>
+        <div className="flex items-center gap-2">
+          {lastUpdated && <span className="text-xs text-slate-400">Uppdaterad {lastUpdated.toLocaleTimeString("sv-SE", {hour:"2-digit",minute:"2-digit"})}</span>}
+          <button onClick={load} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
+            <RefreshCw size={15}/>
+          </button>
+        </div>
       </div>
 
       {/* KPI cards */}
@@ -105,7 +110,64 @@ export default function DashboardPanel({ onNavigate }) {
           color="green"
           sub={`${data.month.invoice_count} fakturor, ${kr(data.month.paid)} betalt`}
           onClick={()=>onNavigate("economy")} />
+        {data.month_material_cost > 0 && (
+          <StatCard title="Materialkost. (månaden)" value={kr(data.month_material_cost)} icon={TrendingDown}
+            color="amber"
+            sub={`${data.month_costs_count} kostnadsposter`}
+            onClick={()=>onNavigate("costs")} />
+        )}
       </div>
+
+      {/* Payment Reminders */}
+      {(() => {
+        const today = new Date();
+        const day = today.getDate();
+        const month = today.toLocaleString("sv-SE", { month: "long" });
+        const year = today.getFullYear();
+        const mon = String(today.getMonth()+1).padStart(2,"0");
+        const reminders = [];
+
+        // AGI reminder - due 12th
+        const agiDate = new Date(year, today.getMonth(), 12);
+        const daysToAgi = Math.ceil((agiDate - today) / (1000*60*60*24));
+        if (daysToAgi >= 0 && daysToAgi <= 5) {
+          reminders.push({ type: "red", iconType: "agi", title: "AGI förfaller om " + daysToAgi + " dag(ar)!", desc: "Arbetsgivaravgift + prelskatt ska betalas till Skatteverket (Bankgiro: 5050-1055)", date: `${year}-${mon}-12` });
+        }
+
+        // Salary reminder - due 25th
+        const salaryDate = new Date(year, today.getMonth(), 25);
+        const daysToSalary = Math.ceil((salaryDate - today) / (1000*60*60*24));
+        if (daysToSalary >= 0 && daysToSalary <= 5) {
+          reminders.push({ type: "amber", iconType: "lon", title: "Löneutbetalning om " + daysToSalary + " dag(ar)", desc: "Nettolön ska betalas till anställdas bankkonton (kolla Lön-fliken)", date: `${year}-${mon}-25` });
+        }
+
+        // Moms reminder - due 26th (quarterly/monthly)
+        const momsDate = new Date(year, today.getMonth(), 26);
+        const daysMoms = Math.ceil((momsDate - today) / (1000*60*60*24));
+        if (daysMoms >= 0 && daysMoms <= 5) {
+          reminders.push({ type: "amber", iconType: "moms", title: "Momsdeklaration om " + daysMoms + " dag(ar)", desc: "Skicka momsredovisning och betala moms till Skatteverket", date: `${year}-${mon}-26` });
+        }
+
+        if (reminders.length === 0) return null;
+        return (
+          <div className="space-y-2 mb-2">
+            {reminders.map((r, i) => (
+              <div key={i} className={`rounded-2xl p-4 flex items-start gap-3 ${r.type==="red" ? "bg-red-50 border border-red-100" : "bg-amber-50 border border-amber-100"}`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${r.type==="red" ? "bg-red-100" : "bg-amber-100"}`}>
+                  {r.iconType==="agi" && <Landmark size={18} className={r.type==="red"?"text-red-600":"text-amber-600"}/>}
+                  {r.iconType==="lon" && <Banknote size={18} className={r.type==="red"?"text-red-600":"text-amber-600"}/>}
+                  {r.iconType==="moms" && <Receipt size={18} className={r.type==="red"?"text-red-600":"text-amber-600"}/>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-bold text-sm ${r.type==="red" ? "text-red-800" : "text-amber-800"}`}>{r.title}</p>
+                  <p className="text-xs text-slate-600 mt-0.5">{r.desc}</p>
+                  <p className={`text-xs font-semibold mt-1 ${r.type==="red" ? "text-red-600" : "text-amber-600"}`}>Förfallodatum: {r.date}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Alerts */}
       {(data.sick_today.length>0 || data.overdue_count>0) && (
