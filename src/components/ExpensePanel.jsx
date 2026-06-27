@@ -7,11 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const EXPENSE_CATS = [
-  { value: "Material",       moms: 25, label: "Material (25%)" },
-  { value: "Bränsle",        moms: 25, label: "Bränsle (25%)" },
-  { value: "Milersättning",  moms: 0,  label: "Milersättning (0%)" },
-  { value: "Parkering",      moms: 25, label: "Parkering (25%)" },
-  { value: "Övrigt",         moms: 25, label: "Övrigt (25%)" },
+  { value: "material",       moms: 25, label: "material" },
+  { value: "Bränsle",        moms: 25, label: "Bränsle" },
+  { value: "Parkering",      moms: 25, label: "Parkering" },
+  { value: "Milersättning",  moms: 0,  label: "Milersättning" },
+  { value: "Övrigt",         moms: 25, label: "Övrigt" },
 ];
 const STATUS = {
   pending: { label: "Väntar", cls: "bg-amber-50 text-amber-700" },
@@ -135,7 +135,7 @@ function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto })
   const [saving, setSaving] = React.useState(false);
   const [preview, setPreview] = React.useState(expense.receipt_image || null);
 
-  const CATS = ["Material","Bränsle","Milersättning","Parkering","Övrigt"];
+  const CATS = ["material","Bränsle","Parkering","Milersättning","Övrigt"];
 
   const handlePhoto = (e) => {
     const f = e.target.files[0];
@@ -230,10 +230,10 @@ function SubmitReceiptModal({ employees, onClose, onSubmit }) {
   const [saving, setSaving] = useState(false);
 
   const CATS = [
-    { value: "Material", moms: 25 },
+    { value: "material", moms: 25 },
     { value: "Bränsle", moms: 25 },
-    { value: "Milersättning", moms: 0 },
     { value: "Parkering", moms: 25 },
+    { value: "Milersättning", moms: 0 },
     { value: "Övrigt", moms: 25 },
   ];
 
@@ -306,6 +306,8 @@ function SubmitReceiptModal({ employees, onClose, onSubmit }) {
               <label className="text-xs font-medium text-slate-700">Moms %</label>
               <select value={form.moms_rate} onChange={e=>setForm(f=>({...f,moms_rate:+e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
                 <option value={25}>25%</option>
+                <option value={12}>12%</option>
+                <option value={6}>6%</option>
                 <option value={0}>0%</option>
               </select>
             </div>
