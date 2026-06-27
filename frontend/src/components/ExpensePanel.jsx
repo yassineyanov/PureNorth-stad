@@ -124,9 +124,9 @@ function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto })
   const [form, setForm] = React.useState({
     employee_id: expense.employee_id || "",
     date: expense.date || "",
-    amount: expense.amount || "",
+    amount: expense.amount ? String(expense.amount) : "",
     antal: expense.antal || 1,
-    unit_price: expense.unit_price || "",
+    unit_price: expense.unit_price ? String(expense.unit_price) : (expense.amount ? String(expense.amount) : ""),
     moms_rate: expense.moms_rate || 25,
     category: expense.category || "Material",
     description: expense.description || "",
@@ -135,7 +135,13 @@ function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto })
   const [saving, setSaving] = React.useState(false);
   const [preview, setPreview] = React.useState(expense.receipt_image || null);
 
-  const CATS = ["Material","Bränsle","Parkering","Milersättning","Övrigt"];
+  const CATS = [
+    { value: "Material", label: "Material (25%)" },
+    { value: "Bränsle", label: "Bränsle (25%)" },
+    { value: "Parkering", label: "Parkering (25%)" },
+    { value: "Milersättning", label: "Milersättning (0%)" },
+    { value: "Övrigt", label: "Övrigt" },
+  ];
 
   const handlePhoto = (e) => {
     const f = e.target.files[0];
@@ -186,7 +192,7 @@ function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto })
             <div>
               <label className="text-xs font-medium text-slate-700">Kategori</label>
               <select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
-                {CATS.map(c=><option key={c} value={c}>{c}</option>)}
+                {CATS.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
             </div>
             <div>
@@ -194,6 +200,7 @@ function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto })
               <select value={form.moms_rate} onChange={e=>setForm(f=>({...f,moms_rate:+e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
                 <option value={25}>25%</option>
                 <option value={12}>12%</option>
+                <option value={6}>6%</option>
                 <option value={0}>0%</option>
               </select>
             </div>
