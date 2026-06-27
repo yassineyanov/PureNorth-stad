@@ -836,7 +836,12 @@ function Dashboard() {
   };
 
   const TYPE_NAV = { booking: "bookings", customer: "customers", invoice: "invoices", employee: "schema" };
-  const TYPE_ICON = { booking: "📅", customer: "👤", invoice: "📄", employee: "👷" };
+  const TYPE_ICON = {
+    booking: <CalendarDays size={15} className="text-blue-600"/>,
+    customer: <Users size={15} className="text-green-600"/>,
+    invoice: <FileText size={15} className="text-amber-600"/>,
+    employee: <Users size={15} className="text-purple-600"/>,
+  };
   const TYPE_LABEL = { booking: "Bokning", customer: "Kund", invoice: "Faktura", employee: "Anställd" };
 
   useEffect(() => {
@@ -885,7 +890,7 @@ function Dashboard() {
                 ) : searchResults.map((r, i) => (
                   <button key={i} onMouseDown={() => { setTab(TYPE_NAV[r.type] || "dashboard"); setSearchOpen(false); setSearchQ(""); }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 text-left transition-colors">
-                    <span className="text-lg shrink-0">{TYPE_ICON[r.type]}</span>
+                    <span className="h-7 w-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">{TYPE_ICON[r.type]}</span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-slate-900 truncate">{r.title}</p>
                       <p className="text-xs text-slate-500 truncate">{r.sub}</p>
@@ -926,7 +931,7 @@ function Dashboard() {
                         <button key={n.id} onClick={()=>{ markSeen(n.id); setTab("bookings"); setNotifOpen(false); }}
                           className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 text-left transition-colors">
                           <div className="relative shrink-0">
-                            <span className="text-lg">📅</span>
+                            <span className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"><CalendarDays size={14} className="text-blue-600"/></span>
                             {!seenIds.includes(n.id) && (
                               <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>
                             )}
