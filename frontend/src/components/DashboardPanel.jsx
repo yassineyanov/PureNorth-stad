@@ -61,7 +61,11 @@ export default function DashboardPanel({ onNavigate }) {
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(()=>{ load(); }, []);
+  useEffect(()=>{ 
+    load();
+    const interval = setInterval(load, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const todayStr = new Date().toLocaleDateString("sv-SE", { weekday:"long", day:"numeric", month:"long" });
 
