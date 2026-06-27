@@ -761,6 +761,11 @@ function Dashboard() {
   const { logout, user } = useAuth();
   const { t, i18n } = useTranslation();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
+  const TRANS = {
+    sv: { "tabs.dashboard": "Översikt", "tabs.bookings": "Bokningar", "tabs.invoices": "Fakturor", "tabs.customers": "Kunder", "tabs.schema": "Schema", "tabs.payroll": "Lön", "tabs.absences": "Frånvaro", "tabs.expenses": "Utlägg", "tabs.costs": "Kostnader", "tabs.economy": "Ekonomi", "tabs.pricelist": "Prislista", "tabs.calendar": "Kalender", "tabs.stats": "Statistik", "tabs.reviews": "Omdömen", "tabs.users": "Användare", "tabs.settings": "Inställningar" },
+    en: { "tabs.dashboard": "Overview", "tabs.bookings": "Bookings", "tabs.invoices": "Invoices", "tabs.customers": "Customers", "tabs.schema": "Schedule", "tabs.payroll": "Payroll", "tabs.absences": "Absences", "tabs.expenses": "Expenses", "tabs.costs": "Costs", "tabs.economy": "Economy", "tabs.pricelist": "Price List", "tabs.calendar": "Calendar", "tabs.stats": "Statistics", "tabs.reviews": "Reviews", "tabs.users": "Users", "tabs.settings": "Settings" },
+  };
+  const t = (key) => (TRANS[lang] || TRANS.sv)[key] || key;
 
   const toggleLang = () => {
     const newLang = lang === "sv" ? "en" : "sv";
