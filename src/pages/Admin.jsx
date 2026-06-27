@@ -759,7 +759,6 @@ function ReviewsPanel() {
 
 function Dashboard() {
   const { logout, user } = useAuth();
-  const { t, i18n } = useTranslation();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
   const TRANS = {
     sv: { "tabs.dashboard": "Översikt", "tabs.bookings": "Bokningar", "tabs.invoices": "Fakturor", "tabs.customers": "Kunder", "tabs.schema": "Schema", "tabs.payroll": "Lön", "tabs.absences": "Frånvaro", "tabs.expenses": "Utlägg", "tabs.costs": "Kostnader", "tabs.economy": "Ekonomi", "tabs.pricelist": "Prislista", "tabs.calendar": "Kalender", "tabs.stats": "Statistik", "tabs.reviews": "Omdömen", "tabs.users": "Användare", "tabs.settings": "Inställningar" },
@@ -770,7 +769,6 @@ function Dashboard() {
   const toggleLang = () => {
     const newLang = lang === "sv" ? "en" : "sv";
     setLang(newLang);
-    i18n.changeLanguage(newLang);
     localStorage.setItem("pn_language", newLang);
   };
   const { tab: urlTab } = useParams();
