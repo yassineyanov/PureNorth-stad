@@ -65,10 +65,6 @@ function ExpenseModal({ employees, onClose, onSave }) {
             </select>
           </div>
           <div>
-            <Label htmlFor="e-desc">Beskrivning</Label>
-            <textarea id="e-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
-          </div>
-          <div>
             <Label htmlFor="e-date">Datum</Label>
             <Input id="e-date" type="date" style={{WebkitAppearance:"none", appearance:"none"}} value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
           </div>
@@ -100,6 +96,10 @@ function ExpenseModal({ employees, onClose, onSave }) {
                 <option value={0}>0%</option>
               </select>
             </div>
+          </div>
+          <div>
+            <Label htmlFor="e-desc">Beskrivning (valfritt)</Label>
+            <textarea id="e-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
           </div>
           <div>
             <Label>Kvittobild (valfritt)</Label>
