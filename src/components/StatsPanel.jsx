@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { TrendingUp, Users, Calendar, Clock, PiggyBank, BookOpen, Timer, Award } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, Calendar, Clock, PiggyBank, BookOpen, Timer, Award } from "lucide-react";
 
 function kr(v) { return `${(v||0).toLocaleString("sv-SE",{minimumFractionDigits:0,maximumFractionDigits:0})} kr`; }
 
