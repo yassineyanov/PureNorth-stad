@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Users, FileText, CreditCard, Receipt, Eye, DollarSign, Briefcase, Calculator, Landmark, BarChart, Package } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Users, FileText, CreditCard, Receipt, Eye, DollarSign, Briefcase, Calculator, Landmark, BarChart, Package, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -84,7 +84,7 @@ export default function EconomyPanel() {
   const viewReport = () => {
     const token = localStorage.getItem("pn_token") || "";
     const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
-    window.location.href = `${backendUrl}/api/economy/report-pdf?start=${start}&end=${end}&token=${token}`;
+    window.open(`${backendUrl}/api/economy/report-pdf?start=${start}&end=${end}&token=${token}`, "_blank");
   };
 
   if (!data && loading) return <p className="text-slate-500">Laddar...</p>;
@@ -107,9 +107,40 @@ export default function EconomyPanel() {
             {loading ? "Laddar..." : "Hämta"}
           </button>
           {data && (
-            <button onClick={viewReport} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 hover:border-[#141414] text-slate-700 text-sm font-semibold px-4 py-2.5 transition-colors">
-              <Eye size={15}/> Visa PDF-rapport
-            </button>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button onClick={() => { const t=localStorage.getItem("pn_token"),b=process.env.REACT_APP_BACKEND_URL||"",y=start.substring(0,4); window.open(`${b}/api/reports/arsredovisning?year=${y}&token=${t}`,"_blank"); }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#141414] bg-[#141414] hover:bg-black text-white text-xs font-semibold px-3 py-2 transition-all">
+                <FileText size={13}/> Årsredovisning {start.substring(0,4)}
+              </button>
+              <button onClick={() => { const t=localStorage.getItem("pn_token"),b=process.env.REACT_APP_BACKEND_URL||"",m=start.substring(0,7); window.open(`${b}/api/reports/monthly?month=${m}&token=${t}`,"_blank"); }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-xs font-medium px-3 py-2 transition-all">
+                <FileText size={13}/> Månadsrapport
+              </button>
+              <button onClick={() => { const t=localStorage.getItem("pn_token"),b=process.env.REACT_APP_BACKEND_URL||"",m=start.substring(0,7); window.open(`${b}/api/reports/moms?month=${m}&token=${t}`,"_blank"); }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-xs font-medium px-3 py-2 transition-all">
+                <Receipt size={13}/> Momsdeklaration
+              </button>
+              <button onClick={() => { const t=localStorage.getItem("pn_token"),b=process.env.REACT_APP_BACKEND_URL||"",m=start.substring(0,7); window.open(`${b}/api/reports/bokforing?month=${m}&token=${t}`,"_blank"); }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-xs font-medium px-3 py-2 transition-all">
+                <BarChart size={13}/> Bokföringsunderlag
+              </button>
+              <button onClick={() => { const t=localStorage.getItem("pn_token"),b=process.env.REACT_APP_BACKEND_URL||"",m=start.substring(0,7),a=document.createElement("a"); a.href=`${b}/api/reports/sie?month=${m}&token=${t}`;a.download=`sie_${m}.se`;a.click(); }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-xs font-medium px-3 py-2 transition-all">
+                <Download size={13}/> SIE4 Bokföring
+              </button>
+              <button onClick={() => { const t=localStorage.getItem("pn_token"),b=process.env.REACT_APP_BACKEND_URL||"",m=start.substring(0,7),a=document.createElement("a"); a.href=`${b}/api/reports/agi?month=${m}&token=${t}`;a.download=`agi_${m}.xml`;a.click(); }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-xs font-medium px-3 py-2 transition-all">
+                <Download size={13}/> AGI XML
+              </button>
+              <button onClick={() => { const t=localStorage.getItem("pn_token"),b=process.env.REACT_APP_BACKEND_URL||"",m=start.substring(0,7); window.open(`${b}/api/reports/rut?month=${m}&token=${t}`,"_blank"); }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-xs font-medium px-3 py-2 transition-all">
+                <Landmark size={13}/> RUT-ansökan
+              </button>
+              <button onClick={() => viewReport()}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-xs font-medium px-3 py-2 transition-all">
+                <Eye size={13}/> Visa PDF-rapport
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -118,12 +149,12 @@ export default function EconomyPanel() {
         <>
           {/* ── KPI cards ─────────────────────────────────────────── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-            <Card title="Intäkter (exkl. moms)" value={kr(data.revenue.excl_vat)} icon={TrendingUp}
+            <Card title="Intäkter (exkl. moms)" value={kr(data.revenue.total_revenue || data.revenue.total_intakter || data.revenue.excl_vat)} icon={TrendingUp}
               color={data.revenue.excl_vat > 0 ? "green" : "slate"}
               sub={`${data.revenue.invoice_count} fakturor, ${data.revenue.paid_count} betalda`} />
             <Card title="Rörelseresultat" value={kr(data.result.operating_profit)} icon={data.result.operating_profit >= 0 ? TrendingUp : TrendingDown}
               color={data.result.operating_profit >= 0 ? "green" : "red"}
-              sub={`Marginal: ${data.result.profit_margin}%`} />
+              sub={`Marginal: ${(data.result.profit_margin || 0).toFixed(1)}%`} />
             <Card title="Total personalkostnad" value={kr(data.payroll.total_payroll_cost)} icon={Users} color="amber"
               sub={`inkl. ${data.constants.arbetsgivaravgift_pct}% avg + ${data.constants.semesterersattning_pct}% sem`} />
             <Card title="Att betala Skatteverket" value={kr(data.obligations.total_to_pay - data.obligations.salaries_to_pay)} icon={AlertCircle} color="red"
@@ -133,7 +164,8 @@ export default function EconomyPanel() {
           {/* ── Intäkter ─────────────────────────────────────────── */}
           <Section title={<span className="flex items-center gap-2"><DollarSign size={17} className="text-green-600"/>Intäkter</span>}>
             <div className="rounded-2xl bg-white border border-slate-100 p-5">
-              <Row label="Fakturerat belopp (exkl. moms)" value={kr(data.revenue.excl_vat)} />
+              <Row label="Försäljning tjänster (exkl. moms)" value={kr(data.revenue.excl_vat)} />
+              {data.revenue.reminder_fees > 0 && <Row label="Påminnelseavgifter" value={kr(data.revenue.reminder_fees)} />}
               <Row label="Utgående moms (25%)" value={kr(data.revenue.vat_collected)} />
               <Row label="Totalt fakturerat (inkl. moms)" value={kr(data.revenue.total_invoiced)} highlight />
               <Row label="varav RUT-avdrag (betalas av Skatteverket)" value={kr(data.revenue.rut_deductions)} />
@@ -172,11 +204,11 @@ export default function EconomyPanel() {
                       <tr key={i} className="border-b border-slate-50 last:border-b-0">
                         <td className="p-4 font-semibold text-slate-900">{e.name}</td>
                         <td className="p-4 text-slate-500 text-xs">{e.employment_type === "vikarie" ? "Vikarie" : "Fast"}</td>
-                        <td className="p-4 text-slate-600">{e.hours.toFixed(1)} h</td>
-                        <td className="p-4 text-slate-700">{kr(e.gross_salary)}</td>
-                        <td className="p-4 text-amber-700">{kr(e.arbetsgivaravgift)}</td>
-                        <td className="p-4 text-blue-700">{kr(e.semesterersattning)}</td>
-                        <td className="p-4 font-bold text-slate-900">{kr(e.total_cost)}</td>
+                        <td className="p-4 text-slate-600">{(e.normal_h || e.hours || 0).toFixed(1)} h</td>
+                        <td className="p-4 text-slate-700">{kr(e.gross_salary || e.gross || 0)}</td>
+                        <td className="p-4 text-amber-700">{kr(e.ag_avgift || e.arbetsgivaravgift)}</td>
+                        <td className="p-4 text-blue-700">{kr(e.semester || e.semesterersattning)}</td>
+                        <td className="p-4 font-bold text-slate-900">{kr(e.total_cost || 0)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -230,7 +262,7 @@ export default function EconomyPanel() {
               <Row label="Intäkter (exkl. moms)" value={kr(data.result.revenue_excl_vat)} />
               <Row label="Personalkostnader" value={`-${kr(data.payroll.total_payroll_cost + data.payroll.utlagg)}`} />
               <Row label="Rörelseresultat" value={kr(data.result.operating_profit)} highlight />
-              <Row label="Vinstmarginal" value={`${data.result.profit_margin}%`} />
+              <Row label="Vinstmarginal" value={`${(data.result.profit_margin || 0).toFixed(1)}%`} />
             </div>
             <div className={`rounded-2xl border p-5 mt-3 ${data.result.operating_profit >= 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"}`}>
               <div className="flex items-center gap-3">
@@ -239,7 +271,7 @@ export default function EconomyPanel() {
                   : <AlertCircle size={24} className="text-red-600" />}
                 <div>
                   <p className={`font-bold text-lg ${data.result.operating_profit >= 0 ? "text-green-800" : "text-red-800"}`}>
-                    {data.result.operating_profit >= 0 ? "Positivt resultat 🎉" : "Negativt resultat ⚠️"}
+                    {data.result.operating_profit >= 0 ? "Positivt resultat" : "Negativt resultat"}
                   </p>
                   <p className={`text-sm ${data.result.operating_profit >= 0 ? "text-green-700" : "text-red-700"}`}>
                     {data.result.operating_profit >= 0
