@@ -1,12 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Users, Link2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Users, Link2, FileText, FileSpreadsheet } from "lucide-react";
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const COLORS = ["#166534", "#1d4ed8", "#b45309", "#7c3aed", "#be123c", "#0f766e"];
+const COLORS = [
+  "#0f172a", "#1e3a5f", "#1d4ed8", "#0369a1", "#0891b2",
+  "#059669", "#166534", "#15803d", "#4d7c0f", "#ca8a04",
+  "#d97706", "#b45309", "#c2410c", "#b91c1c", "#be123c",
+  "#7c3aed", "#6d28d9", "#4338ca", "#0f766e", "#065f46",
+  "#374151", "#92400e", "#831843", "#9d174d", "#1e40af",
+];
 const DAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
 function startOfWeekMonday(date) {
@@ -79,6 +85,7 @@ function EmployeeModal({ employees, onClose, onAdd, onRemove, onUpdate }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [color, setColor] = useState(COLORS[0]);
+  const [showAllColors, setShowAllColors] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const submit = async (e) => {
@@ -127,16 +134,22 @@ function EmployeeModal({ employees, onClose, onAdd, onRemove, onUpdate }) {
           </div>
           <div>
             <Label>Färg</Label>
-            <div className="flex gap-2 mt-1.5">
-              {COLORS.map((c) => (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {(showAllColors ? COLORS : COLORS.slice(0, 10)).map((c) => (
                 <button
                   type="button"
                   key={c}
                   onClick={() => setColor(c)}
-                  className="h-7 w-7 rounded-full border-2 transition-transform"
-                  style={{ backgroundColor: c, borderColor: color === c ? "#141414" : "transparent", transform: color === c ? "scale(1.1)" : "scale(1)" }}
-                />
+                  className="h-8 w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: c, borderColor: color === c ? "#141414" : "transparent", boxShadow: color === c ? "0 0 0 2px #141414" : "none" }}
+                >
+                  {color === c && <span className="text-white text-[10px] font-bold">✓</span>}
+                </button>
               ))}
+              <button type="button" onClick={() => setShowAllColors(v => !v)}
+                className="h-8 px-2 rounded-full border border-slate-200 text-xs text-slate-500 hover:border-slate-400 transition-all shrink-0">
+                {showAllColors ? "Visa färre" : `+${COLORS.length - 10} fler`}
+              </button>
             </div>
           </div>
           <button type="submit" disabled={saving || !name.trim()} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
@@ -382,9 +395,32 @@ export default function SchedulePanel() {
           </button>
           <span className="ml-2 font-display font-semibold text-slate-900">{prettyRange(weekStart, weekEnd)}</span>
         </div>
-        <button onClick={() => setEmployeeModal(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-[#141414] hover:text-[#141414] transition-colors">
-          <Users size={15} /> Hantera personal
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const start = weekStart.toISOString().split("T")[0];
+            const end = weekEnd.toISOString().split("T")[0];
+            window.open(`${base}/api/shifts/export-pdf?start=${start}&end=${end}&token=${token}`, "_blank");
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> Schema PDF
+          </button>
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const start = weekStart.toISOString().split("T")[0];
+            const end = weekEnd.toISOString().split("T")[0];
+            const a = document.createElement("a");
+            a.href = `${base}/api/shifts/export-xlsx?start=${start}&end=${end}&token=${token}`;
+            a.download = `schema_${start}_${end}.xlsx`;
+            a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
+          </button>
+          <button onClick={() => setEmployeeModal(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-[#141414] hover:text-[#141414] transition-colors">
+            <Users size={15} /> Hantera personal
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -419,13 +455,13 @@ export default function SchedulePanel() {
                   const dateStr = fmt(d);
                   const dayShifts = shiftsFor(emp.id, dateStr);
                   return (
-                    <div key={i} className="p-1.5 border-l border-slate-100 min-h-[70px] group relative">
+                    <div key={i} className="p-1.5 border-l border-slate-100 min-h-[70px] group relative overflow-hidden">
                       <div className="space-y-1">
                         {dayShifts.map((s) => (
                           <button
                             key={s.id}
                             onClick={() => setShiftModal(s)}
-                            className="relative w-full text-left rounded-lg px-2 py-1.5 text-white text-xs leading-tight hover:opacity-90 transition-opacity"
+                            className="relative w-full text-left rounded-lg px-2 py-1.5 text-white text-xs leading-tight hover:opacity-90 transition-opacity overflow-hidden"
                             style={{ backgroundColor: emp.color }}
                           >
                             <p className="font-semibold truncate">{s.start_time}–{s.end_time}</p>
