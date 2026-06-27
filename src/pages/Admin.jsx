@@ -777,14 +777,14 @@ function Dashboard() {
 
   const loadNotifs = async () => {
     try {
-      const [bookRes, invRes, revRes] = await Promise.all([
-        api.get("/bookings"),
-        api.get("/invoices"),
-        api.get("/reviews/pending"),
+      const [bookRes, invRes] = await Promise.all([
+        api.get("/bookings").catch(() => ({ data: [] })),
+        api.get("/invoices").catch(() => ({ data: [] })),
       ]);
+      let pendingRevs = [];
+      try { const revRes = await api.get("/reviews"); pendingRevs = (revRes.data || []).filter(r => r.status === "pending"); } catch {}
       const newBookings = (bookRes.data || []).filter(b => b.status === "new");
       const overdueInvs = (invRes.data || []).filter(i => i.status === "overdue");
-      const pendingRevs = (revRes.data || []);
       const all = [
         ...newBookings.map(b => ({ type: "booking", icon: "📅", title: `Ny bokning: ${b.name}`, sub: b.service || "", tab: "bookings" })),
         ...overdueInvs.map(i => ({ type: "invoice", icon: "🔴", title: `Förfallen faktura #${i.invoice_number}`, sub: `${i.customer_name} · ${i.customer_pays?.toFixed(0)} kr`, tab: "invoices" })),
