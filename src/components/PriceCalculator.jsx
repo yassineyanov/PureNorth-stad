@@ -33,7 +33,7 @@ function ServiceCalc({ item, onAddToInvoice, bookingKvm }) {
   const isFast = item.unit === "fast";
   const isTim = item.unit === "tim" && speed === null;
 
-  const defaultQty = bookingKvm ? parseInt(bookingKvm) : (isKvm ? 75 : isSt ? 5 : 1);
+  const defaultQty = bookingKvm ? parseInt(bookingKvm) : 0;
   const [qty, setQty] = useState(defaultQty);
   const [qtyInput, setQtyInput] = useState(String(defaultQty));
   React.useEffect(() => {
@@ -48,8 +48,8 @@ function ServiceCalc({ item, onAddToInvoice, bookingKvm }) {
   const priceRut = price * 0.5;
   const isRut = item.is_rut_eligible;
 
-  const maxQty = isKvm ? 300 : isSt ? 50 : isTim ? 20 : 1;
-  const minQty = isKvm ? 10 : 1;
+  const maxQty = isKvm ? 9999 : isSt ? 9999 : isTim ? 9999 : 1;
+  const minQty = 0;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 p-5">
