@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { LogOut, Trash2, Phone, Mail, Calendar, Maximize, Hash, RefreshCw, Check, X, Clock, LayoutDashboard, CalendarDays, Star, CalendarRange, UserMinus, Receipt, Banknote, FileText, Tag, TrendingUp, TrendingDown, Users, BarChart2, Search, MapPin, FileSpreadsheet, Settings, Bell } from "lucide-react";
@@ -770,7 +770,7 @@ function ReviewsPanel() {
 
 function Dashboard() {
   const { logout, user } = useAuth();
-  const { t, i18n } = useTranslation();
+  const t = (key) => { const translations = { "tabs.dashboard": "Översikt", "tabs.bookings": "Bokningar", "tabs.invoices": "Fakturor", "tabs.customers": "Kunder", "tabs.schema": "Schema", "tabs.payroll": "Lön", "tabs.absences": "Frånvaro", "tabs.expenses": "Utlägg", "tabs.costs": "Kostnader", "tabs.economy": "Ekonomi", "tabs.pricelist": "Prislista", "tabs.calendar": "Kalender", "tabs.stats": "Statistik", "tabs.reviews": "Omdömen", "tabs.users": "Användare", "tabs.settings": "Inställningar" }; return translations[key] || key; };
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
   const [notifs, setNotifs] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -803,7 +803,6 @@ function Dashboard() {
   const toggleLang = () => {
     const newLang = lang === "sv" ? "en" : "sv";
     setLang(newLang);
-    i18n.changeLanguage(newLang);
     localStorage.setItem("pn_language", newLang);
   };
   const { tab: urlTab } = useParams();
