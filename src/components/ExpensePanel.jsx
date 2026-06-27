@@ -452,30 +452,20 @@ export default function ExpensePanel() {
     <>
       {/* Kvitto Edit Modal */}
       {kvittoEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={()=>setKvittoEdit(null)}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6" onClick={e=>e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-bold text-xl">Redigera utlägg</h2>
-              <button onClick={()=>setKvittoEdit(null)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100"><X size={16}/></button>
-            </div>
-            {kvittoEdit.receipt_image && (
-              <div className="mb-4">
-                <p className="text-xs text-slate-500 mb-2">Nuvarande kvitto:</p>
-                <img src={kvittoEdit.receipt_image} alt="kvitto" className="w-full max-h-48 object-contain rounded-xl border border-slate-200 cursor-pointer" onClick={()=>setKvittoView(kvittoEdit.receipt_image)}/>
-              </div>
-            )}
-            <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-[#141414] transition-colors mb-4"
-              onClick={()=>document.getElementById('kvitto-edit-upload').click()}>
-              <Upload size={20} className="mx-auto text-slate-400 mb-2"/>
-              <p className="text-sm text-slate-500">{kvittoEdit.receipt_image ? "Ersätt kvitto" : "Lägg till kvitto"}</p>
-              <input id="kvitto-edit-upload" type="file" accept="image/*" className="hidden"
-                onChange={ev=>handleKvittoEdit(kvittoEdit.id, ev.target.files[0])}/>
-            </div>
-            <button onClick={()=>setKvittoEdit(null)} className="w-full rounded-full border border-slate-200 text-slate-700 py-2.5 font-semibold hover:border-slate-400 transition-colors">
-              Stäng
-            </button>
-          </div>
-        </div>
+        <EditExpenseModal
+          expense={kvittoEdit}
+          employees={employees}
+          onClose={()=>setKvittoEdit(null)}
+          onViewKvitto={setKvittoView}
+          onSave={async (updates) => {
+            try {
+              await api.patch(`/expenses/${kvittoEdit.id}`, updates);
+              toast.success("Utlägg uppdaterat!");
+              setKvittoEdit(null);
+              load();
+            } catch { toast.error("Kunde inte uppdatera."); }
+          }}
+        />
       )}
       {/* Kvitto Lightbox */}
       {kvittoView && (
