@@ -33,7 +33,7 @@ function CostModal({ onClose, onSave, initial }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4" onClick={onClose}>
-      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-xl p-6" onClick={e=>e.stopPropagation()}>
+      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-xl p-6 max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-display font-bold text-xl">{initial ? "Redigera kostnad" : "Ny kostnad"}</h2>
           <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100"><X size={16}/></button>
