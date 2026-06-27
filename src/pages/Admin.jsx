@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { LogOut, Trash2, Phone, Mail, Calendar, Maximize, Hash, RefreshCw, Check, X, Clock, LayoutDashboard, CalendarDays, Star, CalendarRange, UserMinus, Receipt, Banknote, FileText, Tag, TrendingUp, TrendingDown, Users, BarChart2, Search, MapPin, FileSpreadsheet, Settings } from "lucide-react";
+import { LogOut, Trash2, Phone, Mail, Calendar, Maximize, Hash, RefreshCw, Check, X, Clock, LayoutDashboard, CalendarDays, Star, CalendarRange, UserMinus, Receipt, Banknote, FileText, Tag, TrendingUp, TrendingDown, Users, BarChart2, Search, MapPin, FileSpreadsheet, Settings, Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/lib/api";
@@ -703,6 +703,38 @@ function ReviewsPanel() {
 function Dashboard() {
   const { logout, user } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
+  const [notifs, setNotifs] = useState([]);
+  const [seenIds, setSeenIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("pn_seen_notifs") || "[]"); } catch { return []; }
+  });
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const loadNotifs = React.useCallback(async () => {
+    try {
+      const res = await api.get("/bookings");
+      const newBookings = (res.data || []).filter(b => b.status === "new");
+      setNotifs(newBookings.map(b => ({
+        id: b.id,
+        title: `Ny bokning: ${b.name}`,
+        sub: `${b.service || ""} · ${b.date || ""}`,
+        bookingId: b.id,
+      })));
+    } catch {}
+  }, []);
+
+  React.useEffect(() => {
+    loadNotifs();
+    const interval = setInterval(loadNotifs, 60000);
+    return () => clearInterval(interval);
+  }, [loadNotifs]);
+
+  const unseenCount = notifs.filter(n => !seenIds.includes(n.id)).length;
+
+  const markSeen = (id) => {
+    const updated = [...seenIds, id];
+    setSeenIds(updated);
+    localStorage.setItem("pn_seen_notifs", JSON.stringify(updated));
+  };
   const TRANS = {
     sv: { "tabs.dashboard": "Översikt", "tabs.bookings": "Bokningar", "tabs.invoices": "Fakturor", "tabs.customers": "Kunder", "tabs.schema": "Schema", "tabs.payroll": "Lön", "tabs.absences": "Frånvaro", "tabs.expenses": "Utlägg", "tabs.costs": "Kostnader", "tabs.economy": "Ekonomi", "tabs.pricelist": "Prislista", "tabs.calendar": "Kalender", "tabs.stats": "Statistik", "tabs.reviews": "Omdömen", "tabs.users": "Användare", "tabs.settings": "Inställningar" },
     en: { "tabs.dashboard": "Overview", "tabs.bookings": "Bookings", "tabs.invoices": "Invoices", "tabs.customers": "Customers", "tabs.schema": "Schedule", "tabs.payroll": "Payroll", "tabs.absences": "Absences", "tabs.expenses": "Expenses", "tabs.costs": "Costs", "tabs.economy": "Economy", "tabs.pricelist": "Price List", "tabs.calendar": "Calendar", "tabs.stats": "Statistics", "tabs.reviews": "Reviews", "tabs.users": "Users", "tabs.settings": "Settings" },
@@ -871,6 +903,45 @@ function Dashboard() {
             <button onClick={()=>setTab("settings")} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
               <Settings size={16}/>
             </button>
+            <div className="relative">
+              <button onClick={()=>setNotifOpen(o=>!o)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+                <Bell size={16}/>
+                {unseenCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    {unseenCount > 9 ? "9+" : unseenCount}
+                  </span>
+                )}
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <p className="font-semibold text-sm text-slate-900">Notifikationer</p>
+                    <button onClick={()=>setNotifOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={14}/></button>
+                  </div>
+                  {notifs.length === 0 ? (
+                    <p className="p-4 text-sm text-slate-400 text-center">Inga nya bokningar</p>
+                  ) : (
+                    <div className="max-h-72 overflow-y-auto">
+                      {notifs.map(n => (
+                        <button key={n.id} onClick={()=>{ markSeen(n.id); setTab("bookings"); setNotifOpen(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 text-left transition-colors">
+                          <div className="relative shrink-0">
+                            <span className="text-lg">📅</span>
+                            {!seenIds.includes(n.id) && (
+                              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
+                            <p className="text-xs text-slate-500 truncate">{n.sub}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             <button onClick={logout} data-testid="admin-logout" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-[#141414] hover:text-[#141414] transition-colors">
               <LogOut size={15} /> Logga ut
             </button>
