@@ -259,7 +259,10 @@ function SubmitReceiptModal({ employees, onClose, onSubmit }) {
     setSaving(true);
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k,v]) => fd.append(k, v));
+      const ant = parseInt(form.antal) || 1;
+      const totalAmount = parseFloat(form.amount) || 0;
+      const unitPr = form.unit_price ? parseFloat(form.unit_price) : totalAmount / ant;
+      Object.entries({...form, unit_price: unitPr, antal: ant, amount: totalAmount}).forEach(([k,v]) => fd.append(k, v));
       if (file) fd.append("receipt", file);
       await onSubmit(fd);
       onClose();
