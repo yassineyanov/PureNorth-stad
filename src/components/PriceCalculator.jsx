@@ -62,13 +62,11 @@ function ServiceCalc({ item, onAddToInvoice, bookingKvm }) {
             {isKvm ? "Yta (kvm)" : isSt ? "Antal (st)" : "Timmar"}
           </label>
           <div className="flex items-center gap-2">
-            <input type="range" min={minQty} max={maxQty} step={isKvm?5:1} value={qty}
-              onChange={e=>setQty(+e.target.value)} className="flex-1"/>
-            <input type="number" min={minQty} max={maxQty} value={qtyInput}
+            <input type="number" min={0} value={qtyInput}
               onChange={e=>setQtyInput(e.target.value)}
-              onBlur={e=>{const v=e.target.value===""?minQty:Math.max(minQty,Math.min(maxQty,+e.target.value||minQty));setQty(v);setQtyInput(String(v));}}
-              onKeyDown={e=>{if(e.key==="Enter"){const v=Math.max(minQty,Math.min(maxQty,+qtyInput||minQty));setQty(v);setQtyInput(String(v));}}}
-              className="w-20 text-center rounded-lg border border-slate-200 text-sm py-1 outline-none focus:border-[#141414]"/>
+              onBlur={e=>{const v=e.target.value===""?0:Math.max(0,+e.target.value||0);setQty(v);setQtyInput(String(v));}}
+              onKeyDown={e=>{if(e.key==="Enter"){const v=Math.max(0,+qtyInput||0);setQty(v);setQtyInput(String(v));}}}
+              className="w-28 text-center rounded-lg border border-slate-200 text-sm py-2 outline-none focus:border-[#141414]"/>
           </div>
         </div>
       )}
