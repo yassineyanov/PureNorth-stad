@@ -35,10 +35,12 @@ function ServiceCalc({ item, onAddToInvoice, bookingKvm }) {
 
   const defaultQty = bookingKvm ? parseInt(bookingKvm) : (isKvm ? 75 : isSt ? 5 : 1);
   const [qty, setQty] = useState(defaultQty);
+  const [qtyInput, setQtyInput] = useState(String(defaultQty));
   React.useEffect(() => {
-    if (bookingKvm) setQty(parseInt(bookingKvm) || 1);
+    if (bookingKvm) { setQty(parseInt(bookingKvm) || 1); setQtyInput(String(parseInt(bookingKvm) || 1)); }
   }, [bookingKvm, isKvm]);
   const [rate, setRate] = useState(item.price);
+  const [rateInput, setRateInput] = useState(String(item.price));
 
   const hoursRaw = isKvm && speed ? qty / speed : isTim ? qty : isSt ? qty * 0.2 : 1;
   const hours = Math.ceil(hoursRaw * 2) / 2; // Round up to nearest 0.5 tim
@@ -62,9 +64,11 @@ function ServiceCalc({ item, onAddToInvoice, bookingKvm }) {
           <div className="flex items-center gap-2">
             <input type="range" min={minQty} max={maxQty} step={isKvm?5:1} value={qty}
               onChange={e=>setQty(+e.target.value)} className="flex-1"/>
-            <input type="number" min={minQty} max={maxQty} value={qty}
-              onChange={e=>setQty(Math.max(minQty,Math.min(maxQty,+e.target.value||minQty)))}
-              className="w-16 text-center rounded-lg border border-slate-200 text-sm py-1 outline-none focus:border-[#141414]"/>
+            <input type="number" min={minQty} max={maxQty} value={qtyInput}
+              onChange={e=>setQtyInput(e.target.value)}
+              onBlur={e=>{const v=e.target.value===""?minQty:Math.max(minQty,Math.min(maxQty,+e.target.value||minQty));setQty(v);setQtyInput(String(v));}}
+              onKeyDown={e=>{if(e.key==="Enter"){const v=Math.max(minQty,Math.min(maxQty,+qtyInput||minQty));setQty(v);setQtyInput(String(v));}}}
+              className="w-20 text-center rounded-lg border border-slate-200 text-sm py-1 outline-none focus:border-[#141414]"/>
           </div>
         </div>
       )}
