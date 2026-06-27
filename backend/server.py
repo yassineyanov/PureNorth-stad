@@ -3249,8 +3249,11 @@ class MaterialCost(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: Optional[PyObjectId] = Field(default=None, alias="_id")
     name: str
-    category: str = "material"  # material, equipment, other
+    category: str = "material"
     amount: float
+    antal: Optional[int] = 1
+    unit_price: Optional[float] = None
+    moms_rate: Optional[float] = 25.0
     date: str
     notes: Optional[str] = None
     created_at: str
@@ -3259,6 +3262,8 @@ class MaterialCostCreate(BaseModel):
     name: str
     category: str = "material"
     amount: float
+    antal: Optional[int] = 1
+    unit_price: Optional[float] = None
     moms_rate: float = 25.0
     date: str
     notes: Optional[str] = None
