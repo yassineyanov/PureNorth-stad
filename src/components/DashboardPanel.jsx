@@ -48,20 +48,22 @@ function Section({ title, children, action }) {
 export default function DashboardPanel({ onNavigate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState(null);
 
   const load = async () => {
     setLoading(true);
     try {
       const res = await api.get("/dashboard");
       setData(res.data);
-      setLastUpdated(new Date());
     } catch { toast.error("Kunde inte hämta dashboard."); }
     finally { setLoading(false); }
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(()=>{ load(); }, []);
+  useEffect(()=>{ 
+    load();
+    const interval = setInterval(load, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const todayStr = new Date().toLocaleDateString("sv-SE", { weekday:"long", day:"numeric", month:"long" });
 
@@ -84,12 +86,9 @@ export default function DashboardPanel({ onNavigate }) {
           <h2 className="font-display font-bold text-xl text-slate-900">Översikt</h2>
           <p className="text-sm text-slate-500 capitalize">{todayStr}</p>
         </div>
-        <div className="flex items-center gap-2">
-          {lastUpdated && <span className="text-xs text-slate-400">Uppdaterad {lastUpdated.toLocaleTimeString("sv-SE", {hour:"2-digit",minute:"2-digit"})}</span>}
-          <button onClick={load} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
-            <RefreshCw size={15}/>
-          </button>
-        </div>
+        <button onClick={load} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
+          <RefreshCw size={15}/>
+        </button>
       </div>
 
       {/* KPI cards */}
