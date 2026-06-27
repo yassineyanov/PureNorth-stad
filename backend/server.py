@@ -266,9 +266,12 @@ class ExpenseCreate(BaseModel):
     employee_id: str
     date: str
     amount: float = Field(..., ge=0)
+    antal: Optional[int] = 1
+    unit_price: Optional[float] = None
     moms_rate: float = 0.0
     category: str = "Övrigt"
     description: Optional[str] = None
+    receipt_image: Optional[str] = None
 
 
 class ExpenseUpdate(BaseModel):
