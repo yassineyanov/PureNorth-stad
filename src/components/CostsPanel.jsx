@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, Package, X } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, Package, X, FileText, FileSpreadsheet } from "lucide-react";
 
 const CATEGORIES = [
   { value: "material", label: "Städmaterial" },
@@ -20,14 +20,14 @@ const CAT_COLORS = {
 function kr(n) { return Math.round(n).toLocaleString("sv-SE") + " kr"; }
 
 function CostModal({ onClose, onSave, initial }) {
-  const [form, setForm] = useState(initial || { name: "", category: "material", amount: "", moms_rate: 25, date: new Date().toISOString().split("T")[0], notes: "" });
+  const [form, setForm] = useState(initial || { name: "", category: "material", amount: "", antal: 1, unit_price: "", moms_rate: 25, date: new Date().toISOString().split("T")[0], notes: "" });
   const [saving, setSaving] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.amount || !form.date) return;
     setSaving(true);
-    try { await onSave({ ...form, amount: parseFloat(form.amount) }); }
+    try { await onSave({ ...form, amount: parseFloat(form.amount), antal: parseInt(form.antal)||1, unit_price: parseFloat(form.unit_price)||0 }); }
     finally { setSaving(false); }
   };
 
@@ -52,7 +52,15 @@ function CostModal({ onClose, onSave, initial }) {
             </div>
             <div>
               <label className="text-xs font-medium text-slate-700">Belopp inkl. moms (kr) *</label>
-              <input type="number" min="0" step="0.01" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
+              <input type="number" min="0" step="0.01" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value,unit_price:e.target.value,antal:1}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">À-pris (kr)</label>
+              <input type="number" min="0" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Antal</label>
+              <input type="number" min="1" step="1" value={form.antal} onChange={e=>{const ant=parseInt(e.target.value)||1;const up=parseFloat(form.unit_price)||0;setForm(f=>({...f,antal:e.target.value,amount:up>0?(up*ant).toFixed(2):f.amount}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="1"/>
             </div>
             <div>
               <label className="text-xs font-medium text-slate-700">Moms %</label>
@@ -140,9 +148,29 @@ export default function CostsPanel() {
           <h2 className="font-display font-bold text-xl text-slate-900">Kostnader & Lönsamhet</h2>
           <p className="text-sm text-slate-500 mt-0.5">Materialkostnader och vinstanalys</p>
         </div>
-        <button onClick={()=>{setEditing(null);setModal(true);}} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] hover:bg-black rounded-full px-4 py-2 transition-colors">
-          <Plus size={14}/> Ny kostnad
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const month = new Date().toISOString().substring(0,7);
+            window.open(`${base}/api/costs/report-pdf?month=${month}&token=${token}`, "_blank");
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> Kostnadsrapport
+          </button>
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/costs/export-xlsx?token=${token}`;
+            a.download = "kostnader.xlsx";
+            a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
+          </button>
+          <button onClick={()=>{setEditing(null);setModal(true);}} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] hover:bg-black rounded-full px-4 py-2 transition-colors">
+            <Plus size={14}/> Ny kostnad
+          </button>
+        </div>
       </div>
 
       {/* Date filter */}
