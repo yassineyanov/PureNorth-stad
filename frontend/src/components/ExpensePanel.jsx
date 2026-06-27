@@ -64,11 +64,15 @@ function ExpenseModal({ employees, onClose, onSave }) {
               {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
             </select>
           </div>
+          <div>
+            <Label htmlFor="e-desc">Beskrivning</Label>
+            <textarea id="e-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
+          </div>
+          <div>
+            <Label htmlFor="e-date">Datum</Label>
+            <Input id="e-date" type="date" style={{WebkitAppearance:"none", appearance:"none"}} value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
+          </div>
           <div className="grid grid-cols-2 gap-2.5">
-            <div>
-              <Label htmlFor="e-date">Datum</Label>
-              <Input id="e-date" type="date" style={{WebkitAppearance:"none", appearance:"none"}} value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
-            </div>
             <div>
               <Label htmlFor="e-amount">Belopp inkl. moms (kr)</Label>
               <Input id="e-amount" type="number" step="0.01" value={unitPrice} onChange={e=>{const up=parseFloat(e.target.value)||0;setUnitPrice(e.target.value);setAmount((up*(parseInt(antal)||1)).toFixed(2));}} className="mt-1.5" placeholder="0.00" />
@@ -81,20 +85,21 @@ function ExpenseModal({ employees, onClose, onSave }) {
               <Label>Total (kr)</Label>
               <div className="mt-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900">{amount ? `${parseFloat(amount).toFixed(2)} kr` : "0.00 kr"}</div>
             </div>
-          </div>
-          <div>
-            <Label>Kategori</Label>
-            <select value={category} onChange={e=>{
-                const cat = EXPENSE_CATS.find(c=>c.value===e.target.value);
-                setCategory(e.target.value);
-                if(cat) setMomsRate(cat.moms);
-              }} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
-              {EXPENSE_CATS.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <Label htmlFor="e-desc">Beskrivning (valfritt)</Label>
-            <textarea id="e-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
+            <div>
+              <Label>Kategori</Label>
+              <select value={category} onChange={e=>{const cat=EXPENSE_CATS.find(c=>c.value===e.target.value);setCategory(e.target.value);if(cat)setMomsRate(cat.moms);}} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                {EXPENSE_CATS.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <Label>Moms %</Label>
+              <select value={momsRate} onChange={e=>setMomsRate(+e.target.value)} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value={25}>25%</option>
+                <option value={12}>12%</option>
+                <option value={6}>6%</option>
+                <option value={0}>0%</option>
+              </select>
+            </div>
           </div>
           <div>
             <Label>Kvittobild (valfritt)</Label>
