@@ -298,6 +298,10 @@ class Expense(BaseModel):
     description: Optional[str] = None
     status: str = "pending"
     created_at: str
+    moms_rate: Optional[float] = 0.0
+    antal: Optional[int] = 1
+    unit_price: Optional[float] = None
+    receipt_image: Optional[str] = None
 
 
 # ---- Payroll settings (OB-tillägg + salary codes for PAXML) ----
