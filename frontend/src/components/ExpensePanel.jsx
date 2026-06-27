@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const EXPENSE_CATS = [
-  { value: "material",       moms: 25, label: "material" },
-  { value: "Bränsle",        moms: 25, label: "Bränsle" },
-  { value: "Parkering",      moms: 25, label: "Parkering" },
-  { value: "Milersättning",  moms: 0,  label: "Milersättning" },
+  { value: "Material",       moms: 25, label: "Material (25%)" },
+  { value: "Bränsle",        moms: 25, label: "Bränsle (25%)" },
+  { value: "Parkering",      moms: 25, label: "Parkering (25%)" },
+  { value: "Milersättning",  moms: 0,  label: "Milersättning (0%)" },
   { value: "Övrigt",         moms: 25, label: "Övrigt" },
 ];
 const STATUS = {
@@ -135,7 +135,7 @@ function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto })
   const [saving, setSaving] = React.useState(false);
   const [preview, setPreview] = React.useState(expense.receipt_image || null);
 
-  const CATS = ["material","Bränsle","Parkering","Milersättning","Övrigt"];
+  const CATS = ["Material","Bränsle","Parkering","Milersättning","Övrigt"];
 
   const handlePhoto = (e) => {
     const f = e.target.files[0];
@@ -230,11 +230,11 @@ function SubmitReceiptModal({ employees, onClose, onSubmit }) {
   const [saving, setSaving] = useState(false);
 
   const CATS = [
-    { value: "material", moms: 25 },
-    { value: "Bränsle", moms: 25 },
-    { value: "Parkering", moms: 25 },
-    { value: "Milersättning", moms: 0 },
-    { value: "Övrigt", moms: 25 },
+    { value: "Material", moms: 25, label: "Material (25%)" },
+    { value: "Bränsle", moms: 25, label: "Bränsle (25%)" },
+    { value: "Parkering", moms: 25, label: "Parkering (25%)" },
+    { value: "Milersättning", moms: 0, label: "Milersättning (0%)" },
+    { value: "Övrigt", moms: 25, label: "Övrigt" },
   ];
 
   const handleFile = (e) => {
@@ -299,7 +299,7 @@ function SubmitReceiptModal({ employees, onClose, onSubmit }) {
                 const cat = CATS.find(c=>c.value===e.target.value);
                 setForm(f=>({...f,category:e.target.value,moms_rate:cat?.moms||25}));
               }} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
-                {CATS.map(c=><option key={c.value} value={c.value}>{c.value} ({c.moms}%)</option>)}
+                {CATS.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
             </div>
             <div>
