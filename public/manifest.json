@@ -1,0 +1,26 @@
+{
+  "short_name": "PureNorth",
+  "name": "PureNorth Städ",
+  "description": "Miljövänlig städning i Umeå",
+  "icons": [
+    {
+      "src": "purenorth-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "purenorth-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#141414",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "lang": "sv",
+  "categories": ["business", "lifestyle"]
+}
