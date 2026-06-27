@@ -25,6 +25,8 @@ function App() {
             <Route path="/varderingar" element={<Varderingar />} />
             <Route path="/malsattning" element={<Malsattning />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/:tab" element={<Admin />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-center" richColors />
@@ -34,3 +36,4 @@ function App() {
 }
 
 export default App;
+/* rebuild 1782576831 */
