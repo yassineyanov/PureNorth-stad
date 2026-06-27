@@ -47,9 +47,10 @@ function CalcCard({ item }) {
   const speed = speedEntry ? speedEntry[1] : 30;
 
   const [qty, setQty] = React.useState(type === "st" ? 5 : 75);
+  const [qtyInput, setQtyInput] = React.useState(type === "st" ? "5" : "75");
   if (!item.is_active) return null;
   const maxQty = type === "st" ? 30 : 300;
-  const minQty = type === "st" ? 1 : 10;
+  const minQty = type === "st" ? 1 : 0;
   const label = type === "st" ? "Antal (st)" : "Yta (kvm)";
 
   let tim = 0;
@@ -85,9 +86,14 @@ function CalcCard({ item }) {
           <label className="text-xs text-slate-400 block mb-1">{label}</label>
           <div className="flex items-center gap-2">
             <input type="range" min={minQty} max={maxQty} step={type==="st"?1:5} value={qty}
-              onChange={e=>setQty(+e.target.value)} className="flex-1"/>
-            <input type="number" min={minQty} max={maxQty} value={qty}
-              onChange={e=>setQty(Math.max(minQty,Math.min(maxQty,+e.target.value||minQty)))}
+              onChange={e=>{setQty(+e.target.value);setQtyInput(e.target.value);}} className="flex-1"/>
+            <input type="number" min={minQty} max={maxQty} value={qtyInput}
+              onChange={e=>setQtyInput(e.target.value)}
+              onBlur={e=>{
+                const v = e.target.value === "" ? minQty : Math.max(minQty, Math.min(maxQty, +e.target.value));
+                setQty(v);
+                setQtyInput(String(v));
+              }}
               className="w-16 text-center rounded-lg border border-slate-200 text-sm py-1 outline-none focus:border-[#141414]"/>
           </div>
         </div>
@@ -326,3 +332,4 @@ export default function PriceListPanel() {
     </>
   );
 }
+ 
