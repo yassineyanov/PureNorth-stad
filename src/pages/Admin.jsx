@@ -697,66 +697,9 @@ function ReviewsPanel() {
         </div>
       )}
       {/* ── Settings Modal ─────────────────────────────────────────────── */}
-      {settingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-7">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <Settings size={20} className="text-slate-700"/>
-                <h2 className="font-display font-bold text-xl text-slate-900">Inställningar</h2>
-              </div>
-              <button onClick={()=>setSettingsOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">
-                <X size={16}/>
-              </button>
-            </div>
-            <div className="mb-6">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Företagsuppgifter</h3>
-              <div className="space-y-3">
-                {[
-                  {label:"Företagsnamn", key:"company_name", placeholder:"PureNorth Städ"},
-                  {label:"Organisationsnummer", key:"company_orgnr", placeholder:"556123-4567"},
-                  {label:"Adress", key:"company_address", placeholder:"Storgatan 1, 903 25 Umeå"},
-                  {label:"Telefon", key:"company_phone", placeholder:"070-000 00 00"},
-                  {label:"E-post", key:"company_email", placeholder:"info@purenorth.se"},
-                  {label:"Webbplats", key:"company_website", placeholder:"www.purenorth.se"},
-                ].map(({label, key, placeholder}) => (
-                  <div key={key}>
-                    <label className="text-xs font-medium text-slate-600">{label}</label>
-                    <input value={settingsData[key]} onChange={e=>setSettingsData(d=>({...d,[key]:e.target.value}))} placeholder={placeholder} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="mb-6">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Fakturainställningar</h3>
-              <div>
-                <label className="text-xs font-medium text-slate-600">Betalningsvillkor (dagar)</label>
-                <input type="number" value={settingsData.payment_terms_days} onChange={e=>setSettingsData(d=>({...d,payment_terms_days:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
-              </div>
-            </div>
-            <div className="mb-6">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">OB-tillägg (kr/tim)</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-slate-600">OB1 (kväll)</label>
-                  <input type="number" value={settingsData.ob1_extra} onChange={e=>setSettingsData(d=>({...d,ob1_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-slate-600">OB2 (natt/helg)</label>
-                  <input type="number" value={settingsData.ob2_extra} onChange={e=>setSettingsData(d=>({...d,ob2_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
-                </div>
-              </div>
-            </div>
-            <button onClick={saveSettings} disabled={settingsSaving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
-              {settingsSaving ? "Sparar..." : "Spara inställningar"}
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }
-
 function Dashboard() {
   const { logout, user } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
