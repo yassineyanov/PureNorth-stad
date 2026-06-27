@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { LogOut, Trash2, Phone, Mail, Calendar, Maximize, Hash, RefreshCw, Check, X, Clock, LayoutDashboard, CalendarDays, Star, CalendarRange, UserMinus, Receipt, Banknote, FileText, Tag, TrendingUp, TrendingDown, Users, BarChart2, Search, MapPin, FileSpreadsheet, Settings, Bell } from "lucide-react";
+import { LogOut, Trash2, Phone, Mail, Calendar, Maximize, Hash, RefreshCw, Check, X, Clock, LayoutDashboard, CalendarDays, Star, CalendarRange, UserMinus, Receipt, Banknote, FileText, Tag, TrendingUp, TrendingDown, Users, BarChart2, Search, MapPin, FileSpreadsheet, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/lib/api";
@@ -133,9 +133,6 @@ function LoginScreen({ onLogin }) {
 
 function BookingsPanel() {
   const [bookings, setBookings] = useState([]);
-  const [bookingSearch, setBookingSearch] = useState("");
-  const [invoiceSearch, setInvoiceSearch] = useState("");
-  const [customerSearch, setCustomerSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [newBookingOpen, setNewBookingOpen] = useState(false);
   const [expandedCalc, setExpandedCalc] = useState(null);
@@ -327,14 +324,6 @@ function BookingsPanel() {
           </button>
         </div>
       </div>
-      <div className="mb-4">
-        <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
-          <input value={bookingSearch} onChange={e=>setBookingSearch(e.target.value)}
-            placeholder="Sök namn, tjänst, adress..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-[#141414] bg-white"/>
-        </div>
-      </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Totalt", value: bookings.length },
@@ -357,7 +346,7 @@ function BookingsPanel() {
         </div>
       ) : (
         <div className="grid gap-4" data-testid="admin-bookings-list">
-          {bookings.filter(b => !bookingSearch || [b.name,b.service,b.address,b.phone,b.email].some(v=>v?.toLowerCase().includes(bookingSearch.toLowerCase()))).map((b) => (<React.Fragment key={b.id}>
+          {bookings.map((b) => (<React.Fragment key={b.id}>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -707,44 +696,76 @@ function ReviewsPanel() {
           ))}
         </div>
       )}
+      {/* ── Settings Modal ─────────────────────────────────────────────── */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-7">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Settings size={20} className="text-slate-700"/>
+                <h2 className="font-display font-bold text-xl text-slate-900">Inställningar</h2>
+              </div>
+              <button onClick={()=>setSettingsOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">
+                <X size={16}/>
+              </button>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Företagsuppgifter</h3>
+              <div className="space-y-3">
+                {[
+                  {label:"Företagsnamn", key:"company_name", placeholder:"PureNorth Städ"},
+                  {label:"Organisationsnummer", key:"company_orgnr", placeholder:"556123-4567"},
+                  {label:"Adress", key:"company_address", placeholder:"Storgatan 1, 903 25 Umeå"},
+                  {label:"Telefon", key:"company_phone", placeholder:"070-000 00 00"},
+                  {label:"E-post", key:"company_email", placeholder:"info@purenorth.se"},
+                  {label:"Webbplats", key:"company_website", placeholder:"www.purenorth.se"},
+                ].map(({label, key, placeholder}) => (
+                  <div key={key}>
+                    <label className="text-xs font-medium text-slate-600">{label}</label>
+                    <input value={settingsData[key]} onChange={e=>setSettingsData(d=>({...d,[key]:e.target.value}))} placeholder={placeholder} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Fakturainställningar</h3>
+              <div>
+                <label className="text-xs font-medium text-slate-600">Betalningsvillkor (dagar)</label>
+                <input type="number" value={settingsData.payment_terms_days} onChange={e=>setSettingsData(d=>({...d,payment_terms_days:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">OB-tillägg (kr/tim)</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB1 (kväll)</label>
+                  <input type="number" value={settingsData.ob1_extra} onChange={e=>setSettingsData(d=>({...d,ob1_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB2 (natt/helg)</label>
+                  <input type="number" value={settingsData.ob2_extra} onChange={e=>setSettingsData(d=>({...d,ob2_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+              </div>
+            </div>
+            <button onClick={saveSettings} disabled={settingsSaving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+              {settingsSaving ? "Sparar..." : "Spara inställningar"}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+
 function Dashboard() {
   const { logout, user } = useAuth();
-  const t = (key) => { const translations = { "tabs.dashboard": "Översikt", "tabs.bookings": "Bokningar", "tabs.invoices": "Fakturor", "tabs.customers": "Kunder", "tabs.schema": "Schema", "tabs.payroll": "Lön", "tabs.absences": "Frånvaro", "tabs.expenses": "Utlägg", "tabs.costs": "Kostnader", "tabs.economy": "Ekonomi", "tabs.pricelist": "Prislista", "tabs.calendar": "Kalender", "tabs.stats": "Statistik", "tabs.reviews": "Omdömen", "tabs.users": "Användare", "tabs.settings": "Inställningar" }; return translations[key] || key; };
+  const { t, i18n } = useTranslation();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
-  const [notifs, setNotifs] = useState([]);
-  const [notifOpen, setNotifOpen] = useState(false);
-
-  const loadNotifs = async () => {
-    try {
-      const [bookRes, invRes] = await Promise.all([
-        api.get("/bookings").catch(() => ({ data: [] })),
-        api.get("/invoices").catch(() => ({ data: [] })),
-      ]);
-      let pendingRevs = [];
-      try { const revRes = await api.get("/reviews"); pendingRevs = (revRes.data || []).filter(r => r.status === "pending"); } catch {}
-      const newBookings = (bookRes.data || []).filter(b => b.status === "new");
-      const overdueInvs = (invRes.data || []).filter(i => i.status === "overdue");
-      const all = [
-        ...newBookings.map(b => ({ type: "booking", icon: "📅", title: `Ny bokning: ${b.name}`, sub: b.service || "", tab: "bookings" })),
-        ...overdueInvs.map(i => ({ type: "invoice", icon: "🔴", title: `Förfallen faktura #${i.invoice_number}`, sub: `${i.customer_name} · ${i.customer_pays?.toFixed(0)} kr`, tab: "invoices" })),
-        ...pendingRevs.map(r => ({ type: "review", icon: "⭐", title: `Nytt omdöme: ${r.name}`, sub: r.text?.substring(0, 50), tab: "reviews" })),
-      ];
-      setNotifs(all);
-    } catch {}
-  };
-
-  useEffect(() => {
-    loadNotifs();
-    const interval = setInterval(loadNotifs, 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   const toggleLang = () => {
     const newLang = lang === "sv" ? "en" : "sv";
     setLang(newLang);
+    i18n.changeLanguage(newLang);
     localStorage.setItem("pn_language", newLang);
   };
   const { tab: urlTab } = useParams();
@@ -904,45 +925,6 @@ function Dashboard() {
             <button onClick={()=>setTab("settings")} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
               <Settings size={16}/>
             </button>
-            <div className="relative">
-              <button onClick={()=>setNotifOpen(o=>!o)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
-                <Bell size={16}/>
-                {notifs.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
-                    {notifs.length > 9 ? "9+" : notifs.length}
-                  </span>
-                )}
-              </button>
-              {notifOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden" onClick={e=>e.stopPropagation()}>
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                    <p className="font-semibold text-sm text-slate-900">Notifikationer</p>
-                    <button onClick={()=>setNotifOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={14}/></button>
-                  </div>
-                  {notifs.length === 0 ? (
-                    <p className="p-4 text-sm text-slate-400 text-center">Inga nya notifikationer</p>
-                  ) : (
-                    <div className="max-h-72 overflow-y-auto">
-                      {notifs.map((n, i) => (
-                        <button key={i} onClick={()=>{ setTab(n.tab); setNotifOpen(false); }}
-                          className="w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 text-left transition-colors">
-                          <span className="text-lg shrink-0 mt-0.5">{n.icon}</span>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
-                            <p className="text-xs text-slate-500 truncate">{n.sub}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div className="px-4 py-2 border-t border-slate-100">
-                    <button onClick={loadNotifs} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">
-                      <RefreshCw size={11}/> Uppdatera
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
             <button onClick={logout} data-testid="admin-logout" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-[#141414] hover:text-[#141414] transition-colors">
               <LogOut size={15} /> Logga ut
             </button>
