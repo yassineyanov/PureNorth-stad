@@ -43,13 +43,11 @@ function CostModal({ onClose, onSave, initial }) {
             <label className="text-xs font-medium text-slate-700">Beskrivning *</label>
             <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="T.ex. Rengöringsmedel Pur-Eco"/>
           </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Datum *</label>
+            <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-slate-700">Kategori</label>
-              <select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
-                {CATEGORIES.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-            </div>
             <div>
               <label className="text-xs font-medium text-slate-700">Belopp inkl. moms (kr) *</label>
               <input type="number" min="0" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
@@ -63,6 +61,12 @@ function CostModal({ onClose, onSave, initial }) {
               <div className="w-full mt-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900">{form.amount ? `${parseFloat(form.amount).toFixed(2)} kr` : "0.00 kr"}</div>
             </div>
             <div>
+              <label className="text-xs font-medium text-slate-700">Kategori</label>
+              <select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                {CATEGORIES.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
               <label className="text-xs font-medium text-slate-700">Moms %</label>
               <select value={form.moms_rate} onChange={e=>setForm(f=>({...f,moms_rate:+e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
                 <option value={25}>25% (standard)</option>
@@ -71,10 +75,6 @@ function CostModal({ onClose, onSave, initial }) {
                 <option value={0}>0% (ingen moms)</option>
               </select>
             </div>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-700">Datum *</label>
-            <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
           </div>
           <div>
             <label className="text-xs font-medium text-slate-700">Anteckning</label>
