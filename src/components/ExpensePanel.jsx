@@ -71,22 +71,15 @@ function ExpenseModal({ employees, onClose, onSave }) {
             </div>
             <div>
               <Label htmlFor="e-amount">Belopp inkl. moms (kr)</Label>
-              <Input id="e-amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1.5" placeholder="0.00" />
-            </div>
-            <div>
-              <Label>À-pris (kr)</Label>
-              <Input type="number" step="0.01" value={unitPrice} onChange={e=>{const up=parseFloat(e.target.value)||0;setUnitPrice(e.target.value);setAmount((up*(parseInt(antal)||1)).toFixed(2));}} className="mt-1.5" placeholder="0.00"/>
+              <Input id="e-amount" type="number" step="0.01" value={unitPrice} onChange={e=>{const up=parseFloat(e.target.value)||0;setUnitPrice(e.target.value);setAmount((up*(parseInt(antal)||1)).toFixed(2));}} className="mt-1.5" placeholder="0.00" />
             </div>
             <div>
               <Label>Antal</Label>
               <Input type="number" min="1" value={antal} onChange={e=>{setAntal(e.target.value);const up=parseFloat(unitPrice)||0;if(up>0)setAmount((up*(parseInt(e.target.value)||1)).toFixed(2));}} className="mt-1.5" placeholder="1"/>
             </div>
-            <div>
-              <Label>Moms %</Label>
-              <select value={momsRate} onChange={e=>setMomsRate(+e.target.value)} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
-                <option value={25}>25%</option>
-                <option value={0}>0% (Milersättning)</option>
-              </select>
+            <div className="col-span-2">
+              <Label>Total (kr)</Label>
+              <div className="mt-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900">{amount ? `${parseFloat(amount).toFixed(2)} kr` : "0.00 kr"}</div>
             </div>
           </div>
           <div>
