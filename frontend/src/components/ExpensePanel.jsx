@@ -282,11 +282,11 @@ function SubmitReceiptModal({ employees, onClose, onSubmit }) {
               {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
             </select>
           </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Datum *</label>
+            <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-slate-700">Datum *</label>
-              <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
-            </div>
             <div>
               <label className="text-xs font-medium text-slate-700">Belopp inkl. moms (kr)</label>
               <input type="number" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
