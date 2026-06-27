@@ -182,12 +182,12 @@ function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto })
               <input type="number" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-700">Total (kr)</label>
-              <div className="w-full mt-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900">{form.amount ? `${parseFloat(form.amount).toFixed(2)} kr` : "0.00 kr"}</div>
-            </div>
-            <div>
               <label className="text-xs font-medium text-slate-700">Antal</label>
               <input type="number" min="1" value={form.antal} onChange={e=>{const ant=parseInt(e.target.value)||1;const up=parseFloat(form.unit_price)||0;setForm(f=>({...f,antal:e.target.value,amount:up>0?(up*ant).toFixed(2):f.amount}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Total (kr)</label>
+              <div className="w-full mt-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900">{form.amount ? `${parseFloat(form.amount).toFixed(2)} kr` : "0.00 kr"}</div>
             </div>
             <div>
               <label className="text-xs font-medium text-slate-700">Kategori</label>
