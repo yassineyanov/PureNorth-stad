@@ -23,17 +23,28 @@ function ExpenseModal({ employees, onClose, onSave }) {
   const [employeeId, setEmployeeId] = useState(employees[0]?.id || "");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [amount, setAmount] = useState("");
+  const [antal, setAntal] = useState(1);
+  const [unitPrice, setUnitPrice] = useState("");
   const [momsRate, setMomsRate] = useState(25);
   const [category, setCategory] = useState("Material");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [receiptImage, setReceiptImage] = useState(null);
+  const handlePhoto = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { setPreview(ev.target.result); setReceiptImage(ev.target.result); };
+    reader.readAsDataURL(f);
+  };
 
   const submit = async (e) => {
     e.preventDefault();
     if (!employeeId || !date || !amount) return;
     setSaving(true);
     try {
-      await onSave({ employee_id: employeeId, date, amount: parseFloat(amount), moms_rate: momsRate, category, description: description.trim() || null });
+      await onSave({ employee_id: employeeId, date, amount: parseFloat(amount), antal: parseInt(antal)||1, unit_price: parseFloat(unitPrice)||0, moms_rate: momsRate, category, description: description.trim() || null, receipt_image: receiptImage });
     } finally {
       setSaving(false);
     }
@@ -63,6 +74,14 @@ function ExpenseModal({ employees, onClose, onSave }) {
               <Input id="e-amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1.5" placeholder="0.00" />
             </div>
             <div>
+              <Label>À-pris (kr)</Label>
+              <Input type="number" step="0.01" value={unitPrice} onChange={e=>{const up=parseFloat(e.target.value)||0;setUnitPrice(e.target.value);setAmount((up*(parseInt(antal)||1)).toFixed(2));}} className="mt-1.5" placeholder="0.00"/>
+            </div>
+            <div>
+              <Label>Antal</Label>
+              <Input type="number" min="1" value={antal} onChange={e=>{setAntal(e.target.value);const up=parseFloat(unitPrice)||0;if(up>0)setAmount((up*(parseInt(e.target.value)||1)).toFixed(2));}} className="mt-1.5" placeholder="1"/>
+            </div>
+            <div>
               <Label>Moms %</Label>
               <select value={momsRate} onChange={e=>setMomsRate(+e.target.value)} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
                 <option value={25}>25%</option>
@@ -84,6 +103,13 @@ function ExpenseModal({ employees, onClose, onSave }) {
             <Label htmlFor="e-desc">Beskrivning (valfritt)</Label>
             <textarea id="e-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
           </div>
+          <div>
+            <Label>Kvittobild (valfritt)</Label>
+            <div className="mt-1.5 border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-[#141414] transition-colors" onClick={()=>document.getElementById('nytt-receipt').click()}>
+              {preview ? <img src={preview} alt="kvitto" className="max-h-32 mx-auto rounded-lg object-contain"/> : <p className="text-slate-400 text-sm">Tryck för att ladda upp kvitto</p>}
+              <input id="nytt-receipt" type="file" accept="image/*" className="hidden" onChange={handlePhoto}/>
+            </div>
+          </div>
           <button type="submit" disabled={saving || !employeeId || !date || !amount} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
             {saving ? "Sparar..." : "Lägg till utlägg"}
           </button>
@@ -93,11 +119,111 @@ function ExpenseModal({ employees, onClose, onSave }) {
   );
 }
 
+
+function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto }) {
+  const [form, setForm] = React.useState({
+    employee_id: expense.employee_id || "",
+    date: expense.date || "",
+    amount: expense.amount || "",
+    antal: expense.antal || 1,
+    unit_price: expense.unit_price || "",
+    moms_rate: expense.moms_rate || 25,
+    category: expense.category || "Material",
+    description: expense.description || "",
+    receipt_image: expense.receipt_image || null,
+  });
+  const [saving, setSaving] = React.useState(false);
+  const [preview, setPreview] = React.useState(expense.receipt_image || null);
+
+  const CATS = ["Material","Bränsle","Milersättning","Parkering","Övrigt"];
+
+  const handlePhoto = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { setPreview(ev.target.result); setForm(fm=>({...fm, receipt_image: ev.target.result})); };
+    reader.readAsDataURL(f);
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try { await onSave({ ...form, amount: parseFloat(form.amount), antal: parseInt(form.antal)||1, unit_price: parseFloat(form.unit_price)||0 }); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display font-bold text-xl">Redigera utlägg</h2>
+          <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100"><X size={16}/></button>
+        </div>
+        <form onSubmit={submit} className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-slate-700">Anställd</label>
+            <select value={form.employee_id} onChange={e=>setForm(f=>({...f,employee_id:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+              {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs font-medium text-slate-700">Datum</label>
+              <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Belopp (kr)</label>
+              <input type="number" step="0.01" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">À-pris (kr)</label>
+              <input type="number" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Antal</label>
+              <input type="number" min="1" value={form.antal} onChange={e=>{const ant=parseInt(e.target.value)||1;const up=parseFloat(form.unit_price)||0;setForm(f=>({...f,antal:e.target.value,amount:up>0?(up*ant).toFixed(2):f.amount}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Kategori</label>
+              <select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                {CATS.map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Moms %</label>
+              <select value={form.moms_rate} onChange={e=>setForm(f=>({...f,moms_rate:+e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value={25}>25%</option>
+                <option value={12}>12%</option>
+                <option value={0}>0%</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Beskrivning</label>
+            <input value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Kvitto</label>
+            {preview && <img src={preview} alt="kvitto" className="w-full max-h-40 object-contain rounded-xl border border-slate-200 mb-2 cursor-pointer mt-1" onClick={()=>onViewKvitto(preview)}/>}
+            <div className="border-2 border-dashed border-slate-200 rounded-xl p-3 text-center cursor-pointer hover:border-[#141414] transition-colors" onClick={()=>document.getElementById('edit-receipt').click()}>
+              <p className="text-sm text-slate-400">{preview ? "Ersätt kvitto" : "Lägg till kvitto"}</p>
+              <input id="edit-receipt" type="file" accept="image/*" className="hidden" onChange={handlePhoto}/>
+            </div>
+          </div>
+          <button type="submit" disabled={saving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {saving ? "Sparar..." : "Spara ändringar"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── Staff Receipt Submission ──────────────────────────────────────────────────
 function SubmitReceiptModal({ employees, onClose, onSubmit }) {
   const [form, setForm] = useState({
     employee_id: "", date: new Date().toISOString().split("T")[0],
-    amount: "", moms_rate: 25, category: "Material", description: ""
+    amount: "", antal: 1, unit_price: "", moms_rate: 25, category: "Material", description: ""
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -156,6 +282,14 @@ function SubmitReceiptModal({ employees, onClose, onSubmit }) {
             <div>
               <label className="text-xs font-medium text-slate-700">Belopp inkl. moms *</label>
               <input type="number" step="0.01" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">À-pris (kr)</label>
+              <input type="number" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Antal</label>
+              <input type="number" min="1" value={form.antal} onChange={e=>{const ant=parseInt(e.target.value)||1;const up=parseFloat(form.unit_price)||0;setForm(f=>({...f,antal:e.target.value,amount:up>0?(up*ant).toFixed(2):f.amount}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="1"/>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
