@@ -70,11 +70,11 @@ function ExpenseModal({ employees, onClose, onSave }) {
               <Input id="e-date" type="date" style={{WebkitAppearance:"none", appearance:"none"}} value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
             </div>
             <div>
-              <Label htmlFor="e-amount">Belopp inkl. moms (kr)</Label>
+              <Label htmlFor="e-amount">À-pris (kr)</Label>
               <Input id="e-amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1.5" placeholder="0.00" />
             </div>
             <div>
-              <Label>À-pris (kr)</Label>
+              <Label>Belopp inkl. moms (kr)</Label>
               <Input type="number" step="0.01" value={unitPrice} onChange={e=>{const up=parseFloat(e.target.value)||0;setUnitPrice(e.target.value);setAmount((up*(parseInt(antal)||1)).toFixed(2));}} className="mt-1.5" placeholder="0.00"/>
             </div>
             <div>
@@ -176,7 +176,7 @@ function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto })
               <input type="number" step="0.01" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-700">À-pris (kr)</label>
+              <label className="text-xs font-medium text-slate-700">Belopp inkl. moms *</label>
               <input type="number" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
             </div>
             <div>
@@ -284,7 +284,7 @@ function SubmitReceiptModal({ employees, onClose, onSubmit }) {
               <input type="number" step="0.01" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-700">À-pris (kr)</label>
+              <label className="text-xs font-medium text-slate-700">Belopp inkl. moms *</label>
               <input type="number" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
             </div>
             <div>
