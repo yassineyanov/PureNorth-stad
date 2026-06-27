@@ -275,9 +275,13 @@ class ExpenseUpdate(BaseModel):
     employee_id: Optional[str] = None
     date: Optional[str] = None
     amount: Optional[float] = None
+    antal: Optional[int] = None
+    unit_price: Optional[float] = None
     category: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
+    moms_rate: Optional[int] = None
+    receipt_image: Optional[str] = None
 
 
 class Expense(BaseModel):
