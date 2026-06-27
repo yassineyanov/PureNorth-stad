@@ -20,7 +20,14 @@ const CAT_COLORS = {
 function kr(n) { return Math.round(n).toLocaleString("sv-SE") + " kr"; }
 
 function CostModal({ onClose, onSave, initial }) {
-  const [form, setForm] = useState(initial || { name: "", category: "material", amount: "", antal: 1, unit_price: "", moms_rate: 25, date: new Date().toISOString().split("T")[0], notes: "" });
+  const initAntal = initial?.antal || 1;
+  const initUnitPrice = initial?.unit_price || (initial?.amount ? initial.amount / initAntal : "");
+  const [form, setForm] = useState(initial ? {
+    ...initial,
+    antal: initAntal,
+    unit_price: initUnitPrice,
+    amount: initial.amount || "",
+  } : { name: "", category: "material", amount: "", antal: 1, unit_price: "", moms_rate: 25, date: new Date().toISOString().split("T")[0], notes: "" });
   const [saving, setSaving] = useState(false);
 
   const submit = async (e) => {
