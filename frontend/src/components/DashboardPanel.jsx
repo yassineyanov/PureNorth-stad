@@ -50,20 +50,20 @@ export default function DashboardPanel({ onNavigate }) {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get("/dashboard");
       setData(res.data);
       setLastUpdated(new Date());
-    } catch { toast.error("Kunde inte hämta dashboard."); }
-    finally { setLoading(false); }
+    } catch { if (!silent) toast.error("Kunde inte hämta dashboard."); }
+    finally { if (!silent) setLoading(false); }
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(()=>{ 
     load();
-    const interval = setInterval(load, 60000);
+    const interval = setInterval(() => load(true), 60000);
     return () => clearInterval(interval);
   }, []);
 
