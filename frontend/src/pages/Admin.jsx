@@ -720,21 +720,19 @@ function Dashboard() {
 
   const [firstBookingId, setFirstBookingId] = React.useState(null);
 
+  const [knownIds, setKnownIds] = React.useState(null);
+
   const loadNotifs = React.useCallback(async () => {
     try {
       const res = await api.get("/bookings");
       const allBookings = res.data || [];
-      if (allBookings.length === 0) return;
-      const topId = allBookings[0]?.id;
-      setFirstBookingId(prev => {
+      const allIds = allBookings.map(b => b.id);
+      setKnownIds(prev => {
         if (prev === null) {
-          // First load - just save the top ID
-          return topId;
+          return allIds;
         }
-        if (topId !== prev) {
-          // New bookings arrived - find how many are new
-          const prevIdx = allBookings.findIndex(b => b.id === prev);
-          const newOnes = prevIdx === -1 ? [allBookings[0]] : allBookings.slice(0, prevIdx);
+        const newOnes = allBookings.filter(b => !prev.includes(b.id));
+        if (newOnes.length > 0) {
           setNotifs(cur => {
             const existingIds = cur.map(n => n.id);
             const added = newOnes.filter(b => !existingIds.includes(b.id)).map(b => ({
@@ -744,7 +742,7 @@ function Dashboard() {
             }));
             return [...cur, ...added];
           });
-          return topId;
+          return [...prev, ...newOnes.map(b => b.id)];
         }
         return prev;
       });
