@@ -713,9 +713,11 @@ function Dashboard() {
   const loadNotifs = React.useCallback(async () => {
     try {
       const res = await api.get("/bookings");
-      const lastVisit = localStorage.getItem("pn_bookings_last_visit") || "0";
+      const allBookings = res.data || [];
+      // Update bookings list with fresh data
+      setBookings(allBookings);
       const readIds = JSON.parse(localStorage.getItem("pn_read_bookings") || "[]");
-      const newBookings = (res.data || []).filter(b => 
+      const newBookings = allBookings.filter(b => 
         b.status === "new" && !readIds.includes(b.id)
       );
       setNotifs(newBookings.map(b => ({
