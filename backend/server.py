@@ -5333,6 +5333,7 @@ async def export_costs_xlsx(start: str = None, end: str = None, current=Depends(
 @api_router.get("/bookings/export-pdf")
 async def export_bookings_pdf(start: str = None, end: str = None, current=Depends(get_current_user)):
     """Export bookings list to PDF"""
+    try:
     query = {}
     if start and end:
         query["created_at"] = {"$gte": start, "$lte": end + "T23:59:59"}
