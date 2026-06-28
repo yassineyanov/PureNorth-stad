@@ -5331,96 +5331,49 @@ async def export_costs_xlsx(start: str = None, end: str = None, current=Depends(
 
 # ── Bookings PDF Export ───────────────────────────────────────────────────────
 @api_router.get("/bookings/export-pdf")
-async def export_bookings_pdf(start: str = None, end: str = None, current=Depends(get_current_user)):
-    """Export bookings list to PDF"""
-    query = {}
-    if start and end:
-            query["created_at"] = {"$gte": start, "$lte": end + "T23:59:59"}
-
-    bookings = await db.bookings.find(query).sort("created_at", -1).to_list(5000)
+async def export_bookings_pdf(current=Depends(get_current_user)):
+    bookings = await db.bookings.find().sort("created_at", -1).to_list(5000)
     inv_settings = await get_invoice_settings_obj()
     company = inv_settings.company_name or "PureNorth Städ"
-
-    status_map = {"new":"Ny","contacted":"Kontaktad","quoted":"Offert","done":"Klar","cancelled":"Avbruten"}
-    status_colors_map = {"new":colors.HexColor("#1e40af"),"contacted":colors.HexColor("#b45309"),"quoted":colors.HexColor("#7c3aed"),"done":colors.HexColor("#15803d"),"cancelled":colors.HexColor("#dc2626")}
-
-    # Summary
-    total = len(bookings)
-    by_status = {}
-    for b in bookings:
-        s = b.get("status","new")
-        by_status[s] = by_status.get(s,0) + 1
-
-    from reportlab.lib.pagesizes import landscape
+    status_map = {"new":"Ny","contacted":"Kontaktad","done":"Klar","cancelled":"Avbruten"}
     buf = BytesIO()
+    from reportlab.lib.pagesizes import landscape
     doc = SimpleDocTemplate(buf, pagesize=landscape(A4),
-    topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm,
-    title="Bokningslista", author=company)
+        topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm)
     styles = getSampleStyleSheet()
-    def ps(name, **kw): return ParagraphStyle(name, parent=styles["Normal"], **kw)
-    page_w = landscape(A4)[0]
     elements = []
-
     # Header
-    hdr = Table([[
-    Paragraph(f"<b>{company}</b>", ps("h", fontSize=14, fontName="Helvetica-Bold", textColor=colors.white)),
-    Paragraph(f"<b>BOKNINGSLISTA</b><br/>Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ps("s", fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
-    ]], colWidths=[120*mm, None])
-    hdr.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),("VALIGN",(0,0),(-1,-1),"MIDDLE")]))
-    elements.append(hdr)
-    elements.append(Spacer(1,3*mm))
-
-    # Summary
-    sum_data = [[
-    Paragraph(f"<b>Totalt</b><br/>{total} st", ps("sb", fontSize=9)),
-    Paragraph(f"<b>Nya</b><br/>{by_status.get('new',0)} st", ps("sb", fontSize=9, textColor=colors.HexColor("#1e40af"))),
-    Paragraph(f"<b>Kontaktade</b><br/>{by_status.get('contacted',0)} st", ps("sb", fontSize=9, textColor=colors.HexColor("#b45309"))),
-    Paragraph(f"<b>Offert</b><br/>{by_status.get('quoted',0)} st", ps("sb", fontSize=9, textColor=colors.HexColor("#7c3aed"))),
-    Paragraph(f"<b>Klara</b><br/>{by_status.get('done',0)} st", ps("sb", fontSize=9, textColor=colors.HexColor("#15803d"))),
-    Paragraph(f"<b>Avbrutna</b><br/>{by_status.get('cancelled',0)} st", ps("sb", fontSize=9, textColor=colors.HexColor("#dc2626"))),
-    ]]
-    sum_tbl = Table(sum_data, colWidths=[(page_w-30*mm)/6]*6)
-    sum_tbl.setStyle(TableStyle([("BOX",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),("INNERGRID",(0,0),(-1,-1),0.5,colors.HexColor("#E2E8F0")),("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),("TOPPADDING",(0,0),(-1,-1),6),("BOTTOMPADDING",(0,0),(-1,-1),6)]))
-    elements.append(sum_tbl)
-    elements.append(Spacer(1,4*mm))
-
-    # Bookings table
-    data = [["Datum", "Kund", "E-post", "Telefon", "Tjänst", "Adress", "Meddelande", "Status"]]
+    elements.append(Paragraph(f"<b>{company} — Bokningslista</b>", ParagraphStyle("h", parent=styles["Normal"], fontSize=14, fontName="Helvetica-Bold")))
+    elements.append(Spacer(1, 5*mm))
+    # Table
+    data = [["Datum", "Kund", "Telefon", "E-post", "Tjänst", "Status"]]
     for b in bookings:
         data.append([
-            b.get("created_at","")[:10],
-            b.get("name","")[:20],
-            b.get("email","")[:25] or "-",
-            b.get("phone","") or "-",
-            (", ".join(b.get("services",[]) or [b.get("service","")]))[:25] or "-",
-            b.get("address","")[:25] or "-",
-            (b.get("other_description","") or b.get("message","") or "-")[:30],
-            status_map.get(b.get("status","new"),""),
-    ])
-
-    tbl = Table(data, colWidths=[22*mm, 35*mm, 45*mm, 25*mm, 30*mm, 40*mm, 45*mm, 25*mm])
-    ts = [
-    ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
-    ("TEXTCOLOR",(0,0),(-1,0),colors.white),
-    ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
-    ("FONTSIZE",(0,0),(-1,-1),7.5),
-    ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
-    ("LEFTPADDING",(0,0),(-1,-1),3),("RIGHTPADDING",(0,0),(-1,-1),3),
-    ("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3),
-    ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white, colors.HexColor("#F8FAFC")]),
-    ]
-    for row_idx, b in enumerate(bookings, 1):
-        col = status_colors_map.get(b.get("status","new"))
-        if col: ts.append(("TEXTCOLOR",(7,row_idx),(7,row_idx),col))
-    tbl.setStyle(TableStyle(ts))
+            (b.get("created_at","")[:10] or b.get("preferred_date","") or "-"),
+            (b.get("name","") or "-")[:25],
+            (b.get("phone","") or "-"),
+            (b.get("email","") or "-")[:30],
+            (", ".join(b.get("services",[]) or []))[:30] or "-",
+            status_map.get(b.get("status","new"), "Ny"),
+        ])
+    tbl = Table(data, colWidths=[25*mm, 45*mm, 30*mm, 55*mm, 55*mm, 20*mm])
+    tbl.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#141414")),
+        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+        ("FONTSIZE",(0,0),(-1,-1),8),
+        ("GRID",(0,0),(-1,-1),0.3,colors.HexColor("#E2E8F0")),
+        ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white, colors.HexColor("#F8FAFC")]),
+        ("LEFTPADDING",(0,0),(-1,-1),4),
+        ("RIGHTPADDING",(0,0),(-1,-1),4),
+        ("TOPPADDING",(0,0),(-1,-1),3),
+        ("BOTTOMPADDING",(0,0),(-1,-1),3),
+    ]))
     elements.append(tbl)
-    elements.append(Spacer(1,3*mm))
-    elements.append(Paragraph(f"{company}  ·  Bokningslista  ·  {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"))))
-
     doc.build(elements)
     buf.seek(0)
-    return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": 'inline; filename="bokningar.pdf"'})
-
+    return Response(content=buf.getvalue(), media_type="application/pdf",
+        headers={"Content-Disposition": 'inline; filename="bokningar.pdf"'})
 
 # ── Bookings Excel Export ─────────────────────────────────────────────────────
 @api_router.get("/bookings/export-xlsx")
