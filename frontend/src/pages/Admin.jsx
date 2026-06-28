@@ -734,7 +734,7 @@ function Dashboard() {
         bookingId: b.id,
       })));
     } catch {}
-  }, [seenIds]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
     loadNotifs();
