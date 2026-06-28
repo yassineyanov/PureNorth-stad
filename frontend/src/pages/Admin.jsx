@@ -719,11 +719,16 @@ function Dashboard() {
       const res = await api.get("/bookings");
       const allBookings = res.data || [];
       const newBookings = allBookings.filter(b => b.status === "new");
-      setNotifs(newBookings.map(b => ({
-        id: b.id,
-        title: `Ny bokning: ${b.name}`,
-        sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
-      })));
+      setDismissedIds(dismissed => {
+        setNotifs(newBookings
+          .filter(b => !dismissed.includes(b.id))
+          .map(b => ({
+            id: b.id,
+            title: `Ny bokning: ${b.name}`,
+            sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+          })));
+        return dismissed;
+      });
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
