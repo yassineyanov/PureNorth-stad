@@ -5344,7 +5344,19 @@ async def export_bookings_pdf(current=Depends(get_current_user)):
     styles = getSampleStyleSheet()
     elements = []
     # Header
-    elements.append(Paragraph("<b>Bokningslista</b>", ParagraphStyle("h", parent=styles["Normal"], fontSize=14, fontName="Helvetica-Bold")))
+    from reportlab.lib.units import mm as mm2
+    page_w = landscape(A4)[0]
+    hdr = Table([[
+        Paragraph(f"<b>{company}</b>", ParagraphStyle("h", parent=styles["Normal"], fontSize=14, fontName="Helvetica-Bold", textColor=colors.white)),
+        Paragraph(f"<b>BOKNINGSLISTA</b><br/>Skapad: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ParagraphStyle("s", parent=styles["Normal"], fontSize=10, fontName="Helvetica-Bold", textColor=colors.white, alignment=2))
+    ]], colWidths=[120*mm, None])
+    hdr.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#141414")),
+        ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+        ("TOPPADDING",(0,0),(-1,-1),10),("BOTTOMPADDING",(0,0),(-1,-1),10),
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+    ]))
+    elements.append(hdr)
     elements.append(Spacer(1, 5*mm))
     # Table
     data = [["Datum", "Kund", "Telefon", "E-post", "Tjänst", "Status"]]
