@@ -715,14 +715,18 @@ function Dashboard() {
   const [notifs, setNotifs] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = React.useRef(null);
+  const [readIds, setReadIds] = React.useState([]);
   React.useEffect(() => {
     const handler = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setNotifOpen(false);
-        setNotifs([]);
       }
     };
-    if (notifOpen) document.addEventListener("mousedown", handler);
+    if (notifOpen) {
+      // Mark all current notifs as read when opening
+      setReadIds(notifs.map(n => n.id));
+      document.addEventListener("mousedown", handler);
+    }
     return () => document.removeEventListener("mousedown", handler);
   }, [notifOpen]);
 
@@ -945,13 +949,13 @@ function Dashboard() {
             <div className="relative">
               <button onClick={()=>setNotifOpen(o=>!o)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
                 <Bell size={16}/>
-                {notifs.length > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{notifs.length > 9 ? "9+" : notifs.length}</span>}
+                {notifs.filter(n => !readIds.includes(n.id)).length > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{notifs.filter(n => !readIds.includes(n.id)).length > 9 ? "9+" : notifs.filter(n => !readIds.includes(n.id)).length}</span>}
               </button>
               {notifOpen && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                     <p className="font-semibold text-sm text-slate-900">Nya bokningar</p>
-                    <button onClick={()=>{setNotifOpen(false);setNotifs([]);}} className="text-slate-400 hover:text-slate-600"><X size={14}/></button>
+                    <button onClick={()=>setNotifOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={14}/></button>
                   </div>
                   {notifs.length === 0 ? (
                     <p className="p-4 text-sm text-slate-400 text-center">Inga nya bokningar</p>
@@ -960,7 +964,10 @@ function Dashboard() {
                       {notifs.map(n => (
                         <div key={n.id} className="flex items-center px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 transition-colors">
                           <button onClick={()=>{ setTab("bookings"); setNotifOpen(false); setSelectedBooking(n.id); setTimeout(()=>{const el=document.getElementById(`booking-${n.id}`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},300); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
-                            <span className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"><CalendarDays size={14} className="text-blue-600"/></span>
+                            <div className="relative shrink-0">
+                              <span className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center"><CalendarDays size={14} className="text-blue-600"/></span>
+                              {!readIds.includes(n.id) && <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>}
+                            </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
                               <p className="text-xs text-slate-500 truncate">{n.sub}</p>
