@@ -968,6 +968,7 @@ function Dashboard() {
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "bookings" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
             <CalendarDays size={14}/> {t("tabs.bookings")}
+            {notifs.length > 0 && <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold">{notifs.length}</span>}
           </button>
           <button
             onClick={() => setTab("invoices")}
