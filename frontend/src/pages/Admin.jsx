@@ -730,6 +730,13 @@ function Dashboard() {
 
   const unseenCount = notifs.filter(n => !seenIds.includes(n.id)).length;
 
+  const markAllSeen = () => {
+    const allIds = notifs.map(n => n.id);
+    const updated = [...new Set([...seenIds, ...allIds])];
+    setSeenIds(updated);
+    localStorage.setItem("pn_seen_notifs", JSON.stringify(updated));
+  };
+
   const markSeen = (id) => {
     const updated = [...seenIds, id];
     setSeenIds(updated);
@@ -963,7 +970,7 @@ function Dashboard() {
             <LayoutDashboard size={14}/> {t("tabs.dashboard")}
           </button>
           <button
-            onClick={() => setTab("bookings")}
+            onClick={() => { setTab("bookings"); markAllSeen(); }}
             data-testid="admin-tab-bookings"
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "bookings" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
