@@ -721,15 +721,19 @@ function Dashboard() {
       const newBookings = allBookings.filter(b => b.status === "new");
       setNotifs(prev => {
         const dismissed = prev.filter(n => n._dismissed).map(n => n.id);
-        return newBookings
-          .filter(b => !dismissed.includes(b.id))
-          .map(b => ({
-            id: b.id,
-            title: `Ny bokning: ${b.name}`,
-            sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
-          }));
+        const filtered = newBookings.filter(b => !dismissed.includes(b.id));
+        const prevIds = prev.map(n => n.id);
+        const hasNew = filtered.some(b => !prevIds.includes(b.id));
+        if (hasNew) {
+          setBookings(allBookings);
+          setBookingsLastUpdated(new Date());
+        }
+        return filtered.map(b => ({
+          id: b.id,
+          title: `Ny bokning: ${b.name}`,
+          sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+        }));
       });
-      setBookings(allBookings);
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
