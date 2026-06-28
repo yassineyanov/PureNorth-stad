@@ -728,7 +728,7 @@ function Dashboard() {
       document.addEventListener("mousedown", handler);
     }
     return () => document.removeEventListener("mousedown", handler);
-  }, [notifOpen]);
+  }, [notifOpen, notifs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [baseCount, setBaseCount] = React.useState(null);
 
