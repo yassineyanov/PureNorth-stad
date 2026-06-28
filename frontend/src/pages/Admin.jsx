@@ -928,19 +928,21 @@ function Dashboard() {
                   ) : (
                     <div className="max-h-72 overflow-y-auto">
                       {notifs.map(n => (
-                        <button key={n.id} onClick={()=>{ markSeen(n.id); setTab("bookings"); setNotifOpen(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 text-left transition-colors">
-                          <div className="relative shrink-0">
-                            <span className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"><CalendarDays size={14} className="text-blue-600"/></span>
-                            {!seenIds.includes(n.id) && (
-                              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
-                            <p className="text-xs text-slate-500 truncate">{n.sub}</p>
-                          </div>
-                        </button>
+                        <div key={n.id} className="flex items-center px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 transition-colors">
+                          <button onClick={()=>{ markSeen(n.id); setTab("bookings"); setNotifOpen(false); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
+                            <div className="relative shrink-0">
+                              <span className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"><CalendarDays size={14} className="text-blue-600"/></span>
+                              {!seenIds.includes(n.id) && <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
+                              <p className="text-xs text-slate-500 truncate">{n.sub}</p>
+                            </div>
+                          </button>
+                          <button onClick={e=>{e.stopPropagation();markSeen(n.id);setNotifs(prev=>prev.filter(x=>x.id!==n.id));}} className="h-7 w-7 rounded-full flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 shrink-0 transition-colors ml-1">
+                            <Trash2 size={13}/>
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
