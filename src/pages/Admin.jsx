@@ -753,7 +753,7 @@ function Dashboard() {
 
   React.useEffect(() => {
     loadNotifs();
-    const interval = setInterval(loadNotifs, 15000);
+    const interval = setInterval(loadNotifs, 1000);
     return () => clearInterval(interval);
   }, [loadNotifs]);
 
