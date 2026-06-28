@@ -5344,7 +5344,7 @@ async def export_bookings_pdf(current=Depends(get_current_user)):
     styles = getSampleStyleSheet()
     elements = []
     # Header
-    elements.append(Paragraph(f"<b>{company} — Bokningslista</b>", ParagraphStyle("h", parent=styles["Normal"], fontSize=14, fontName="Helvetica-Bold")))
+    elements.append(Paragraph("<b>Bokningslista</b>", ParagraphStyle("h", parent=styles["Normal"], fontSize=14, fontName="Helvetica-Bold")))
     elements.append(Spacer(1, 5*mm))
     # Table
     data = [["Datum", "Kund", "Telefon", "E-post", "Tjänst", "Status"]]
