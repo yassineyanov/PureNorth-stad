@@ -131,9 +131,11 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-function BookingsPanel() {
+function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: setParentSelected }) {
   const [bookings, setBookings] = useState([]);
-  const [selectedBooking, setSelectedBooking] = React.useState(null);
+  const [selectedBooking, setSelectedBookingLocal] = React.useState(initialSelected || null);
+  React.useEffect(() => { if(initialSelected) setSelectedBookingLocal(initialSelected); }, [initialSelected]);
+  const setSelectedBooking = (id) => { setSelectedBookingLocal(id); if(setParentSelected) setParentSelected(id); };
   const [bookingsLastUpdated, setBookingsLastUpdated] = React.useState(null);
   const [loading, setLoading] = useState(true);
   const [newBookingOpen, setNewBookingOpen] = useState(false);
@@ -1098,14 +1100,14 @@ function Dashboard() {
         {user?.role === "staff" ? (
           tab === "absences" ? <AbsencePanel /> : <SchedulePanel />
         ) : user?.role === "sales" ? (
-          tab === "bookings" ? <BookingsPanel /> : tab === "reviews" ? <ReviewsPanel /> :
+          tab === "bookings" ? <BookingsPanel selectedBooking={selectedBooking} setSelectedBooking={setSelectedBooking}/> : tab === "reviews" ? <ReviewsPanel /> :
           tab === "schema" ? <SchedulePanel /> : tab === "absences" ? <AbsencePanel /> :
           tab === "expenses" ? <ExpensePanel /> : tab === "payroll" ? <PayrollPanel /> :
           tab === "invoices" ? <InvoicePanel /> : tab === "pricelist" ? <PriceListPanel /> :
           tab === "customers" ? <CustomerPanel /> : tab === "calendar" ? <CalendarPanel /> :
           <DashboardPanel onNavigate={setTab} />
         ) : (
-          tab === "dashboard" ? <DashboardPanel onNavigate={setTab} /> : tab === "bookings" ? <BookingsPanel /> : tab === "reviews" ? <ReviewsPanel /> : tab === "schema" ? <SchedulePanel /> : tab === "absences" ? <AbsencePanel /> : tab === "expenses" ? <ExpensePanel /> : tab === "payroll" ? <PayrollPanel /> : tab === "invoices" ? <InvoicePanel /> : tab === "pricelist" ? <PriceListPanel /> : tab === "economy" ? <EconomyPanel /> : tab === "customers" ? <CustomerPanel /> : tab === "calendar" ? <CalendarPanel /> : tab === "stats" ? <StatsPanel /> : tab === "users" ? <UsersPanel /> : tab === "costs" ? <CostsPanel /> : tab === "settings" ? <SettingsPanel /> : <DashboardPanel onNavigate={setTab} />
+          tab === "dashboard" ? <DashboardPanel onNavigate={setTab} /> : tab === "bookings" ? <BookingsPanel selectedBooking={selectedBooking} setSelectedBooking={setSelectedBooking}/> : tab === "reviews" ? <ReviewsPanel /> : tab === "schema" ? <SchedulePanel /> : tab === "absences" ? <AbsencePanel /> : tab === "expenses" ? <ExpensePanel /> : tab === "payroll" ? <PayrollPanel /> : tab === "invoices" ? <InvoicePanel /> : tab === "pricelist" ? <PriceListPanel /> : tab === "economy" ? <EconomyPanel /> : tab === "customers" ? <CustomerPanel /> : tab === "calendar" ? <CalendarPanel /> : tab === "stats" ? <StatsPanel /> : tab === "users" ? <UsersPanel /> : tab === "costs" ? <CostsPanel /> : tab === "settings" ? <SettingsPanel /> : <DashboardPanel onNavigate={setTab} />
         )}
       {/* ── Settings Modal ─────────────────────────────────────────────── */}
       {settingsOpen && (
