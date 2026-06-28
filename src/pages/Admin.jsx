@@ -134,6 +134,7 @@ function LoginScreen({ onLogin }) {
 function BookingsPanel() {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = React.useState(null);
+  const [bookingsLastUpdated, setBookingsLastUpdated] = React.useState(null);
   const [loading, setLoading] = useState(true);
   const [newBookingOpen, setNewBookingOpen] = useState(false);
   const [expandedCalc, setExpandedCalc] = useState(null);
@@ -297,7 +298,13 @@ function BookingsPanel() {
   return (
     <>
       <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
-        <h2 className="font-display font-bold text-xl text-slate-900">Bokningar</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="font-display font-bold text-xl text-slate-900">Bokningar</h2>
+          <button onClick={async ()=>{ await load(); setBookingsLastUpdated(new Date()); }} className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
+            <RefreshCw size={14}/>
+          </button>
+          {bookingsLastUpdated && <span className="text-xs text-slate-400">Uppdaterad {bookingsLastUpdated.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"})}</span>}
+        </div>
         <div className="flex gap-2">
           <button onClick={() => setRecurringOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 hover:border-[#141414] rounded-full px-4 py-2 transition-colors">
             <RefreshCw size={14}/> Återkommande
