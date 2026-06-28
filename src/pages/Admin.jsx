@@ -759,7 +759,7 @@ function Dashboard() {
   }, [loadNotifs]);
 
   const unseenCount = notifs.length;
-  const deleteNotif = (id) => { setDismissedIds(prev => [...prev, id]); setNotifs(prev => prev.filter(n => n.id !== id)); };
+  const deleteNotif = (id) => { setNotifs(prev => prev.filter(n => n.id !== id)); };
 
   const TRANS = {
     sv: { "tabs.dashboard": "Översikt", "tabs.bookings": "Bokningar", "tabs.invoices": "Fakturor", "tabs.customers": "Kunder", "tabs.schema": "Schema", "tabs.payroll": "Lön", "tabs.absences": "Frånvaro", "tabs.expenses": "Utlägg", "tabs.costs": "Kostnader", "tabs.economy": "Ekonomi", "tabs.pricelist": "Prislista", "tabs.calendar": "Kalender", "tabs.stats": "Statistik", "tabs.reviews": "Omdömen", "tabs.users": "Användare", "tabs.settings": "Inställningar" },
