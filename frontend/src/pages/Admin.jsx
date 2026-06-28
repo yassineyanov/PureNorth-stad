@@ -721,8 +721,8 @@ function Dashboard() {
         setNotifOpen(false);
       }
     };
-    document.addEventListener("click", handler, true);
-    return () => document.removeEventListener("click", handler, true);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
   }, [notifOpen]);
   const [readIds, setReadIds] = React.useState([]);
 
