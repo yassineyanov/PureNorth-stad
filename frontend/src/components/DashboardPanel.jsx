@@ -45,7 +45,7 @@ function Section({ title, children, action }) {
   );
 }
 
-export default function DashboardPanel({ onNavigate }) {
+export default function DashboardPanel({ onNavigate, onRefresh }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -90,7 +90,7 @@ export default function DashboardPanel({ onNavigate }) {
         </div>
         <div className="flex items-center gap-2">
           {lastUpdated && <span className="text-xs text-slate-400">Uppdaterad {lastUpdated.toLocaleTimeString("sv-SE", {hour:"2-digit", minute:"2-digit"})}</span>}
-          <button onClick={load} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
+          <button onClick={()=>{load();if(onRefresh)onRefresh();}} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
             <RefreshCw size={15}/>
           </button>
         </div>
