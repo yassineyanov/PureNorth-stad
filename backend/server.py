@@ -5418,6 +5418,7 @@ async def export_bookings_pdf(start: str = None, end: str = None, current=Depend
     elements.append(Paragraph(f"{company}  ·  Bokningslista  ·  {datetime.now(timezone.utc).strftime('%Y-%m-%d')}", ps("ft", fontSize=7, textColor=colors.HexColor("#94a3b8"))))
 
     doc.build(elements)
+    buf.seek(0)
     return Response(content=buf.getvalue(), media_type="application/pdf", headers={"Content-Disposition": 'inline; filename="bokningar.pdf"'})
 
 
