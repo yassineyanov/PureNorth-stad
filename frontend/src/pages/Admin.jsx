@@ -714,18 +714,24 @@ function Dashboard() {
     try {
       const res = await api.get("/bookings");
       const allBookings = res.data || [];
-      // Update bookings list with fresh data
       setBookings(allBookings);
-      const readIds = JSON.parse(localStorage.getItem("pn_read_bookings") || "[]");
-      const newBookings = allBookings.filter(b => 
-        b.status === "new" && !readIds.includes(b.id)
-      );
-      setNotifs(newBookings.map(b => ({
-        id: b.id,
-        title: `Ny bokning: ${b.name}`,
-        sub: `${b.service || ""} · ${b.date || ""}`,
-        bookingId: b.id,
-      })));
+      const knownIds = JSON.parse(localStorage.getItem("pn_known_booking_ids") || "null");
+      const allIds = allBookings.map(b => b.id);
+      if (knownIds === null) {
+        localStorage.setItem("pn_known_booking_ids", JSON.stringify(allIds));
+        setNotifs([]);
+      } else {
+        const newBookings = allBookings.filter(b => !knownIds.includes(b.id) && b.status === "new");
+        if (newBookings.length > 0) {
+          localStorage.setItem("pn_known_booking_ids", JSON.stringify(allIds));
+        }
+        setNotifs(newBookings.map(b => ({
+          id: b.id,
+          title: `Ny bokning: ${b.name}`,
+          sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+          bookingId: b.id,
+        })));
+      }
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
