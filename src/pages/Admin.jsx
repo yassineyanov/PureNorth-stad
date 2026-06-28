@@ -717,18 +717,16 @@ function Dashboard() {
   const notifRef = React.useRef(null);
   const [readIds, setReadIds] = React.useState([]);
   React.useEffect(() => {
+    if (!notifOpen) return;
+    setReadIds(notifs.map(n => n.id));
     const handler = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setNotifOpen(false);
       }
     };
-    if (notifOpen) {
-      // Mark all current notifs as read when opening
-      setReadIds(notifs.map(n => n.id));
-      document.addEventListener("mousedown", handler);
-    }
+    setTimeout(() => document.addEventListener("mousedown", handler), 0);
     return () => document.removeEventListener("mousedown", handler);
-  }, [notifOpen, notifs]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [notifOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [baseCount, setBaseCount] = React.useState(null);
 
