@@ -717,6 +717,8 @@ function Dashboard() {
 
   const [baseCount, setBaseCount] = React.useState(null);
 
+  const [baseCount, setBaseCount] = React.useState(null);
+
   const loadNotifs = React.useCallback(async () => {
     try {
       const res = await api.get("/bookings");
@@ -724,20 +726,17 @@ function Dashboard() {
       const newBookings = allBookings.filter(b => b.status === "new");
       setBaseCount(prev => {
         if (prev === null) {
-          // First load - set base count, no notifications
           return newBookings.length;
         }
-        // Show only truly new ones (arrived after first load)
-        const truly = newBookings.slice(0, Math.max(0, newBookings.length - prev));
-        setDismissedIds(dismissed => {
-          setNotifs(truly
-            .filter(b => !dismissed.includes(b.id))
-            .map(b => ({
-              id: b.id,
-              title: `Ny bokning: ${b.name}`,
-              sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
-            })));
-          return dismissed;
+        const trulyNew = newBookings.slice(0, Math.max(0, newBookings.length - prev));
+        setNotifs(prev2 => {
+          const existingIds = prev2.map(n => n.id);
+          const added = trulyNew.filter(b => !existingIds.includes(b.id)).map(b => ({
+            id: b.id,
+            title: `Ny bokning: ${b.name}`,
+            sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+          }));
+          return [...prev2, ...added];
         });
         return prev;
       });
