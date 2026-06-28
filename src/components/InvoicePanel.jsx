@@ -227,7 +227,8 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
           else if (st) { quantity = qty || 1; }
           else if (speed && qty) { quantity = Math.ceil((qty / speed) * 2) / 2; }
           else { quantity = qty || 1; }
-          return { service: item.service, description: item.service, quantity, unit_price: item.price, is_material: false };
+          const kvm = (speed && qty) ? qty : 0;
+          return { service: item.service, description: item.service, quantity, unit_price: item.price, is_material: false, kvm };
         }).filter(Boolean);
         if (autoItems.length > 0) {
           setItems(autoItems);
@@ -431,9 +432,11 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
                   <div className="grid grid-cols-4 gap-2 items-end">
                     {(() => {
                       const pl = priceList.find(p=>p.service===it.service);
-                      const isKvm = pl?.unit === "kvm" || pl?.unit === "tim";
-                      const speed = pl?.kvm_per_hour || 20;
-                      if (isKvm) return (<>
+                      const SPEED_MAP = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35};
+                      const speedKey = pl ? Object.keys(SPEED_MAP).find(k=>pl.service.toLowerCase().includes(k)) : null;
+                      const speed = speedKey ? SPEED_MAP[speedKey] : 20;
+                      const isTimBased = pl?.unit === "tim" || pl?.unit === "kvm";
+                      if (isTimBased) return (<>
                         <div>
                           <Label className="text-[10px] text-slate-400">Yta (kvm)</Label>
                           <Input type="number" step="1" value={it.kvm||""} onChange={e=>{const kvm=parseFloat(e.target.value)||0;const tim=Math.ceil((kvm/speed)*2)/2;updateItem(i,"kvm",kvm);updateItem(i,"quantity",tim);}} className="text-sm mt-0.5" placeholder="0"/>
@@ -452,7 +455,7 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
                       </>);
                       return (<>
                         <div>
-                          <Label className="text-[10px] text-slate-400">{pl?.unit==="tim"?"Timmar":"Antal"}</Label>
+                          <Label className="text-[10px] text-slate-400">{pl?.unit==="st"?"Antal":"Antal"}</Label>
                           <Input type="number" step="0.01" value={it.quantity} onChange={e=>updateItem(i,"quantity",e.target.value)} className="text-sm mt-0.5"/>
                         </div>
                         <div>
