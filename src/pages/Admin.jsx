@@ -306,9 +306,6 @@ function BookingsPanel() {
           {bookingsLastUpdated && <span className="text-xs text-slate-400">Uppdaterad {bookingsLastUpdated.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"})}</span>}
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setRecurringOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 hover:border-[#141414] rounded-full px-4 py-2 transition-colors">
-            <RefreshCw size={14}/> Återkommande
-          </button>
           <button onClick={() => {
             const token = localStorage.getItem("pn_token");
             const base = process.env.REACT_APP_BACKEND_URL || "";
