@@ -63,7 +63,7 @@ export default function DashboardPanel({ onNavigate, onRefresh }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(()=>{ 
     load();
-    const interval = setInterval(() => load(true), 60000);
+    const interval = setInterval(() => load(true), 5000);
     return () => clearInterval(interval);
   }, []);
 
