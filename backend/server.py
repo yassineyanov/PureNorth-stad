@@ -5340,7 +5340,7 @@ async def export_bookings_pdf(current=Depends(get_current_user)):
     from reportlab.lib.pagesizes import landscape
     doc = SimpleDocTemplate(buf, pagesize=landscape(A4),
         topMargin=12*mm, bottomMargin=12*mm, leftMargin=15*mm, rightMargin=15*mm,
-        title=f"{company} - Bokningslista", author=company)
+        title="Bokningslista", author=company)
     styles = getSampleStyleSheet()
     elements = []
     # Header
