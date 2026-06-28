@@ -717,28 +717,23 @@ function Dashboard() {
   });
   const [notifOpen, setNotifOpen] = useState(false);
 
+  const [dismissedNotifs, setDismissedNotifs] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem("pn_dismissed_notifs") || "[]"); } catch { return []; }
+  });
+
   const loadNotifs = React.useCallback(async () => {
     try {
       const res = await api.get("/bookings");
       const allBookings = res.data || [];
       setBookings(allBookings);
-      const knownIds = JSON.parse(localStorage.getItem("pn_known_booking_ids") || "null");
-      const allIds = allBookings.map(b => b.id);
-      if (knownIds === null) {
-        localStorage.setItem("pn_known_booking_ids", JSON.stringify(allIds));
-        setNotifs([]);
-      } else {
-        const newBookings = allBookings.filter(b => !knownIds.includes(b.id) && b.status === "new");
-        if (newBookings.length > 0) {
-          localStorage.setItem("pn_known_booking_ids", JSON.stringify(allIds));
-        }
-        setNotifs(newBookings.map(b => ({
-          id: b.id,
-          title: `Ny bokning: ${b.name}`,
-          sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
-          bookingId: b.id,
-        })));
-      }
+      const dismissed = JSON.parse(localStorage.getItem("pn_dismissed_notifs") || "[]");
+      const newBookings = allBookings.filter(b => b.status === "new" && !dismissed.includes(b.id));
+      setNotifs(newBookings.map(b => ({
+        id: b.id,
+        title: `Ny bokning: ${b.name}`,
+        sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+        bookingId: b.id,
+      })));
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -966,7 +961,7 @@ function Dashboard() {
                               <p className="text-xs text-slate-500 truncate">{n.sub}</p>
                             </div>
                           </button>
-                          <button onClick={e=>{e.stopPropagation();markSeen(n.id);setNotifs(prev=>prev.filter(x=>x.id!==n.id));}} className="h-7 w-7 rounded-full flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 shrink-0 transition-colors ml-1">
+                          <button onClick={e=>{e.stopPropagation();markSeen(n.id);setNotifs(prev=>prev.filter(x=>x.id!==n.id));const d=JSON.parse(localStorage.getItem("pn_dismissed_notifs")||"[]");localStorage.setItem("pn_dismissed_notifs",JSON.stringify([...d,n.id]));}} className="h-7 w-7 rounded-full flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 shrink-0 transition-colors ml-1">
                             <Trash2 size={13}/>
                           </button>
                         </div>
