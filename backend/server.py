@@ -6011,11 +6011,12 @@ class WebsiteSettings(BaseModel):
 
 @api_router.get("/settings/website")
 async def get_website_settings():
+    defaults = WebsiteSettings().dict()
     doc = await db.website_settings.find_one({"_id": "main"})
     if not doc:
-        return WebsiteSettings().dict()
+        return defaults
     doc.pop("_id", None)
-    return doc
+    return {**defaults, **doc}
 
 @api_router.patch("/settings/website")
 async def update_website_settings(payload: WebsiteSettings, current=Depends(get_current_user)):
