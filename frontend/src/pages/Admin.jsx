@@ -306,13 +306,7 @@ function BookingsPanel() {
           {bookingsLastUpdated && <span className="text-xs text-slate-400">Uppdaterad {bookingsLastUpdated.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"})}</span>}
         </div>
         <div className="flex gap-2">
-          <button onClick={() => {
-            const token = localStorage.getItem("pn_token");
-            const base = process.env.REACT_APP_BACKEND_URL || "";
-            window.open(`${base}/api/bookings/export-pdf?token=${token}`, "_blank");
-          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
-            <FileText size={14}/> PDF
-          </button>
+
           <button onClick={() => {
             const token = localStorage.getItem("pn_token");
             const base = process.env.REACT_APP_BACKEND_URL || "";
