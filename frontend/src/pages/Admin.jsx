@@ -714,7 +714,6 @@ function Dashboard() {
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
   const [notifs, setNotifs] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
 
   const loadNotifs = React.useCallback(async () => {
     try {
