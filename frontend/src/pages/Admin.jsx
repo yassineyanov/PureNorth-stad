@@ -947,7 +947,7 @@ function Dashboard() {
             <div className="relative">
               <button onClick={()=>setNotifOpen(o=>{if(!o)setReadIds(notifs.map(n=>n.id));return !o;})} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
                 <Bell size={16}/>
-                {notifs.filter(n => !readIds.includes(n.id)).length > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{notifs.filter(n => !readIds.includes(n.id)).length > 9 ? "9+" : notifs.filter(n => !readIds.includes(n.id)).length}</span>}
+                {notifs.length > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{notifs.length > 9 ? "9+" : notifs.length}</span>}
               </button>
               {notifOpen && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
