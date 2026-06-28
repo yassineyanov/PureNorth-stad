@@ -429,17 +429,39 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
                     <Input value={it.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Beskrivning" className="text-sm" />
                   )}
                   <div className="grid grid-cols-4 gap-2 items-end">
-                    <div>
-                      <Label className="text-[10px] text-slate-400">{priceList.find((p) => p.service === it.service)?.unit === "tim" ? "Timmar" : "Antal"}</Label>
-                      <Input type="number" step="0.01" value={it.quantity} onChange={(e) => updateItem(i, "quantity", e.target.value)} className="text-sm mt-0.5" />
-                    </div>
-                    <div>
-                      <Label className="text-[10px] text-slate-400">À-pris (kr)</Label>
-                      <Input type="number" step="0.01" value={it.unit_price} onChange={(e) => updateItem(i, "unit_price", e.target.value)} className="text-sm mt-0.5" />
-                    </div>
-                    <label className="text-xs flex items-center gap-1.5 text-slate-600 self-center">
-                      
-                    </label>
+                    {(() => {
+                      const pl = priceList.find(p=>p.service===it.service);
+                      const isKvm = pl?.unit === "kvm";
+                      const speed = pl?.kvm_per_hour || 20;
+                      if (isKvm) return (<>
+                        <div>
+                          <Label className="text-[10px] text-slate-400">Yta (kvm)</Label>
+                          <Input type="number" step="1" value={it.kvm||""} onChange={e=>{const kvm=parseFloat(e.target.value)||0;const tim=Math.ceil((kvm/speed)*2)/2;updateItem(i,"kvm",kvm);updateItem(i,"quantity",tim);}} className="text-sm mt-0.5" placeholder="0"/>
+                        </div>
+                        <div className="flex items-end gap-1">
+                          <span className="text-slate-400 mb-2">→</span>
+                          <div className="flex-1">
+                            <Label className="text-[10px] text-slate-400">tim</Label>
+                            <Input type="number" step="0.5" value={it.quantity} onChange={e=>updateItem(i,"quantity",e.target.value)} className="text-sm mt-0.5"/>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-slate-400">À-Pris (kr)</Label>
+                          <Input type="number" step="0.01" value={it.unit_price} onChange={e=>updateItem(i,"unit_price",e.target.value)} className="text-sm mt-0.5"/>
+                        </div>
+                      </>);
+                      return (<>
+                        <div>
+                          <Label className="text-[10px] text-slate-400">{pl?.unit==="tim"?"Timmar":"Antal"}</Label>
+                          <Input type="number" step="0.01" value={it.quantity} onChange={e=>updateItem(i,"quantity",e.target.value)} className="text-sm mt-0.5"/>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-slate-400">À-pris (kr)</Label>
+                          <Input type="number" step="0.01" value={it.unit_price} onChange={e=>updateItem(i,"unit_price",e.target.value)} className="text-sm mt-0.5"/>
+                        </div>
+                        <div/>
+                      </>);
+                    })()}
                     {items.length > 1 && (
                       <button type="button" onClick={() => removeItem(i)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 justify-self-end self-center">
                         <Trash2 size={14} />
@@ -521,7 +543,6 @@ export default function InvoicePanel() {
   const [modalOpen, setModalOpen] = useState(false);
   const [priceList, setPriceList] = useState([]);
   const [editingInvoice, setEditingInvoice] = useState(null);
-  const [search, setSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -669,12 +690,6 @@ export default function InvoicePanel() {
       </div>
 
       {settings && <InvoiceSettingsPanel settings={settings} onSave={saveSettings} />}
-      <div className="mb-4 relative">
-        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input value={search} onChange={e=>setSearch(e.target.value)}
-          placeholder="Sök kund, fakturanummer..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-[#141414] bg-white"/>
-      </div>
 
       {loading ? (
         <p className="text-slate-500">Laddar...</p>
@@ -685,7 +700,7 @@ export default function InvoicePanel() {
         </div>
       ) : (
         <div className="grid gap-3">
-          {invoices.filter(inv => !search || [inv.customer_name, String(inv.invoice_number), inv.customer_email, inv.customer_phone].some(v=>v?.toLowerCase().includes(search.toLowerCase()))).map((inv) => (
+          {invoices.map((inv) => (
             <motion.div key={inv.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-white border border-slate-100 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 mb-1.5">
