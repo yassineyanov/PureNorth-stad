@@ -712,14 +712,7 @@ function Dashboard() {
   const { logout, user } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
   const [notifs, setNotifs] = useState([]);
-  const [seenIds, setSeenIds] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("pn_seen_notifs") || "[]"); } catch { return []; }
-  });
   const [notifOpen, setNotifOpen] = useState(false);
-
-  const [dismissedNotifs, setDismissedNotifs] = React.useState(() => {
-    try { return JSON.parse(localStorage.getItem("pn_dismissed_notifs") || "[]"); } catch { return []; }
-  });
 
   const loadNotifs = React.useCallback(async () => {
     try {
@@ -727,12 +720,16 @@ function Dashboard() {
       const allBookings = res.data || [];
       setBookings(allBookings);
       const newBookings = allBookings.filter(b => b.status === "new");
-      setNotifs(newBookings.map(b => ({
-        id: b.id,
-        title: `Ny bokning: ${b.name}`,
-        sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
-        bookingId: b.id,
-      })));
+      setNotifs(prev => {
+        const manuallyDeleted = prev.filter(n => n._deleted).map(n => n.id);
+        return newBookings
+          .filter(b => !manuallyDeleted.includes(b.id))
+          .map(b => ({
+            id: b.id,
+            title: `Ny bokning: ${b.name}`,
+            sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+          }));
+      });
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -742,20 +739,9 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, [loadNotifs]);
 
-  const unseenCount = notifs.filter(n => !seenIds.includes(n.id)).length;
+  const unseenCount = notifs.length;
+  const deleteNotif = (id) => setNotifs(prev => prev.filter(n => n.id !== id));
 
-  const markAllSeen = () => {
-    const allIds = notifs.map(n => n.id);
-    const updated = [...new Set([...seenIds, ...allIds])];
-    setSeenIds(updated);
-    localStorage.setItem("pn_seen_notifs", JSON.stringify(updated));
-  };
-
-  const markSeen = (id) => {
-    const updated = [...seenIds, id];
-    setSeenIds(updated);
-    localStorage.setItem("pn_seen_notifs", JSON.stringify(updated));
-  };
   const TRANS = {
     sv: { "tabs.dashboard": "Översikt", "tabs.bookings": "Bokningar", "tabs.invoices": "Fakturor", "tabs.customers": "Kunder", "tabs.schema": "Schema", "tabs.payroll": "Lön", "tabs.absences": "Frånvaro", "tabs.expenses": "Utlägg", "tabs.costs": "Kostnader", "tabs.economy": "Ekonomi", "tabs.pricelist": "Prislista", "tabs.calendar": "Kalender", "tabs.stats": "Statistik", "tabs.reviews": "Omdömen", "tabs.users": "Användare", "tabs.settings": "Inställningar" },
     en: { "tabs.dashboard": "Overview", "tabs.bookings": "Bookings", "tabs.invoices": "Invoices", "tabs.customers": "Customers", "tabs.schema": "Schedule", "tabs.payroll": "Payroll", "tabs.absences": "Absences", "tabs.expenses": "Expenses", "tabs.costs": "Costs", "tabs.economy": "Economy", "tabs.pricelist": "Price List", "tabs.calendar": "Calendar", "tabs.stats": "Statistics", "tabs.reviews": "Reviews", "tabs.users": "Users", "tabs.settings": "Settings" },
@@ -950,17 +936,17 @@ function Dashboard() {
                     <div className="max-h-72 overflow-y-auto">
                       {notifs.map(n => (
                         <div key={n.id} className="flex items-center px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 transition-colors">
-                          <button onClick={()=>{ markSeen(n.id); setTab("bookings"); setNotifOpen(false); setSelectedBooking(n.id); setTimeout(()=>{const el=document.getElementById(`booking-${n.id}`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},300); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
+                          <button onClick={()=>{ setTab("bookings"); setNotifOpen(false); setSelectedBooking(n.id); setTimeout(()=>{const el=document.getElementById(`booking-${n.id}`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},300); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
                             <div className="relative shrink-0">
                               <span className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"><CalendarDays size={14} className="text-blue-600"/></span>
-                              {!seenIds.includes(n.id) && <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>}
+                              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
                               <p className="text-xs text-slate-500 truncate">{n.sub}</p>
                             </div>
                           </button>
-                          <button onClick={e=>{e.stopPropagation();markSeen(n.id);setNotifs(prev=>prev.filter(x=>x.id!==n.id));const d=JSON.parse(localStorage.getItem("pn_dismissed_notifs")||"[]");localStorage.setItem("pn_dismissed_notifs",JSON.stringify([...d,n.id]));}} className="h-7 w-7 rounded-full flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 shrink-0 transition-colors ml-1">
+                          <button onClick={e=>{e.stopPropagation();deleteNotif(n.id);}} className="h-7 w-7 rounded-full flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 shrink-0 transition-colors ml-1">
                             <Trash2 size={13}/>
                           </button>
                         </div>
@@ -986,7 +972,7 @@ function Dashboard() {
           <button
             onClick={() => { 
               setTab("bookings"); 
-              markAllSeen(); 
+              setNotifOpen(false);
               localStorage.setItem("pn_bookings_last_visit", new Date().toISOString());
             }}
             data-testid="admin-tab-bookings"
