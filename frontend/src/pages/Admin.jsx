@@ -716,17 +716,7 @@ function Dashboard() {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = React.useRef(null);
   const [readIds, setReadIds] = React.useState([]);
-  React.useEffect(() => {
-    if (!notifOpen) return;
-    setReadIds(prev => notifs.map(n => n.id));
-    const handler = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
-        setNotifOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [notifOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const [baseCount, setBaseCount] = React.useState(null);
 
@@ -906,7 +896,7 @@ function Dashboard() {
           </div>
           {/* Global Search */}
           <div className="relative flex-1 max-w-xs hidden sm:block">
-            <div className="relative" ref={notifRef}>
+            <div className="relative" ref={notifRef} tabIndex={-1} onBlur={e=>{if(!notifRef.current?.contains(e.relatedTarget)){setNotifOpen(false);}}}>
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
               <input
                 value={searchQ}
@@ -945,7 +935,7 @@ function Dashboard() {
               <Settings size={16}/>
             </button>
             <div className="relative">
-              <button onMouseDown={e=>e.stopPropagation()} onClick={()=>setNotifOpen(o=>!o)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+              <button onClick={()=>setNotifOpen(o=>{if(!o)setReadIds(notifs.map(n=>n.id));return !o;})} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
                 <Bell size={16}/>
                 {notifs.filter(n => !readIds.includes(n.id)).length > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{notifs.filter(n => !readIds.includes(n.id)).length > 9 ? "9+" : notifs.filter(n => !readIds.includes(n.id)).length}</span>}
               </button>
