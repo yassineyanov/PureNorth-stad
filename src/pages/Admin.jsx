@@ -715,6 +715,15 @@ function Dashboard() {
   const [notifs, setNotifs] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = React.useRef(null);
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (notifOpen && notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener("click", handler, true);
+    return () => document.removeEventListener("click", handler, true);
+  }, [notifOpen]);
   const [readIds, setReadIds] = React.useState([]);
 
 
