@@ -724,10 +724,7 @@ function Dashboard() {
         const filtered = newBookings.filter(b => !dismissed.includes(b.id));
         const prevIds = prev.map(n => n.id);
         const hasNew = filtered.some(b => !prevIds.includes(b.id));
-        if (hasNew) {
-          setBookings(allBookings);
-          setBookingsLastUpdated(new Date());
-        }
+        if (hasNew) setBookingsLastUpdated(new Date());
         return filtered.map(b => ({
           id: b.id,
           title: `Ny bokning: ${b.name}`,
