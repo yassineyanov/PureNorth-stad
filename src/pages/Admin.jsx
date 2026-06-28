@@ -718,18 +718,12 @@ function Dashboard() {
     try {
       const res = await api.get("/bookings");
       const allBookings = res.data || [];
-      setBookings(allBookings);
       const newBookings = allBookings.filter(b => b.status === "new");
-      setNotifs(prev => {
-        const manuallyDeleted = prev.filter(n => n._deleted).map(n => n.id);
-        return newBookings
-          .filter(b => !manuallyDeleted.includes(b.id))
-          .map(b => ({
-            id: b.id,
-            title: `Ny bokning: ${b.name}`,
-            sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
-          }));
-      });
+      setNotifs(newBookings.map(b => ({
+        id: b.id,
+        title: `Ny bokning: ${b.name}`,
+        sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+      })));
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
