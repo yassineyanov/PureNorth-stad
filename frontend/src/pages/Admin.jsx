@@ -359,7 +359,7 @@ function BookingsPanel() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               data-testid={`booking-row-${b.id}`}
-              id={`booking-${b.id}`} onClick={()=>setSelectedBooking(b.id===selectedBooking?null:b.id)} className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-all ${selectedBooking===b.id ? "bg-blue-50 border-blue-200 shadow-lg" : "bg-white border-slate-100 shadow-sm hover:shadow-md"}`}
+              className="rounded-2xl border border-slate-100 bg-white p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
@@ -672,7 +672,7 @@ function ReviewsPanel() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               data-testid={`review-row-${r.id}`}
-              id={`booking-${b.id}`} onClick={()=>setSelectedBooking(b.id===selectedBooking?null:b.id)} className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-all ${selectedBooking===b.id ? "bg-blue-50 border-blue-200 shadow-lg" : "bg-white border-slate-100 shadow-sm hover:shadow-md"}`}
+              className="rounded-2xl border border-slate-100 bg-white p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
