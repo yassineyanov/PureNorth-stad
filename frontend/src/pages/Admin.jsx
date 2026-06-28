@@ -147,17 +147,17 @@ function BookingsPanel() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", kvm: "", services: [], preferred_date: "", other_description: "" });
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       setBookings((await api.get("/bookings")).data);
     } catch {
-      toast.error("Kunde inte hämta bokningar.");
+      if (!silent) toast.error("Kunde inte hämta bokningar.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
-  useEffect(() => { load(); const interval = setInterval(load, 5000); return () => clearInterval(interval); }, []);
+  useEffect(() => { load(); const interval = setInterval(() => load(true), 5000); return () => clearInterval(interval); }, []);
 
   const setStatus = async (id, status) => {
     try {
