@@ -712,7 +712,12 @@ function Dashboard() {
   const loadNotifs = React.useCallback(async () => {
     try {
       const res = await api.get("/bookings");
-      const newBookings = (res.data || []).filter(b => b.status === "new");
+      const lastVisit = localStorage.getItem("pn_bookings_last_visit") || "0";
+      const newBookings = (res.data || []).filter(b => 
+        b.status === "new" && 
+        !seenIds.includes(b.id) &&
+        (b.created_at || "") > lastVisit
+      );
       setNotifs(newBookings.map(b => ({
         id: b.id,
         title: `Ny bokning: ${b.name}`,
@@ -720,7 +725,7 @@ function Dashboard() {
         bookingId: b.id,
       })));
     } catch {}
-  }, []);
+  }, [seenIds]);
 
   React.useEffect(() => {
     loadNotifs();
@@ -970,7 +975,11 @@ function Dashboard() {
             <LayoutDashboard size={14}/> {t("tabs.dashboard")}
           </button>
           <button
-            onClick={() => { setTab("bookings"); markAllSeen(); }}
+            onClick={() => { 
+              setTab("bookings"); 
+              markAllSeen(); 
+              localStorage.setItem("pn_bookings_last_visit", new Date().toISOString());
+            }}
             data-testid="admin-tab-bookings"
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "bookings" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
