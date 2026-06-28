@@ -717,7 +717,6 @@ function Dashboard() {
 
   const [baseCount, setBaseCount] = React.useState(null);
 
-  const [baseCount, setBaseCount] = React.useState(null);
 
   const loadNotifs = React.useCallback(async () => {
     try {
