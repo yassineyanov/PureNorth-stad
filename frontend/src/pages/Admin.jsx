@@ -710,6 +710,11 @@ function Dashboard() {
   });
   const [notifOpen, setNotifOpen] = useState(false);
 
+  // Clear known IDs cache to reset notifications
+  React.useEffect(() => {
+    localStorage.removeItem("pn_known_booking_ids");
+  }, []);
+
   const loadNotifs = React.useCallback(async () => {
     try {
       const res = await api.get("/bookings");
