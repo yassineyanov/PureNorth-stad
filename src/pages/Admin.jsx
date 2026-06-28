@@ -715,20 +715,31 @@ function Dashboard() {
   const [notifs, setNotifs] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
 
+  const [baseCount, setBaseCount] = React.useState(null);
+
   const loadNotifs = React.useCallback(async () => {
     try {
       const res = await api.get("/bookings");
       const allBookings = res.data || [];
       const newBookings = allBookings.filter(b => b.status === "new");
-      setDismissedIds(dismissed => {
-        setNotifs(newBookings
-          .filter(b => !dismissed.includes(b.id))
-          .map(b => ({
-            id: b.id,
-            title: `Ny bokning: ${b.name}`,
-            sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
-          })));
-        return dismissed;
+      setBaseCount(prev => {
+        if (prev === null) {
+          // First load - set base count, no notifications
+          return newBookings.length;
+        }
+        // Show only truly new ones (arrived after first load)
+        const truly = newBookings.slice(0, Math.max(0, newBookings.length - prev));
+        setDismissedIds(dismissed => {
+          setNotifs(truly
+            .filter(b => !dismissed.includes(b.id))
+            .map(b => ({
+              id: b.id,
+              title: `Ny bokning: ${b.name}`,
+              sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+            })));
+          return dismissed;
+        });
+        return prev;
       });
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
