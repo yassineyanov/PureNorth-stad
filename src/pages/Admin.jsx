@@ -719,18 +719,11 @@ function Dashboard() {
       const res = await api.get("/bookings");
       const allBookings = res.data || [];
       const newBookings = allBookings.filter(b => b.status === "new");
-      setNotifs(prev => {
-        const dismissed = prev.filter(n => n._dismissed).map(n => n.id);
-        const filtered = newBookings.filter(b => !dismissed.includes(b.id));
-        const prevIds = prev.map(n => n.id);
-        const hasNew = filtered.some(b => !prevIds.includes(b.id));
-        if (hasNew) setBookingsLastUpdated(new Date());
-        return filtered.map(b => ({
-          id: b.id,
-          title: `Ny bokning: ${b.name}`,
-          sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
-        }));
-      });
+      setNotifs(newBookings.map(b => ({
+        id: b.id,
+        title: `Ny bokning: ${b.name}`,
+        sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+      })));
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
