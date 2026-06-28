@@ -133,6 +133,16 @@ function LoginScreen({ onLogin }) {
 
 function BookingsPanel() {
   const [bookings, setBookings] = useState([]);
+  const [readBookings, setReadBookings] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem("pn_read_bookings") || "[]"); } catch { return []; }
+  });
+  const markBookingRead = (id) => {
+    setReadBookings(prev => {
+      const updated = [...new Set([...prev, id])];
+      localStorage.setItem("pn_read_bookings", JSON.stringify(updated));
+      return updated;
+    });
+  };
   const [loading, setLoading] = useState(true);
   const [newBookingOpen, setNewBookingOpen] = useState(false);
   const [expandedCalc, setExpandedCalc] = useState(null);
@@ -351,7 +361,7 @@ function BookingsPanel() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               data-testid={`booking-row-${b.id}`}
-              className="rounded-2xl bg-white border border-slate-100 p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between"
+              onClick={()=>markBookingRead(b.id)} className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-colors ${readBookings.includes(b.id) ? "bg-slate-50 border-slate-200" : "bg-white border-slate-100 shadow-sm"}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
@@ -664,7 +674,7 @@ function ReviewsPanel() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               data-testid={`review-row-${r.id}`}
-              className="rounded-2xl bg-white border border-slate-100 p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between"
+              onClick={()=>markBookingRead(b.id)} className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-colors ${readBookings.includes(b.id) ? "bg-slate-50 border-slate-200" : "bg-white border-slate-100 shadow-sm"}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
@@ -713,10 +723,9 @@ function Dashboard() {
     try {
       const res = await api.get("/bookings");
       const lastVisit = localStorage.getItem("pn_bookings_last_visit") || "0";
+      const readIds = JSON.parse(localStorage.getItem("pn_read_bookings") || "[]");
       const newBookings = (res.data || []).filter(b => 
-        b.status === "new" && 
-        !seenIds.includes(b.id) &&
-        (b.created_at || "") > lastVisit
+        b.status === "new" && !readIds.includes(b.id)
       );
       setNotifs(newBookings.map(b => ({
         id: b.id,
