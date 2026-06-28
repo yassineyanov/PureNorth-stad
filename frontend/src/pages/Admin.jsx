@@ -157,7 +157,7 @@ function BookingsPanel() {
       if (!silent) setLoading(false);
     }
   };
-  useEffect(() => { load(); const interval = setInterval(() => load(true), 5000); return () => clearInterval(interval); }, []);
+  useEffect(() => { load(); const interval = setInterval(() => load(true), 1000); return () => clearInterval(interval); }, []);
 
   const setStatus = async (id, status) => {
     try {
