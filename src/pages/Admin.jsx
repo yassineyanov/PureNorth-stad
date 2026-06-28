@@ -352,7 +352,7 @@ function BookingsPanel() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               data-testid={`booking-row-${b.id}`}
-              onClick={()=>setSelectedBooking(b.id===selectedBooking?null:b.id)} className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-all ${selectedBooking===b.id ? "bg-blue-50 border-blue-200 shadow-lg" : "bg-white border-slate-100 shadow-sm hover:shadow-md"}`}
+              id={`booking-${b.id}`} onClick={()=>setSelectedBooking(b.id===selectedBooking?null:b.id)} className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-all ${selectedBooking===b.id ? "bg-blue-50 border-blue-200 shadow-lg" : "bg-white border-slate-100 shadow-sm hover:shadow-md"}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
@@ -665,7 +665,7 @@ function ReviewsPanel() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               data-testid={`review-row-${r.id}`}
-              onClick={()=>setSelectedBooking(b.id===selectedBooking?null:b.id)} className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-all ${selectedBooking===b.id ? "bg-blue-50 border-blue-200 shadow-lg" : "bg-white border-slate-100 shadow-sm hover:shadow-md"}`}
+              id={`booking-${b.id}`} onClick={()=>setSelectedBooking(b.id===selectedBooking?null:b.id)} className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-all ${selectedBooking===b.id ? "bg-blue-50 border-blue-200 shadow-lg" : "bg-white border-slate-100 shadow-sm hover:shadow-md"}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
@@ -941,7 +941,7 @@ function Dashboard() {
                     <div className="max-h-72 overflow-y-auto">
                       {notifs.map(n => (
                         <div key={n.id} className="flex items-center px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 transition-colors">
-                          <button onClick={()=>{ markSeen(n.id); setTab("bookings"); setNotifOpen(false); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
+                          <button onClick={()=>{ markSeen(n.id); setTab("bookings"); setNotifOpen(false); setSelectedBooking(n.id); setTimeout(()=>{const el=document.getElementById(`booking-${n.id}`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},300); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
                             <div className="relative shrink-0">
                               <span className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"><CalendarDays size={14} className="text-blue-600"/></span>
                               {!seenIds.includes(n.id) && <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>}
