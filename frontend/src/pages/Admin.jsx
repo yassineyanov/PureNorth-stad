@@ -718,25 +718,34 @@ function Dashboard() {
   const [baseCount, setBaseCount] = React.useState(null);
 
 
+  const [firstBookingId, setFirstBookingId] = React.useState(null);
+
   const loadNotifs = React.useCallback(async () => {
     try {
       const res = await api.get("/bookings");
       const allBookings = res.data || [];
-      const newBookings = allBookings.filter(b => b.status === "new");
-      setBaseCount(prev => {
+      if (allBookings.length === 0) return;
+      const topId = allBookings[0]?.id;
+      setFirstBookingId(prev => {
         if (prev === null) {
-          return newBookings.length;
+          // First load - just save the top ID
+          return topId;
         }
-        const trulyNew = newBookings.slice(0, Math.max(0, newBookings.length - prev));
-        setNotifs(prev2 => {
-          const existingIds = prev2.map(n => n.id);
-          const added = trulyNew.filter(b => !existingIds.includes(b.id)).map(b => ({
-            id: b.id,
-            title: `Ny bokning: ${b.name}`,
-            sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
-          }));
-          return [...prev2, ...added];
-        });
+        if (topId !== prev) {
+          // New bookings arrived - find how many are new
+          const prevIdx = allBookings.findIndex(b => b.id === prev);
+          const newOnes = prevIdx === -1 ? [allBookings[0]] : allBookings.slice(0, prevIdx);
+          setNotifs(cur => {
+            const existingIds = cur.map(n => n.id);
+            const added = newOnes.filter(b => !existingIds.includes(b.id)).map(b => ({
+              id: b.id,
+              title: `Ny bokning: ${b.name}`,
+              sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+            }));
+            return [...cur, ...added];
+          });
+          return topId;
+        }
         return prev;
       });
     } catch {}
