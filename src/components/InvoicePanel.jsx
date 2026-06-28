@@ -431,7 +431,7 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
                   <div className="grid grid-cols-4 gap-2 items-end">
                     {(() => {
                       const pl = priceList.find(p=>p.service===it.service);
-                      const isKvm = pl?.unit === "kvm";
+                      const isKvm = pl?.unit === "kvm" || pl?.unit === "tim";
                       const speed = pl?.kvm_per_hour || 20;
                       if (isKvm) return (<>
                         <div>
