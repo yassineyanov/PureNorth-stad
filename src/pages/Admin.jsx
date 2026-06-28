@@ -893,7 +893,7 @@ function Dashboard() {
           </div>
           {/* Global Search */}
           <div className="relative flex-1 max-w-xs hidden sm:block">
-            <div className="relative">
+            <div className="relative" onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget)){setNotifOpen(false);setNotifs([])}}}>
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
               <input
                 value={searchQ}
@@ -932,7 +932,7 @@ function Dashboard() {
               <Settings size={16}/>
             </button>
             <div className="relative">
-              <button onClick={()=>setNotifOpen(o=>!o)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+              <button onClick={()=>{if(notifOpen){setNotifOpen(false);setNotifs([]);}else{setNotifOpen(true);}}} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
                 <Bell size={16}/>
                 {notifs.length > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{notifs.length > 9 ? "9+" : notifs.length}</span>}
               </button>
