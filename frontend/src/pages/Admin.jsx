@@ -726,8 +726,7 @@ function Dashboard() {
       const res = await api.get("/bookings");
       const allBookings = res.data || [];
       setBookings(allBookings);
-      const dismissed = JSON.parse(localStorage.getItem("pn_dismissed_notifs") || "[]");
-      const newBookings = allBookings.filter(b => b.status === "new" && !dismissed.includes(b.id));
+      const newBookings = allBookings.filter(b => b.status === "new");
       setNotifs(newBookings.map(b => ({
         id: b.id,
         title: `Ny bokning: ${b.name}`,
