@@ -130,10 +130,31 @@ function SettingsPanel({ settings, onSave }) {
         </form>
       )}
     </div>
+
   );
 }
 
 export default function PayrollPanel() {
+  const [fskattOpen, setFskattOpen] = useState(false);
+  const [fskattData, setFskattData] = useState(null);
+  const [fskattLoading, setFskattLoading] = useState(false);
+
+  const loadFskatt = async () => {
+    setFskattLoading(true);
+    try {
+      const res = await api.get("/employees/fskatt-kontroll");
+      setFskattData(res.data);
+    } catch { toast.error("Kunde inte hämta F-skatt data."); }
+    finally { setFskattLoading(false); }
+  };
+
+  const updateFskatt = async (empId, updates) => {
+    try {
+      await api.patch(`/employees/${empId}/fskatt`, updates);
+      await loadFskatt();
+      toast.success("Uppdaterat!");
+    } catch { toast.error("Kunde inte uppdatera."); }
+  };
   const [start, setStart] = useState(firstDayOfMonth());
   const [end, setEnd] = useState(lastDayOfMonth());
   const [rows, setRows] = useState([]);
@@ -198,6 +219,9 @@ export default function PayrollPanel() {
     <>
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-display font-bold text-xl text-slate-900">Löneexport</h2>
+        <button onClick={()=>setFskattOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-medium border border-slate-200 hover:border-slate-400 rounded-lg px-3 py-2 transition-all text-slate-700">
+          🔍 F-skatt kontroll
+        </button>
       </div>
 
       {settings && <SettingsPanel settings={settings} onSave={saveSettings} />}
@@ -288,6 +312,74 @@ export default function PayrollPanel() {
       <p className="text-xs text-slate-400 mt-4">
         Beräkningen baseras på inlagda pass i Schema, frånvaro och utlägg för vald period. Kontrollera alltid mot ert lönesystem innan utbetalning.
       </p>
+      {fskattOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={()=>setFskattOpen(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-7" onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-display font-bold text-xl">F-skatt Kontroll</h2>
+              <button onClick={()=>setFskattOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">✕</button>
+            </div>
+            {!fskattData ? (
+              <button onClick={loadFskatt} disabled={fskattLoading} className="w-full rounded-full bg-[#141414] text-white py-3 font-semibold disabled:opacity-50">
+                {fskattLoading ? "Laddar..." : "Hämta F-skatt status"}
+              </button>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                    <p className="text-2xl font-bold text-green-700">{fskattData.ok}</p>
+                    <p className="text-xs text-green-600">OK</p>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-700">{fskattData.warnings}</p>
+                    <p className="text-xs text-amber-600">Varningar</p>
+                  </div>
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+                    <p className="text-2xl font-bold text-red-700">{fskattData.errors}</p>
+                    <p className="text-xs text-red-600">Fel</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {fskattData.employees.map(emp => (
+                    <div key={emp.id} className={`rounded-xl border p-4 ${emp.status==="ok"?"border-green-200 bg-green-50":emp.status==="warning"?"border-amber-200 bg-amber-50":"border-red-200 bg-red-50"}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="font-semibold text-slate-900">{emp.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-slate-500">{emp.personnummer || "Personnummer saknas"}</p>
+                            {emp.pnr_valid === true && <span className="text-xs text-green-600 font-medium">✓ Giltigt</span>}
+                            {emp.pnr_valid === false && <span className="text-xs text-red-600 font-medium" title={emp.pnr_error}>✗ {emp.pnr_error}</span>}
+                            {emp.pnr_valid === null && <span className="text-xs text-amber-600 font-medium">⚠ Saknas</span>}
+                          </div>
+                        </div>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${emp.status==="ok"?"bg-green-200 text-green-800":emp.status==="warning"?"bg-amber-200 text-amber-800":"bg-red-200 text-red-800"}`}>
+                          {emp.status_text}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        <select value={emp.skatt_typ} onChange={e=>updateFskatt(emp.id,{skatt_typ:e.target.value})}
+                          className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-[#141414]">
+                          <option value="A-skatt">A-skatt</option>
+                          <option value="F-skatt">F-skatt</option>
+                        </select>
+                        {emp.skatt_typ === "F-skatt" && <>
+                          <input value={emp.fskatt_nr||""} onChange={e=>updateFskatt(emp.id,{fskatt_nr:e.target.value})}
+                            placeholder="F-skattsedel nr" className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-[#141414] flex-1"/>
+                          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                            <input type="checkbox" checked={emp.fskatt_verified||false} onChange={e=>updateFskatt(emp.id,{fskatt_verified:e.target.checked})} className="rounded"/>
+                            Verifierad
+                          </label>
+                        </>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={loadFskatt} className="mt-4 text-xs text-slate-400 hover:text-slate-600">↻ Uppdatera</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
