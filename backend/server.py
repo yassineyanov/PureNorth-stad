@@ -6538,6 +6538,10 @@ async def sync_invoice_from_booking(booking_id: str, payload: dict, current=Depe
 
 app.include_router(api_router)
 
+@app.get("/api/health")
+async def health():
+    return {"status": "ok"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
