@@ -373,10 +373,12 @@ async def get_next_invoice_number() -> int:
 
 # ---- Invoices (Fakturering) ----
 class InvoiceItemModel(BaseModel):
+    service: Optional[str] = None
     description: str = Field(..., min_length=1)
     quantity: float = 1
     unit_price: float = 0
     is_material: bool = False
+    kvm: Optional[float] = None
 
 
 class InvoiceCreate(BaseModel):
