@@ -175,7 +175,20 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
   const [bookingId, setBookingId] = useState(initial?.booking_id || "");
   const firstService = priceList.find((p) => p.is_active)?.service || "Hemstädning";
   const firstPrice = priceList.find((p) => p.is_active)?.price || 0;
-  const [items, setItems] = useState(() => inferItems(initial?.items, firstService, firstPrice));
+  const [items, setItems] = useState(() => {
+    const inferred = inferItems(initial?.items, firstService, firstPrice);
+    // If kvm is null but we have a booking, try to get kvm from it
+    if (initial?.booking_id) {
+      const booking = bookings?.find(b => b.id === initial.booking_id);
+      if (booking?.kvm) {
+        return inferred.map(it => ({
+          ...it,
+          kvm: it.kvm || parseFloat(booking.kvm) || 0
+        }));
+      }
+    }
+    return inferred;
+  });
   const [note, setNote] = useState(initial?.note || "");
   const [dueDate, setDueDate] = useState(initial?.due_date || defaultDueDate(settings?.payment_terms_days));
   const [saving, setSaving] = useState(false);
