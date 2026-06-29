@@ -523,7 +523,9 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
               const afterRut = Math.round(totaltInklMoms - rutAvdrag);
 
               // Step 2: Add Påminnelseavgift AFTER (no moms on it)
-              const attBetala = afterRut + reminderFee;
+              // Use saved customer_pays if available (from DB/calculator)
+              const savedPays = initial?.customer_pays;
+              const attBetala = savedPays != null && !reminderFee ? savedPays : (afterRut + reminderFee);
 
               return (<>
                 <div className="flex justify-between text-slate-600">
