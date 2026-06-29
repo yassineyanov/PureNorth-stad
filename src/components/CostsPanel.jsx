@@ -188,19 +188,11 @@ export default function CostsPanel() {
       <div className="flex flex-col sm:flex-row gap-2 mb-6">
         <div className="flex flex-col gap-1 flex-1">
           <label className="text-xs text-slate-500 font-medium">Från datum</label>
-          <input type="text" value={start} onChange={e=>setStart(e.target.value)}
-            onFocus={e=>{e.target.type="date"; e.target.focus();}}
-            onBlur={e=>{if(!e.target.value) e.target.type="text";}}
-            placeholder="ÅÅÅÅ-MM-DD"
-            className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full min-h-[42px]"/>
+          <input type="date" value={start} onChange={e=>setStart(e.target.value)} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full min-h-[42px]" style={{colorScheme:"light"}}/>
         </div>
         <div className="flex flex-col gap-1 flex-1">
           <label className="text-xs text-slate-500 font-medium">Till datum</label>
-          <input type="text" value={end} onChange={e=>setEnd(e.target.value)}
-            onFocus={e=>{e.target.type="date"; e.target.focus();}}
-            onBlur={e=>{if(!e.target.value) e.target.type="text";}}
-            placeholder="ÅÅÅÅ-MM-DD"
-            className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full min-h-[42px]"/>
+          <input type="date" value={end} onChange={e=>setEnd(e.target.value)} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full min-h-[42px]" style={{colorScheme:"light"}}/>
         </div>
         <div className="flex items-end gap-2">
           <button onClick={load} className="rounded-full bg-[#141414] text-white text-sm font-semibold px-4 py-2">Filtrera</button>
