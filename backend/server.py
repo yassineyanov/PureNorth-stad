@@ -1617,7 +1617,7 @@ async def auto_remind_overdue(request: Request):
                 work_items = [i for i in items if i.get("service") != "Paminnelseavgift"]
                 subtotal = sum(i["quantity"] * i["unit_price"] for i in work_items)
                 vat_amount = round(subtotal * 0.25, 2)
-                rut_deduction = inv.get("rut_deduction", 0)
+                rut_deduction = inv.get("rut_deduction", 0) or 0
                 customer_pays = round(subtotal + vat_amount - rut_deduction + reminder_fee, 2)
                 update_fields["items"] = items
                 update_fields["subtotal"] = round(subtotal, 2)
@@ -1629,11 +1629,11 @@ async def auto_remind_overdue(request: Request):
                 {"_id": to_object_id(invoice_id)},
                 {"$set": update_fields}
             )
-            # 3. Fetch updated invoice
-            inv_updated = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
-            inv_updated["_id"] = str(inv_updated["_id"])
-            # 4. Generate PDF from updated invoice
-            pdf_bytes = build_invoice_pdf(inv_updated, inv_settings)
+            # 3. Fetch updated invoice (same as Visa faktura)
+            doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+            doc["_id"] = str(doc["_id"])
+            # 4. Generate PDF exactly like Visa faktura endpoint
+            pdf_bytes = build_invoice_pdf(doc, inv_settings)
             import base64
             pdf_b64 = base64.b64encode(pdf_bytes).decode()
             # 5. Send email
@@ -1643,7 +1643,7 @@ async def auto_remind_overdue(request: Request):
                 "subject": subject,
                 "html": html,
                 "attachments": [{
-                    "filename": f"faktura_{inv_num}.pdf",
+                    "filename": f"faktura_{doc['invoice_number']}.pdf",
                     "content": pdf_b64,
                 }]
             })
