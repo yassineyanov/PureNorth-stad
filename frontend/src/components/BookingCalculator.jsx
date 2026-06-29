@@ -191,7 +191,7 @@ export default function BookingCalculator({ booking, onCreateInvoice }) {
         </div>
         {rutDeduction > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-green-600">RUT-avdrag (50% av arbetskostnad)</span>
+            <span className="text-green-600"><span className="hidden sm:inline">RUT-avdrag (50% av arbetskostnad)</span><span className="sm:hidden">RUT-avdrag (50%)</span></span>
             <span className="font-medium text-green-600">-{fmtKr(rutDeduction)}</span>
           </div>
         )}
