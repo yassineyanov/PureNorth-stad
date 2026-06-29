@@ -168,7 +168,14 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
   const [customerName, setCustomerName] = useState(initial?.customer_name || "");
   const [customerEmail, setCustomerEmail] = useState(initial?.customer_email || "");
   const [customerPhone, setCustomerPhone] = useState(initial?.customer_phone || "");
-  const [customerAddress, setCustomerAddress] = useState(initial?.customer_address || "");
+  const [customerAddress, setCustomerAddress] = useState(() => {
+    if (initial?.customer_address) return initial.customer_address;
+    if (initial?.booking_id) {
+      const booking = bookings?.find(b => b.id === initial.booking_id);
+      return booking?.address || "";
+    }
+    return "";
+  });
   const [customerPersonnummer, setCustomerPersonnummer] = useState(initial?.customer_personnummer || "");
   const [customerType, setCustomerType] = useState(initial?.customer_type || "private");
   const [rutEligible, setRutEligible] = useState(initial ? initial.rut_eligible : false);
