@@ -559,7 +559,7 @@ export default function ExpensePanel() {
       ) : (
         <div className="grid gap-3">
           {expenses.map((e) => (
-            <motion.div key={e.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-white border border-slate-100 p-5 flex items-center justify-between gap-4">
+            <motion.div key={e.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-white border border-slate-100 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 mb-1.5">
                   <h3 className="font-semibold text-slate-900">{employeeName(e.employee_id)}</h3>
@@ -569,7 +569,7 @@ export default function ExpensePanel() {
                 {e.moms_rate > 0 && <p className="text-xs text-blue-600">Ingående moms ({e.moms_rate}%): {(e.amount - e.amount/(1+e.moms_rate/100)).toFixed(2)} kr</p>}
                 {e.description && <p className="text-sm text-slate-500 mt-1">{e.description}</p>}
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 {e.status !== "paid" && (
                   <select value={e.status} onChange={(ev) => setStatus(e.id, ev.target.value)} className="rounded-full border border-slate-200 text-sm px-3.5 py-2 outline-none focus:border-[#141414]">
                     <option value="pending">Väntar</option>
