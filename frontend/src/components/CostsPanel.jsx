@@ -150,12 +150,12 @@ export default function CostsPanel() {
   return (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h2 className="font-display font-bold text-xl text-slate-900">Kostnader & Lönsamhet</h2>
           <p className="text-sm text-slate-500 mt-0.5">Materialkostnader och vinstanalys</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={()=>{
             const token = localStorage.getItem("pn_token");
             const base = process.env.REACT_APP_BACKEND_URL || "";
@@ -181,11 +181,19 @@ export default function CostsPanel() {
       </div>
 
       {/* Date filter */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        <input type="date" value={start} onChange={e=>setStart(e.target.value)} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414]"/>
-        <input type="date" value={end} onChange={e=>setEnd(e.target.value)} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414]"/>
-        <button onClick={load} className="rounded-full bg-[#141414] text-white text-sm font-semibold px-4 py-2">Filtrera</button>
-        <button onClick={()=>{setStart("");setEnd("");setTimeout(load,100);}} className="rounded-full border border-slate-200 text-sm font-semibold px-4 py-2 text-slate-600 hover:border-[#141414]">Rensa</button>
+      <div className="flex flex-col sm:flex-row gap-2 mb-6">
+        <div className="flex flex-col gap-1 flex-1">
+          <label className="text-xs text-slate-500 font-medium">Från</label>
+          <input type="date" value={start} onChange={e=>setStart(e.target.value)} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full"/>
+        </div>
+        <div className="flex flex-col gap-1 flex-1">
+          <label className="text-xs text-slate-500 font-medium">Till</label>
+          <input type="date" value={end} onChange={e=>setEnd(e.target.value)} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full"/>
+        </div>
+        <div className="flex items-end gap-2">
+          <button onClick={load} className="rounded-full bg-[#141414] text-white text-sm font-semibold px-4 py-2">Filtrera</button>
+          <button onClick={()=>{setStart("");setEnd("");setTimeout(load,100);}} className="rounded-full border border-slate-200 text-sm font-semibold px-4 py-2 text-slate-600 hover:border-[#141414]">Rensa</button>
+        </div>
       </div>
 
       {/* KPI Cards */}
