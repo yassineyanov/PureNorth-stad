@@ -16,20 +16,16 @@ const DEFAULT = {
   company_name: "PureNorth Städ",
 };
 
-export const Contact = ({ ws: wsProp }) => {
+export const Contact = () => {
   const [ws, setWs] = useState(DEFAULT);
 
   useEffect(() => {
-    if (wsProp && Object.keys(wsProp).length > 0) {
-      setWs({ ...DEFAULT, ...wsProp });
-      return;
-    }
     const base = process.env.REACT_APP_BACKEND_URL || "";
     fetch(`${base}/api/settings/website`)
       .then(r => r.json())
       .then(d => setWs({ ...DEFAULT, ...d }))
       .catch(() => {});
-  }, [wsProp]);
+  }, []);
 
   return (
     <section id="kontakt" className="py-24 sm:py-28 bg-white">
@@ -78,13 +74,13 @@ export const Contact = ({ ws: wsProp }) => {
 
         <div className="rounded-3xl bg-[#141414] text-white p-10 sm:p-12 relative overflow-hidden">
           <Logo className="h-14 w-14 mb-6 !bg-white" />
-          <h3 className="font-display font-bold text-3xl mb-3">{ws.contact_box_title}</h3>
+          <h3 className="font-display font-bold text-3xl mb-3">{ws.contact_box_title || "Redo att boka?"}</h3>
           <p className="text-white/75 leading-relaxed max-w-md">
-            {ws.contact_box_text}
+            {ws.contact_box_text || "Vi erbjuder professionell städning anpassad efter dina behov. Kontakta oss idag!"}
           </p>
           <a href="#boka"
             className="mt-8 inline-flex items-center justify-center rounded-full bg-white text-[#141414] px-8 py-4 font-semibold hover:bg-white/90 transition-colors">
-            {ws.contact_box_btn}
+            {ws.contact_box_btn || "Boka tid"}
           </a>
           <div className="absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-white/[0.04]" />
         </div>
@@ -93,16 +89,15 @@ export const Contact = ({ ws: wsProp }) => {
   );
 };
 
-export const Footer = ({ ws: wsProp }) => {
-  const [ws, setWs] = useState(wsProp || { company_name: "PureNorth Städ" });
+export const Footer = () => {
+  const [ws, setWs] = useState({ company_name: "PureNorth Städ" });
   useEffect(() => {
-    if (wsProp) return;
     const base = process.env.REACT_APP_BACKEND_URL || "";
     fetch(`${base}/api/settings/website`)
       .then(r => r.json())
       .then(d => setWs(d))
       .catch(() => {});
-  }, [wsProp]);
+  }, []);
 
   return (
     <footer className="bg-white border-t border-slate-100 py-12">
