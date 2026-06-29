@@ -624,7 +624,11 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     ]
     if inv.get("rut_eligible") and inv.get("rut_deduction", 0) > 0:
         totals.append([f"RUT-avdrag (50% av arbetskostnad)", f"-{inv['rut_deduction']:,.2f} kr"])
-        totals.append(["ATT BETALA", f"{inv['customer_pays']:,.2f} kr"])
+        reminder_fee_pdf = inv.get("reminder_fee", 0) or 0
+        att_betala = inv['customer_pays'] + reminder_fee_pdf
+        if reminder_fee_pdf > 0:
+            totals.append([f"Påminnelseavgift", f"{reminder_fee_pdf:,.2f} kr"])
+        totals.append(["ATT BETALA", f"{att_betala:,.2f} kr"])
 
     tot_styles = []
     last = len(totals) - 1
