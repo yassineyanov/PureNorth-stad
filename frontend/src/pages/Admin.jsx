@@ -952,7 +952,7 @@ function Dashboard() {
               <Settings size={16}/>
             </button>
             <div className="relative">
-              <button onClick={()=>setNotifOpen(o=>!o)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+              <button onClick={()=>setNotifOpen(o=>{if(o)setUnreadCount(0);return !o;})} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
                 <Bell size={16}/>
                 {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{unreadCount > 9 ? "9+" : unreadCount}</span>}
               </button>
