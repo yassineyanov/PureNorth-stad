@@ -1596,7 +1596,7 @@ async def auto_remind_overdue(request: Request):
             if reminder_fee > 0:
                 update_fields["reminder_fee"] = reminder_fee
                 items = inv.get("items", [])
-                items = [i for i in items if i.get("service") != "Paminnelseavgift"]
+                items = [i for i in items if i.get("service") not in ("Paminnelseavgift", "Påminnelseavgift")]
                 items.append({
                     "service": "Paminnelseavgift",
                     "description": "Paminnelseavgift enligt inkassolagen (ingen moms)",
