@@ -103,8 +103,11 @@ export default function CostsPanel() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+  const [start, setStart] = useState(firstDay);
+  const [end, setEnd] = useState(lastDay);
 
   const load = async () => {
     setLoading(true);
