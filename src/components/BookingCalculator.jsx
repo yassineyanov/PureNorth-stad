@@ -139,8 +139,8 @@ export default function BookingCalculator({ booking, onCreateInvoice }) {
     <div className="space-y-4">
 
       {/* ── Items table ── */}
-      <div className="rounded-xl border border-slate-100 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-xl border border-slate-100 overflow-x-auto">
+        <table className="w-full text-sm min-w-[400px]">
           <thead>
             <tr className="bg-slate-50 text-xs text-slate-400 uppercase tracking-wide">
               <th className="p-3 text-left">Tjänst</th>
