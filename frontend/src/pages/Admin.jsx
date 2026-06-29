@@ -420,7 +420,7 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
 
             </motion.div>
             {expandedCalc === b.id && (
-              <div className="rounded-2xl bg-white border border-slate-100 p-5 -mt-2">
+              <div className="rounded-2xl bg-white border border-slate-100 p-5 -mt-2 overflow-x-auto">
                 <BookingCalculator
                   booking={b}
                   onCreateInvoice={(items, totals) => createInvoiceFromBooking(b, items, totals)}
