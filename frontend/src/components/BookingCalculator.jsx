@@ -22,7 +22,7 @@ function getType(svcName, unit) {
 }
 
 function roundUp(h) { return Math.ceil(h * 2) / 2; }
-function fmtKr(n)   { return Math.round(n).toLocaleString("sv-SE") + " kr"; }
+function fmtKr(n)   { return Number(n).toLocaleString("sv-SE", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " kr"; }
 
 // ── Build one row from service + priceItem + booking qty ──────────────────────
 function buildRow(svcName, priceItem, bookingQty) {
@@ -108,7 +108,7 @@ export default function BookingCalculator({ booking, onCreateInvoice }) {
   const handleCreate = async () => {
     try {
       const invoiceItems = rows.map(r => ({
-        service:     r.invoiceDesc,
+        service:     r.label,
         description: r.invoiceDesc,
         quantity:    r.invoiceQty,
         unit_price:  r.rate,
@@ -116,11 +116,11 @@ export default function BookingCalculator({ booking, onCreateInvoice }) {
       }));
       const hasRut = rows.some(r => r.isRut);
       const totals = {
-        subtotal:      Math.round(subtotal),
-        rut_deduction: Math.round(rutDeduction),
-        vat_amount:    Math.round(moms),
-        total_amount:  Math.round(totalInclMoms),
-        customer_pays: Math.round(attBetala),
+        subtotal:      Math.round(subtotal * 100) / 100,
+        rut_deduction: Math.round(rutDeduction * 100) / 100,
+        vat_amount:    Math.round(moms * 100) / 100,
+        total_amount:  Math.round(totalInclMoms * 100) / 100,
+        customer_pays: Math.round(attBetala * 100) / 100,
         rut_eligible:  hasRut,
       };
       await onCreateInvoice(invoiceItems, totals);
