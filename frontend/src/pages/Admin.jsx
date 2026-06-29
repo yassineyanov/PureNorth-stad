@@ -788,6 +788,7 @@ function Dashboard() {
   const { tab: urlTab } = useParams();
   const navigate = useNavigate();
   const [tab, setTabState] = useState(urlTab || "dashboard");
+  const [selectedBooking, setSelectedBooking] = React.useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsData, setSettingsData] = useState({
     company_name: "", company_orgnr: "", company_address: "",
