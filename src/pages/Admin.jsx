@@ -717,6 +717,7 @@ function Dashboard() {
   const { logout, user } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
   const [notifs, setNotifs] = useState([]);
+  const [unreadCount, setUnreadCount] = React.useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = React.useRef(null);
   React.useEffect(() => {
@@ -724,7 +725,6 @@ function Dashboard() {
     const handler = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setNotifOpen(false);
-        setNotifs([]);
       }
     };
     const t = setTimeout(() => document.addEventListener("click", handler), 100);
@@ -758,6 +758,7 @@ function Dashboard() {
               title: `Ny bokning: ${b.name}`,
               sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
             }));
+            if(added.length>0) setUnreadCount(c=>c+added.length);
             return [...cur, ...added];
           });
           return [...prev, ...newOnes.map(b => b.id)];
@@ -951,15 +952,15 @@ function Dashboard() {
               <Settings size={16}/>
             </button>
             <div className="relative">
-              <button onClick={()=>setNotifOpen(o=>{if(o)setNotifs([]);return !o;})} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+              <button onClick={()=>setNotifOpen(o=>!o)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
                 <Bell size={16}/>
-                {notifs.length > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{notifs.length > 9 ? "9+" : notifs.length}</span>}
+                {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{unreadCount > 9 ? "9+" : unreadCount}</span>}
               </button>
               {notifOpen && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                     <p className="font-semibold text-sm text-slate-900">Nya bokningar</p>
-                    <button onClick={()=>{setNotifOpen(false);setNotifs([]);}} className="text-slate-400 hover:text-slate-600"><X size={14}/></button>
+                    <button onClick={()=>setNotifOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={14}/></button>
                   </div>
                   {notifs.length === 0 ? (
                     <p className="p-4 text-sm text-slate-400 text-center">Inga nya bokningar</p>
@@ -1010,7 +1011,7 @@ function Dashboard() {
             className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "bookings" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
           >
             <CalendarDays size={14}/> {t("tabs.bookings")}
-            {unseenCount > 0 && <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold">{unseenCount}</span>}
+            {unreadCount > 0 && <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold">{unreadCount}</span>}
           </button>
           <button
             onClick={() => setTab("invoices")}
