@@ -40,6 +40,7 @@ function inferItems(initialItems, defaultService = "Hemstädning", defaultPrice 
       quantity: it.quantity,
       unit_price: it.unit_price,
       is_material: it.is_material,
+      kvm: it.kvm || 0,
     };
   });
 }
