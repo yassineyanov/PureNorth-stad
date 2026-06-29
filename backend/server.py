@@ -504,7 +504,6 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     )
     hdr = Table([[logo_cell, faktura_title]], colWidths=[90*mm, None])
 
-    hdr = Table([[logo_cell, [faktura_title, faktura_nr]]], colWidths=[90*mm, None])
     hdr.setStyle(TableStyle([
         ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
         ("ALIGN",(1,0),(1,0),"RIGHT"),
