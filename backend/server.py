@@ -1597,40 +1597,12 @@ async def auto_remind_overdue(request: Request):
         """
 
         try:
-            # Update DB first
-            await db.invoices.update_one(
-                {"_id": to_object_id(invoice_id)},
-                {"$set": update_fields}
-            )
-            # Fetch updated invoice for PDF
-            inv_updated = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
-            inv_updated["_id"] = str(inv_updated["_id"])
-            # Update inv with reminder_fee before generating PDF
-            inv_for_pdf = dict(inv)
-            if reminder_fee > 0:
-                inv_for_pdf["reminder_fee"] = reminder_fee
-            pdf_bytes = build_invoice_pdf(inv_updated, inv_settings)
-            import base64
-            pdf_b64 = base64.b64encode(pdf_bytes).decode()
-
-            resend.Emails.send({
-                "from": f"{company} <onboarding@resend.dev>",
-                "to": admin_email,
-                "subject": subject,
-                "html": html,
-                "attachments": [{
-                    "filename": f"faktura_{inv_num}.pdf",
-                    "content": pdf_b64,
-                }]
-            })
-
-            # Update invoice
+            # 1. Build update_fields
             update_fields = {
                 "status": "overdue",
                 "reminder_count": new_reminder_count,
                 "last_reminder_at": datetime.now(timezone.utc).isoformat()
             }
-
             if reminder_fee > 0:
                 update_fields["reminder_fee"] = reminder_fee
                 items = inv.get("items", [])
@@ -1650,18 +1622,31 @@ async def auto_remind_overdue(request: Request):
                 update_fields["items"] = items
                 update_fields["subtotal"] = round(subtotal, 2)
                 update_fields["vat_amount"] = vat_amount
+                update_fields["total_amount"] = round(subtotal + vat_amount, 2)
                 update_fields["customer_pays"] = customer_pays
-
-
-            sent_count += 1
-            results.append({
-                "invoice": inv_num,
-                "customer": customer_name,
-                "reminder_count": new_reminder_count,
-                "reminder_fee": reminder_fee,
-                "status": "sent"
+            # 2. Save to DB
+            await db.invoices.update_one(
+                {"_id": to_object_id(invoice_id)},
+                {"$set": update_fields}
+            )
+            # 3. Fetch updated invoice
+            inv_updated = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+            inv_updated["_id"] = str(inv_updated["_id"])
+            # 4. Generate PDF from updated invoice
+            pdf_bytes = build_invoice_pdf(inv_updated, inv_settings)
+            import base64
+            pdf_b64 = base64.b64encode(pdf_bytes).decode()
+            # 5. Send email
+            resend.Emails.send({
+                "from": f"{company} <onboarding@resend.dev>",
+                "to": admin_email,
+                "subject": subject,
+                "html": html,
+                "attachments": [{
+                    "filename": f"faktura_{inv_num}.pdf",
+                    "content": pdf_b64,
+                }]
             })
-
         except Exception as e:
             results.append({"invoice": inv_num, "status": "error", "reason": str(e)})
 
