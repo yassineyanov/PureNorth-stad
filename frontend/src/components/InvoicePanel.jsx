@@ -300,10 +300,12 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
         customer_type: customerType,
         rut_eligible: rutEligible,
         items: items.map((i) => ({
+          service: i.service,
           description: i.description,
           quantity: parseFloat(i.quantity) || 0,
           unit_price: parseFloat(i.unit_price) || 0,
           is_material: i.is_material,
+          kvm: parseFloat(i.kvm) || 0,
         })),
         note: note.trim() || null,
         due_date: dueDate || null,
