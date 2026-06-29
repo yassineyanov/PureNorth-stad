@@ -733,10 +733,8 @@ function Dashboard() {
   const [readIds, setReadIds] = React.useState([]);
 
 
-  const [baseCount, setBaseCount] = React.useState(null);
 
 
-  const [firstBookingId, setFirstBookingId] = React.useState(null);
 
   const [knownIds, setKnownIds] = React.useState(null);
 
@@ -774,7 +772,6 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, [loadNotifs]);
 
-  const unseenCount = notifs.length;
   const deleteNotif = (id) => { setNotifs(prev => prev.filter(n => n.id !== id)); };
 
   const TRANS = {
