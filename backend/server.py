@@ -4347,13 +4347,43 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
       </div>
     </div>
     """
-
     try:
-        # Generate PDF
-        pdf_bytes = build_invoice_pdf(doc, inv_settings)
+        # 1. Build update_fields first
+        update_fields = {
+            "status": "overdue",
+            "reminder_count": reminder_count,
+            "last_reminder_at": datetime.now(timezone.utc).isoformat()
+        }
+        if reminder_fee > 0:
+            items = [i for i in doc.get("items", []) if i.get("service") not in ("Påminnelseavgift", "Paminnelseavgift")]
+            items.append({
+                "service": "Påminnelseavgift",
+                "description": "Påminnelseavgift enligt inkassolagen (ingen moms)",
+                "quantity": 1,
+                "unit_price": reminder_fee,
+                "is_material": False,
+            })
+            work_items = [i for i in items if i.get("service") != "Påminnelseavgift"]
+            subtotal = sum(i["quantity"] * i["unit_price"] for i in work_items)
+            vat_amount = round(subtotal * 0.25, 2)
+            rut_deduction = doc.get("rut_deduction", 0) or 0
+            customer_pays = round(subtotal + vat_amount - rut_deduction + reminder_fee, 2)
+            update_fields["items"] = items
+            update_fields["subtotal"] = round(subtotal, 2)
+            update_fields["vat_amount"] = vat_amount
+            update_fields["total_amount"] = round(subtotal + vat_amount, 2)
+            update_fields["customer_pays"] = customer_pays
+        # 2. Save to DB first
+        await db.invoices.update_one(
+            {"_id": to_object_id(invoice_id)},
+            {"$set": update_fields}
+        )
+        # 3. Fetch updated and generate PDF
+        updated_doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+        updated_doc["_id"] = str(updated_doc["_id"])
+        pdf_bytes = build_invoice_pdf(updated_doc, inv_settings)
         import base64
         pdf_b64 = base64.b64encode(pdf_bytes).decode()
-
         resend.Emails.send({
             "from": f"{company} <onboarding@resend.dev>",
             "to": admin_email,
@@ -4364,48 +4394,6 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
                 "content": pdf_b64,
             }]
         })
-
-        # Update invoice - add reminder fee if reminder_count >= 2
-        update_fields = {
-            "status": "overdue",
-            "reminder_count": reminder_count,
-            "last_reminder_at": datetime.now(timezone.utc).isoformat()
-        }
-
-        if reminder_fee > 0:
-            # Add påminnelseavgift to invoice items (NO moms on reminder fee)
-            items = doc.get("items", [])
-            # Remove old reminder fee if exists
-            items = [i for i in items if i.get("service") != "Påminnelseavgift"]
-            # Add new reminder fee
-            items.append({
-                "service": "Påminnelseavgift",
-                "description": "Påminnelseavgift enligt inkassolagen (ingen moms)",
-                "quantity": 1,
-                "unit_price": reminder_fee,
-                "is_material": False,
-            })
-
-            # Recalculate: reminder fee is AFTER moms and RUT
-            work_items = [i for i in items if i.get("service") != "Påminnelseavgift"]
-            subtotal = sum(i["quantity"] * i["unit_price"] for i in work_items)
-            vat_rate = doc.get("vat_amount", 0) / doc.get("subtotal", 1) * 100 if doc.get("subtotal", 0) > 0 else 25
-            vat_amount = round(subtotal * vat_rate / 100, 2)
-            rut_deduction = doc.get("rut_deduction", 0)
-            total_excl_reminder = round(subtotal + vat_amount - rut_deduction, 2)
-            customer_pays = round(total_excl_reminder + reminder_fee, 2)
-            total_amount = round(subtotal + vat_amount + reminder_fee, 2)
-
-            update_fields["items"] = items
-            update_fields["subtotal"] = round(subtotal, 2)
-            update_fields["vat_amount"] = vat_amount
-            update_fields["total_amount"] = total_amount
-            update_fields["customer_pays"] = customer_pays
-
-        await db.invoices.update_one(
-            {"_id": to_object_id(invoice_id)},
-            {"$set": update_fields}
-        )
 
         return {
             "success": True,
