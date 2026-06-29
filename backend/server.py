@@ -1619,9 +1619,9 @@ async def auto_remind_overdue(request: Request):
                 {"_id": to_object_id(invoice_id)},
                 {"$set": update_fields}
             )
-            # 3. Fetch updated invoice (same as Visa faktura)
-            doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
-            doc["_id"] = str(doc["_id"])
+            # 3. Build invoice dict for PDF from current inv + update_fields
+            doc = {**inv, **update_fields}
+            doc["_id"] = str(inv["_id"])
             # 4. Generate PDF exactly like Visa faktura endpoint
             pdf_bytes = build_invoice_pdf(doc, inv_settings)
             import base64
