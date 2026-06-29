@@ -517,10 +517,10 @@ function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave 
               const laborSum = laborItems.reduce((s,i) => s + (parseFloat(i.quantity)||0)*(parseFloat(i.unit_price)||0), 0);
               const matSum = matItems.reduce((s,i) => s + (parseFloat(i.quantity)||0)*(parseFloat(i.unit_price)||0), 0);
               const delsumma = laborSum + matSum;
-              const moms = delsumma * ((settings?.vat_rate ?? 25) / 100);
+              const moms = Math.round(delsumma * ((settings?.vat_rate ?? 25) / 100));
               const totaltInklMoms = delsumma + moms;
-              const rutAvdrag = rutEligible && customerType === "private" ? laborSum * 0.5 : 0;
-              const afterRut = totaltInklMoms - rutAvdrag;
+              const rutAvdrag = rutEligible && customerType === "private" ? Math.round(laborSum * 0.5) : 0;
+              const afterRut = Math.round(totaltInklMoms - rutAvdrag);
 
               // Step 2: Add Påminnelseavgift AFTER (no moms on it)
               const attBetala = afterRut + reminderFee;
