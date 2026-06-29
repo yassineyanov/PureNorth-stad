@@ -361,8 +361,10 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
+              id={`booking-${b.id}`}
               data-testid={`booking-row-${b.id}`}
-              className="rounded-2xl border border-slate-100 bg-white p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between"
+              onClick={()=>setSelectedBooking(selectedBooking===b.id?null:b.id)}
+              className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-all ${selectedBooking===b.id?"bg-blue-50 border-blue-300 shadow-lg shadow-blue-100":"bg-white border-slate-100 hover:shadow-sm"}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
