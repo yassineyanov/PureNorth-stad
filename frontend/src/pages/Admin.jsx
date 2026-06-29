@@ -369,7 +369,7 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
               id={`booking-${b.id}`}
               data-testid={`booking-row-${b.id}`}
               onClick={()=>setSelectedBooking(selectedBooking===b.id?null:b.id)}
-              className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-all ${selectedBooking===b.id?"bg-blue-50 border-blue-300 shadow-lg shadow-blue-100":"bg-white border-slate-100 hover:shadow-sm"}`}
+              className={`rounded-2xl border p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center gap-4 justify-between cursor-pointer transition-all ${selectedBooking===b.id?"bg-blue-50 border-blue-300 shadow-lg shadow-blue-100":"bg-white border-slate-100 hover:shadow-sm"}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
@@ -394,7 +394,7 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                   <p className="mt-3 text-sm text-slate-600 bg-slate-50 rounded-xl p-3"><strong>Anteckning:</strong> {b.other_description}</p>
                 )}
               </div>
-              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                 <select
                   value={b.status}
                   onChange={(e) => setStatus(b.id, e.target.value)}
@@ -920,7 +920,7 @@ function Dashboard() {
           </div>
           {/* Global Search */}
           <div className="relative flex-1 max-w-xs hidden sm:block">
-            <div className="relative" ref={notifRef} tabIndex={-1} onBlur={e=>{if(!notifRef.current?.contains(e.relatedTarget)){setNotifOpen(false);}}}>
+            <div className="relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
               <input
                 value={searchQ}
@@ -958,7 +958,7 @@ function Dashboard() {
             <button onClick={()=>setTab("settings")} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
               <Settings size={16}/>
             </button>
-            <div className="relative">
+            <div className="relative" ref={notifRef}>
               <button onClick={()=>setNotifOpen(o=>{if(o)setUnreadCount(0);return !o;})} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
                 <Bell size={16}/>
                 {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{unreadCount > 9 ? "9+" : unreadCount}</span>}
