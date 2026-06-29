@@ -254,15 +254,17 @@ export const BookingForm = () => {
                 </motion.div>
               )}
 
-              {quantityInfo && (
-                <div>
-                  <Label htmlFor="kvm" className="text-white/70">{quantityInfo.label}</Label>
-                  <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} />
+              <div className="grid grid-cols-2 gap-4">
+                {quantityInfo && (
+                  <div>
+                    <Label htmlFor="kvm" className="text-white/70">{quantityInfo.label}</Label>
+                    <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} />
+                  </div>
+                )}
+                <div className={quantityInfo ? "" : "col-span-2"}>
+                  <Label htmlFor="date" className="text-white/70">Önskat datum för bokning</Label>
+                  <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} min={new Date().toISOString().split("T")[0]} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
                 </div>
-              )}
-              <div>
-                <Label htmlFor="date" className="text-white/70">Önskat datum för bokning</Label>
-                <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} min={new Date().toISOString().split("T")[0]} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
               </div>
 
               <button
