@@ -152,7 +152,12 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      setBookings((await api.get("/bookings")).data);
+      const data = (await api.get("/bookings")).data;
+      setBookings(prev => {
+        const prevStr = JSON.stringify(prev.map(b=>b.id+b.status));
+        const newStr = JSON.stringify(data.map(b=>b.id+b.status));
+        return prevStr === newStr ? prev : data;
+      });
     } catch {
       if (!silent) toast.error("Kunde inte hämta bokningar.");
     } finally {
