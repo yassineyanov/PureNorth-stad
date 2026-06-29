@@ -1590,7 +1590,12 @@ async def auto_remind_overdue(request: Request):
         """
 
         try:
-            pdf_bytes = build_invoice_pdf(inv, inv_settings)
+            # Update inv with reminder_fee before generating PDF
+            inv_for_pdf = dict(inv)
+            if reminder_fee > 0:
+                inv_for_pdf["reminder_fee"] = reminder_fee
+                inv_for_pdf["customer_pays"] = round(inv.get("customer_pays", 0) + reminder_fee, 2)
+            pdf_bytes = build_invoice_pdf(inv_for_pdf, inv_settings)
             import base64
             pdf_b64 = base64.b64encode(pdf_bytes).decode()
 
