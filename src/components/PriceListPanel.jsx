@@ -37,7 +37,7 @@ function getCalcType(name, unit) {
 }
 
 function roundUp(h) { return Math.ceil(h * 2) / 2; }
-function fmtKr(n) { return Math.round(n).toLocaleString("sv-SE") + " kr"; }
+function fmtKr(n) { return Number(n).toLocaleString("sv-SE", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " kr"; }
 
 function CalcCard({ item }) {
 
