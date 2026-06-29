@@ -552,7 +552,7 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     details = [
         [Paragraph("FAKTURADATUM", label_style), Paragraph(inv["created_at"][:10], value_style)],
         [Paragraph("FÖRFALLODATUM", label_style), Paragraph(inv["due_date"], bold_style)],
-        [Paragraph("BETALNINGSVILLKOR", label_style), Paragraph(f"{inv.get('due_days',30)} dagar netto", value_style)],
+        [Paragraph("BETALNINGSVILLKOR", label_style), Paragraph(f"{inv.get('due_days') or inv.get('payment_terms_days') or settings.payment_terms_days or 30} dagar netto", value_style)],
     ]
     if settings.bankgiro:
         details.append([Paragraph("BANKGIRO", label_style), Paragraph(settings.bankgiro, value_style)])
