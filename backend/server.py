@@ -498,15 +498,11 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
             logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
     else:
         logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
-
     faktura_title = Paragraph(
-        '<font size="28" color="#141414"><b>FAKTURA</b></font>',
+        f'<font size="22" color="#141414"><b>FAKTURA</b></font>  <font size="13" color="#888888">#{inv["invoice_number"]}</font>',
         ps("ft", alignment=2)
     )
-    faktura_nr = Paragraph(
-        f'<font size="9" color="#888888">Nr {inv["invoice_number"]}</font>',
-        ps("fnr", alignment=2)
-    )
+    hdr = Table([[logo_cell, faktura_title]], colWidths=[90*mm, None])
 
     hdr = Table([[logo_cell, [faktura_title, faktura_nr]]], colWidths=[90*mm, None])
     hdr.setStyle(TableStyle([
