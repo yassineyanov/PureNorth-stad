@@ -14,6 +14,7 @@ const initialForm = {
   name: "",
   email: "",
   phone: "",
+  address: "",
   kvm: "",
   preferred_date: "",
   other_description: "",
@@ -171,6 +172,10 @@ export const BookingForm = () => {
                 <div>
                   <Label htmlFor="phone" className="text-white/70">Telefonnummer *</Label>
                   <Input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} />
+                </div>
+                <div>
+                  <Label htmlFor="address" className="text-white/70">Adress (städobjekt)</Label>
+                  <Input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" className={darkInput} />
                 </div>
                 {quantityInfo && (
                   <div>
