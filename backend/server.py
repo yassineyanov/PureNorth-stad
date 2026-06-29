@@ -625,7 +625,6 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     if inv.get("rut_eligible") and inv.get("rut_deduction", 0) > 0:
         totals.append([f"RUT-avdrag (50% av arbetskostnad)", f"-{inv['rut_deduction']:,.2f} kr"])
     reminder_fee_pdf = inv.get("reminder_fee", 0) or 0
-    # If reminder_fee not stored, calculate from difference
     if not reminder_fee_pdf:
         total_inkl = inv.get("total_amount", 0)
         cust_pays = inv.get("customer_pays", 0)
@@ -633,7 +632,7 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
         diff = round(cust_pays - (total_inkl - rut), 2)
         if diff > 0:
             reminder_fee_pdf = diff
-    att_betala = inv['customer_pays']
+    att_betala = inv.get("customer_pays", 0)
     if reminder_fee_pdf > 0:
         totals.append([f"Påminnelseavgift", f"{reminder_fee_pdf:,.2f} kr"])
     totals.append(["ATT BETALA", f"{att_betala:,.2f} kr"])
@@ -1625,6 +1624,7 @@ async def auto_remind_overdue(request: Request):
             }
 
             if reminder_fee > 0:
+                update_fields["reminder_fee"] = reminder_fee
                 items = inv.get("items", [])
                 items = [i for i in items if i.get("service") != "Paminnelseavgift"]
                 items.append({
