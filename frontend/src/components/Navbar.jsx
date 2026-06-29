@@ -44,7 +44,7 @@ export const Navbar = () => {
       }`}
     >
       <nav className="max-w-7xl mx-auto px-5 sm:px-8 h-20 flex items-center justify-between">
-        <Link to="/" data-testid="nav-logo" className="flex items-center gap-3" onClick={()=>window.scrollTo({top:0,behavior:"smooth"})}>
+        <Link to="/" data-testid="nav-logo" className="flex items-center gap-3" onClick={()=>window.location.href="/"}>
           <Logo className="h-10 w-10" />
           <span className="font-display font-bold text-xl tracking-tight text-slate-900">
             {companyName}
