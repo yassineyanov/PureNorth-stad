@@ -318,8 +318,8 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
             const token = localStorage.getItem("pn_token");
             const base = process.env.REACT_APP_BACKEND_URL || "";
             window.open(`${base}/api/bookings/export-pdf?token=${token}`, "_blank");
-          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
-            <FileText size={14}/> PDF
+          }} className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-2 sm:px-3 py-2 transition-all">
+            <FileText size={14}/> <span className="hidden sm:inline">PDF</span><span className="sm:hidden">PDF</span>
           </button>
           <button onClick={() => {
             const token = localStorage.getItem("pn_token");
@@ -334,9 +334,9 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
           <button onClick={() => setRecurringOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 hover:border-[#141414] rounded-full px-4 py-2 transition-colors">
             <RefreshCw size={14}/> Återkommande
           </button>
-          <button onClick={() => setNewBookingOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] hover:bg-black rounded-full px-4 py-2 transition-colors">
+          <button onClick={() => setNewBookingOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] hover:bg-black rounded-full px-3 sm:px-4 py-2 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Ny bokning
+            <span className="hidden sm:inline">Ny bokning</span>
           </button>
         </div>
       </div>
@@ -914,8 +914,8 @@ function Dashboard() {
           <div className="flex items-center gap-3">
             <Logo className="h-9 w-9" />
             <div>
-              <span className="font-display font-bold text-lg text-slate-900 block leading-tight">PureNorth Städ</span>
-              <span className="text-xs text-slate-500">Adminpanel</span>
+              <span className="font-display font-bold text-base sm:text-lg text-slate-900 block leading-tight">PureNorth Städ</span>
+              <span className="text-xs text-slate-500 hidden sm:block">Adminpanel</span>
             </div>
           </div>
           {/* Global Search */}
