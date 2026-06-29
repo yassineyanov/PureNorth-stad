@@ -185,11 +185,19 @@ export default function CostsPanel() {
       <div className="flex flex-col sm:flex-row gap-2 mb-6">
         <div className="flex flex-col gap-1 flex-1">
           <label className="text-xs text-slate-500 font-medium">Från</label>
-          <input type="date" value={start} onChange={e=>setStart(e.target.value)} style={{colorScheme:"light"}} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full min-h-[42px]"/>
+          <input type="date" value={start} onChange={e=>setStart(e.target.value)}
+            onFocus={e=>e.target.showPicker?.()}
+            className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full min-h-[42px] text-slate-700"
+            style={{colorScheme:"light", WebkitAppearance:"none"}}/>
+          {!start && <span className="absolute text-sm text-slate-400 pointer-events-none px-3 py-2">Från datum</span>}
         </div>
         <div className="flex flex-col gap-1 flex-1">
           <label className="text-xs text-slate-500 font-medium">Till</label>
-          <input type="date" value={end} onChange={e=>setEnd(e.target.value)} style={{colorScheme:"light"}} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full min-h-[42px]"/>
+          <input type="date" value={end} onChange={e=>setEnd(e.target.value)}
+            onFocus={e=>e.target.showPicker?.()}
+            className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] w-full min-h-[42px] text-slate-700"
+            style={{colorScheme:"light", WebkitAppearance:"none"}}/>
+          {!end && <span className="absolute text-sm text-slate-400 pointer-events-none px-3 py-2">Till datum</span>}
         </div>
         <div className="flex items-end gap-2">
           <button onClick={load} className="rounded-full bg-[#141414] text-white text-sm font-semibold px-4 py-2">Filtrera</button>
