@@ -721,7 +721,9 @@ function ReviewsPanel() {
 function Dashboard() {
   const { logout, user } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
-  const [notifs, setNotifs] = useState([]);
+  const [notifs, setNotifs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("pn_notifs") || "[]"); } catch { return []; }
+  });
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = React.useRef(null);
@@ -742,6 +744,9 @@ function Dashboard() {
 
 
   const [knownIds, setKnownIds] = React.useState(null);
+  React.useEffect(() => {
+    localStorage.setItem("pn_notifs", JSON.stringify(notifs));
+  }, [notifs]);
 
   const loadNotifs = React.useCallback(async () => {
     try {
