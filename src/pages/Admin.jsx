@@ -137,7 +137,6 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
   React.useEffect(() => { if(initialSelected) setSelectedBookingLocal(initialSelected); }, [initialSelected]);
   const setSelectedBooking = (id) => { setSelectedBookingLocal(id); if(setParentSelected) setParentSelected(id); };
   const [bookingsLastUpdated, setBookingsLastUpdated] = React.useState(null);
-  const [selectedBooking, setSelectedBooking] = React.useState(null);
   const [loading, setLoading] = useState(true);
   const [newBookingOpen, setNewBookingOpen] = useState(false);
   const [expandedCalc, setExpandedCalc] = useState(null);
