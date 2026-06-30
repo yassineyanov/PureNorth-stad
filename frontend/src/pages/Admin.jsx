@@ -261,6 +261,8 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
   const RUT_YES = ["Hemstädning","Storstädning","Flyttstädning","Fönsterputs","Ugnstvätt","Kyl/frys rengöring"];
   const openEditBooking = (b) => {
     setEditingBooking(b.id);
+    const RUT_YES = ["Hemstädning","Storstädning","Flyttstädning","Fönsterputs","Ugnstvätt","Kyl/frys rengöring"];
+    const svc0 = (b.services||[])[0]||"";
     setEditBookingForm({
       name: b.name || "",
       email: b.email || "",
@@ -270,6 +272,9 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
       preferred_date: b.preferred_date || "",
       other_description: b.other_description || "",
       services: b.services || [],
+      customer_type: b.customer_type || "private",
+      rut_eligible: RUT_YES.includes(svc0),
+      personnummer: b.personnummer || "",
     });
   };
 
