@@ -6322,6 +6322,19 @@ app.include_router(api_router)
 async def health():
     return {"status": "ok"}
 
+@app.post("/api/admin/reset-economy")
+async def reset_economy_direct(current=Depends(get_current_user)):
+    await db.invoices.delete_many({})
+    await db.expenses.delete_many({})
+    await db.costs.delete_many({})
+    await db.shifts.delete_many({})
+    await db.settings.update_one(
+        {"_key": "invoice"},
+        {"$set": {"next_invoice_number": 1001}},
+        upsert=True
+    )
+    return {"status": "ok", "message": "Economy reset complete"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
