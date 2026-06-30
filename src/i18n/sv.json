@@ -1,0 +1,89 @@
+{
+  "tabs": {
+    "dashboard": "Översikt",
+    "bookings": "Bokningar",
+    "invoices": "Fakturor",
+    "customers": "Kunder",
+    "schema": "Schema",
+    "payroll": "Lön",
+    "absences": "Frånvaro",
+    "expenses": "Utlägg",
+    "costs": "Kostnader",
+    "economy": "Ekonomi",
+    "pricelist": "Prislista",
+    "calendar": "Kalender",
+    "stats": "Statistik",
+    "reviews": "Omdömen",
+    "users": "Användare",
+    "settings": "Inställningar"
+  },
+  "common": {
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "delete": "Ta bort",
+    "edit": "Redigera",
+    "add": "Lägg till",
+    "search": "Sök",
+    "loading": "Laddar...",
+    "logout": "Logga ut",
+    "yes": "Ja",
+    "no": "Nej",
+    "close": "Stäng",
+    "back": "Tillbaka",
+    "new": "Ny",
+    "export": "Exportera",
+    "print": "Skriv ut",
+    "send": "Skicka",
+    "approve": "Godkänn",
+    "reject": "Avvisa",
+    "status": "Status",
+    "date": "Datum",
+    "name": "Namn",
+    "email": "E-post",
+    "phone": "Telefon",
+    "address": "Adress",
+    "amount": "Belopp",
+    "total": "Totalt",
+    "notes": "Anteckning"
+  },
+  "bookings": {
+    "title": "Bokningar",
+    "new": "Ny bokning",
+    "recurring": "Återkommande",
+    "status_new": "Ny",
+    "status_contacted": "Kontaktad",
+    "status_quoted": "Offert",
+    "status_done": "Klar",
+    "status_cancelled": "Avbruten"
+  },
+  "invoices": {
+    "title": "Fakturor",
+    "new": "Ny faktura",
+    "status_paid": "Betald",
+    "status_sent": "Skickad",
+    "status_draft": "Utkast",
+    "status_overdue": "Förfallen"
+  },
+  "payroll": {
+    "title": "Lön",
+    "gross": "Bruttolön",
+    "net": "Nettolön",
+    "tax": "Prelskatt",
+    "employer_fee": "Arbetsgivaravgift",
+    "vacation": "Semesterersättning"
+  },
+  "expenses": {
+    "title": "Utlägg",
+    "new": "Nytt utlägg",
+    "status_pending": "Väntar",
+    "status_approved": "Godkänd",
+    "status_rejected": "Avvisad",
+    "status_paid": "Utbetald"
+  },
+  "schema": {
+    "title": "Schema",
+    "manage_staff": "Hantera personal",
+    "add_employee": "Lägg till anställd",
+    "today": "Idag"
+  }
+}
