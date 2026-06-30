@@ -492,8 +492,14 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                 <div>
                   <label className="text-xs font-medium text-slate-700">Typ av kund</label>
                   <div className="flex gap-2 mt-1.5">
-                    <button type="button" onClick={()=>setEditBookingForm(f=>({...f,customer_type:"private",rut_eligible:true}))} className={`flex-1 py-2 rounded-full text-xs font-semibold border transition-colors ${(editBookingForm.customer_type||"private")==="private"?"bg-[#141414] text-white border-[#141414]":"bg-white text-slate-600 border-slate-200"}`}>Privat</button>
-                    <button type="button" onClick={()=>setEditBookingForm(f=>({...f,customer_type:"company",rut_eligible:false}))} className={`flex-1 py-2 rounded-full text-xs font-semibold border transition-colors ${editBookingForm.customer_type==="company"?"bg-[#141414] text-white border-[#141414]":"bg-white text-slate-600 border-slate-200"}`}>Företag</button>
+                    {(() => {
+                    const RUT_SERVICES = ["hemstädning","storstädning","flyttstädning","fönsterputs","trappstädning","byggstädning"];
+                    const isRutService = (editBookingForm.services||[]).some(s => RUT_SERVICES.some(r => s.toLowerCase().includes(r)));
+                    return (<>
+                      <button type="button" onClick={()=>setEditBookingForm(f=>({...f,customer_type:"private",rut_eligible:isRutService}))} className={`flex-1 py-2 rounded-full text-xs font-semibold border transition-colors ${(editBookingForm.customer_type||"private")==="private"?"bg-[#141414] text-white border-[#141414]":"bg-white text-slate-600 border-slate-200"}`}>Privat</button>
+                      <button type="button" onClick={()=>setEditBookingForm(f=>({...f,customer_type:"company",rut_eligible:false}))} className={`flex-1 py-2 rounded-full text-xs font-semibold border transition-colors ${editBookingForm.customer_type==="company"?"bg-[#141414] text-white border-[#141414]":"bg-white text-slate-600 border-slate-200"}`}>Företag</button>
+                    </>);
+                  })()}
                   </div>
                 </div>
                 {(editBookingForm.customer_type||"private")==="private" && (
