@@ -21,8 +21,7 @@ export const Hero = () => {
             {ws.hero_title || "Renhet med norrländsk precision i Umeå."}
           </h1>
           <p className="mt-6 text-lg text-slate-600 leading-relaxed max-w-xl">
-            Vi definierar premiumstädning genom certifierad expertis och hållbara
-            metoder. Från fönsterputs till flyttstädning, vi tar hand om detaljerna.
+            {ws.hero_subtitle || "Vi definierar premiumstädning genom certifierad expertis och hållbara metoder. Från fönsterputs till flyttstädning, vi tar hand om detaljerna."}
           </p>
 
           <div className="mt-9 flex flex-col sm:flex-row gap-4">
