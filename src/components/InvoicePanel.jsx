@@ -664,17 +664,22 @@ export default function InvoicePanel() {
   const createKreditfaktura = async (inv) => {
     if (!window.confirm(`Skapa kreditfaktura för faktura #${inv.invoice_number}?`)) return;
     try {
-      const kreditItems = inv.items.map(i => ({...i, unit_price: -Math.abs(i.unit_price), quantity: Math.abs(i.quantity)}));
       const res = await api.post("/invoices", {
         booking_id: null,
         customer_name: inv.customer_name,
         customer_email: inv.customer_email,
         customer_phone: inv.customer_phone,
         customer_address: inv.customer_address,
-        customer_personnummer: inv.customer_personnummer,
-        customer_type: inv.customer_type || "private",
+        customer_personnummer: null,
+        customer_type: "private",
         rut_eligible: false,
-        items: kreditItems,
+        items: [{
+          service: `Kreditfaktura #${inv.invoice_number}`,
+          description: `Kreditfaktura för faktura #${inv.invoice_number}`,
+          quantity: 1,
+          unit_price: -(inv.customer_pays || 0),
+          is_material: false,
+        }],
         note: `Kreditfaktura för faktura #${inv.invoice_number}`,
         due_date: new Date().toISOString().split("T")[0],
       });
