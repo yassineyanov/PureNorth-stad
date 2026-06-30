@@ -440,13 +440,10 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
             </div>
             <form onSubmit={saveEditBooking} className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-slate-700">Namn *</label>
-                <input value={editBookingForm.name} onChange={e=>setEditBookingForm(f=>({...f,name:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
-              </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Telefon</label>
-                  <input value={editBookingForm.phone} onChange={e=>setEditBookingForm(f=>({...f,phone:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+                  <label className="text-xs font-medium text-slate-700">Namn *</label>
+                  <input value={editBookingForm.name} onChange={e=>setEditBookingForm(f=>({...f,name:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-slate-700">E-post</label>
@@ -454,11 +451,17 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-medium text-slate-700">Adress (städobjekt)</label>
-                <input value={editBookingForm.address || ""} onChange={(e) => setEditBookingForm((f) => ({...f, address: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="Storgatan 1, Umeå" />
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Telefon</label>
+                  <input value={editBookingForm.phone} onChange={e=>setEditBookingForm(f=>({...f,phone:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Adress (städobjekt)</label>
+                  <input value={editBookingForm.address || ""} onChange={(e) => setEditBookingForm((f) => ({...f, address: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="Storgatan 1, Umeå" />
+                </div>
               </div>
-              <div>
+
                 <label className="text-xs font-medium text-slate-700">Datum</label>
                 <input type="date" value={editBookingForm.preferred_date} onChange={e=>setEditBookingForm(f=>({...f,preferred_date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
               </div>
