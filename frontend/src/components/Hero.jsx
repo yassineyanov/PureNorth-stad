@@ -46,7 +46,7 @@ export const Hero = () => {
               <ShieldCheck size={16} className="text-[#166534]" /> {ws.badge1 || "SRY-kvalifikation"}
             </span>
             <span className="inline-flex items-center gap-2">
-              <Leaf size={16} className="text-[#166534]" /> Pur-Eco produkter
+              <Leaf size={16} className="text-[#166534]" /> {ws.badge2 || "Pur-Eco produkter"}
             </span>
           </div>
         </motion.div>
