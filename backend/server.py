@@ -421,7 +421,7 @@ class Invoice(BaseModel):
     rut_eligible: bool = True
     items: List[InvoiceItemModel]
     note: Optional[str] = None
-    due_date: Optional[str] = None
+    due_date: str
     status: str = "draft"
     labor_total: float = 0.0
     material_total: float = 0.0
@@ -1444,16 +1444,10 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     return Invoice(**doc)
 
 
-@api_router.get("/invoices")
+@api_router.get("/invoices", response_model=List[Invoice], response_model_by_alias=False)
 async def list_invoices(current=Depends(get_current_user)):
     docs = await db.invoices.find().sort("invoice_number", -1).to_list(2000)
-    result = []
-    for d in docs:
-        d["id"] = str(d.pop("_id"))
-        for field in ["subtotal","vat_amount","total_amount","rut_deduction","customer_pays","labor_total","material_total"]:
-            if d.get(field) is None: d[field] = 0.0
-        result.append(d)
-    return result
+    return [Invoice(**{**d, "_id": str(d["_id"])}) for d in docs]
 
 
 
@@ -1738,12 +1732,12 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     }).to_list(2000)
 
     # Core revenue calculations
-    forsaljning_excl_moms = sum(i.get("subtotal") or 0 for i in invoices)
-    utgaende_moms = sum(i.get("vat_amount") or 0 for i in invoices)
-    rut_avdrag = sum(i.get("rut_deduction") or 0 for i in invoices)
-    kund_betalar = sum(i.get("customer_pays") or 0 for i in invoices)
-    betalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") not in ["paid", "cancelled"])
+    forsaljning_excl_moms = sum(i.get("subtotal", 0) for i in invoices)
+    utgaende_moms = sum(i.get("vat_amount", 0) for i in invoices)
+    rut_avdrag = sum(i.get("rut_deduction", 0) for i in invoices)
+    kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
+    betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled"])
 
     # Påminnelseavgifter (no moms)
     paminnelse_avgifter = sum(
