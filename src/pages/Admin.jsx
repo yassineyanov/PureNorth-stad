@@ -453,18 +453,7 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                   <input type="email" value={editBookingForm.email} onChange={e=>setEditBookingForm(f=>({...f,email:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-medium text-slate-700">Tjänster</label>
-                <div className="flex flex-wrap gap-2 mt-1.5">
-                  {SERVICE_OPTIONS.map(svc=>(
-                    <button key={svc} type="button"
-                      onClick={()=>setEditBookingForm(f=>({...f,services:f.services?.includes(svc)?f.services.filter(s=>s!==svc):[...(f.services||[]),svc]}))}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${editBookingForm.services?.includes(svc)?"bg-[#141414] text-white border-[#141414]":"bg-white text-slate-600 border-slate-200"}`}>
-                      {svc}
-                    </button>
-                  ))}
-                </div>
-              </div>
+
               <div>
                 <label className="text-xs font-medium text-slate-700">Adress (städobjekt)</label>
                 <input value={editBookingForm.address || ""} onChange={(e) => setEditBookingForm((f) => ({...f, address: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="Storgatan 1, Umeå" />
