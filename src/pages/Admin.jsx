@@ -258,6 +258,7 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
       toast.error("Kunde inte skapa faktura.");
     }
   };
+  const RUT_YES = ["Hemstädning","Storstädning","Flyttstädning","Fönsterputs","Ugnstvätt","Kyl/frys rengöring"];
   const openEditBooking = (b) => {
     setEditingBooking(b.id);
     setEditBookingForm({
