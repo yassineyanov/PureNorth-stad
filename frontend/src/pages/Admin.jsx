@@ -481,20 +481,33 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                 const speed = speedKey ? SPEED[speedKey] : 30;
                 const kvm = parseFloat(editBookingForm.kvm)||0;
                 const tim = kvm ? Math.ceil((kvm/speed)*2)/2 : 0;
+                const plItem = priceList?.find(p=>p.service?.toLowerCase()===svc);
+                const apris = plItem?.price || 478;
                 return (
-                  <div className="rounded-xl border border-slate-200 p-3 space-y-2">
+                  <div className="rounded-xl border border-slate-200 p-3 space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-slate-500">Tjänster</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <select value={(editBookingForm.services||[])[0]||""} onChange={e=>setEditBookingForm(f=>({...f,services:[e.target.value]}))} className="flex-1 rounded-xl border border-slate-200 text-sm px-3 py-2.5 outline-none focus:border-[#141414]">
+                          {SERVICE_OPTIONS.map(s=><option key={s} value={s}>{s}</option>)}
+                        </select>
+                        <span className="text-xs text-slate-400 whitespace-nowrap">{apris} kr/tim</span>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
-                        <label className="text-xs font-medium text-slate-700">Yta (kvm)</label>
-                        <input type="number" value={editBookingForm.kvm||""} onChange={e=>setEditBookingForm(f=>({...f,kvm:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="T.ex. 75"/>
+                        <label className="text-xs font-medium text-slate-500">Yta (kvm)</label>
+                        <input type="number" value={editBookingForm.kvm||""} onChange={e=>setEditBookingForm(f=>({...f,kvm:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3 py-2.5 outline-none focus:border-[#141414]" placeholder="0"/>
                       </div>
-                      {tim > 0 && <>
-                        <span className="text-slate-400 mt-5">→</span>
-                        <div className="flex-1">
-                          <label className="text-xs font-medium text-slate-700">tim</label>
-                          <input readOnly value={tim} className="w-full mt-1 rounded-xl border border-slate-100 bg-slate-50 text-sm px-3.5 py-2.5 outline-none text-slate-500"/>
-                        </div>
-                      </>}
+                      <span className="text-slate-300 mt-5">→</span>
+                      <div className="flex-1">
+                        <label className="text-xs font-medium text-slate-500">tim</label>
+                        <input readOnly value={tim||""} className="w-full mt-1 rounded-xl border border-slate-100 bg-slate-50 text-sm px-3 py-2.5 outline-none text-slate-500"/>
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs font-medium text-slate-500">À-Pris (kr)</label>
+                        <input readOnly value={apris} className="w-full mt-1 rounded-xl border border-slate-100 bg-slate-50 text-sm px-3 py-2.5 outline-none text-slate-500"/>
+                      </div>
                     </div>
                   </div>
                 );
