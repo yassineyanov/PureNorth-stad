@@ -469,20 +469,36 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                 <label className="text-xs font-medium text-slate-700">Adress (städobjekt)</label>
                 <input value={editBookingForm.address || ""} onChange={(e) => setEditBookingForm((f) => ({...f, address: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="Storgatan 1, Umeå" />
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="text-xs font-medium text-slate-700">Datum</label>
-                  <input type="date" value={editBookingForm.preferred_date} onChange={e=>setEditBookingForm(f=>({...f,preferred_date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-slate-700">
-                    {editBookingForm.services?.some(s=>["Fönsterputs","Ugn/kyl rengöring","Trappstädning","Ugnstvätt","Kyl/frys rengöring"].includes(s)) ? "Antal (st)" : "Yta (kvm)"}
-                  </label>
-                  <input value={editBookingForm.kvm} onChange={e=>setEditBookingForm(f=>({...f,kvm:e.target.value}))}
-                    className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"
-                    placeholder={editBookingForm.services?.some(s=>["Fönsterputs","Ugn/kyl rengöring","Trappstädning"].includes(s)) ? "T.ex. 8" : "T.ex. 75"} />
-                </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700">Datum</label>
+                <input type="date" value={editBookingForm.preferred_date} onChange={e=>setEditBookingForm(f=>({...f,preferred_date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
               </div>
+              {/* Yta/tim calculator */}
+              {(() => {
+                const SPEED = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35,"trappstädning":25,"fönsterputs":10};
+                const svc = (editBookingForm.services||[])[0]?.toLowerCase()||"";
+                const speedKey = Object.keys(SPEED).find(k=>svc.includes(k));
+                const speed = speedKey ? SPEED[speedKey] : 30;
+                const kvm = parseFloat(editBookingForm.kvm)||0;
+                const tim = kvm ? Math.ceil((kvm/speed)*2)/2 : 0;
+                return (
+                  <div className="rounded-xl border border-slate-200 p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <label className="text-xs font-medium text-slate-700">Yta (kvm)</label>
+                        <input type="number" value={editBookingForm.kvm||""} onChange={e=>setEditBookingForm(f=>({...f,kvm:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="T.ex. 75"/>
+                      </div>
+                      {tim > 0 && <>
+                        <span className="text-slate-400 mt-5">→</span>
+                        <div className="flex-1">
+                          <label className="text-xs font-medium text-slate-700">tim</label>
+                          <input readOnly value={tim} className="w-full mt-1 rounded-xl border border-slate-100 bg-slate-50 text-sm px-3.5 py-2.5 outline-none text-slate-500"/>
+                        </div>
+                      </>}
+                    </div>
+                  </div>
+                );
+              })()}
               <div>
                 <label className="text-xs font-medium text-slate-700">Anteckning</label>
                 <textarea value={editBookingForm.other_description} onChange={e=>setEditBookingForm(f=>({...f,other_description:e.target.value}))} rows={2} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
