@@ -421,7 +421,7 @@ class Invoice(BaseModel):
     rut_eligible: bool = True
     items: List[InvoiceItemModel]
     note: Optional[str] = None
-    due_date: str
+    due_date: Optional[str] = None
     status: str = "draft"
     labor_total: float = 0.0
     material_total: float = 0.0
