@@ -310,3 +310,4 @@ export default function DashboardPanel({ onNavigate, onRefresh }) {
     </div>
   );
 }
+
