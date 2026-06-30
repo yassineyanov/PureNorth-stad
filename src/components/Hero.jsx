@@ -1,8 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Phone, Leaf, ShieldCheck } from "lucide-react";
+import { useWebsite } from "@/context/WebsiteContext";
 
 export const Hero = () => {
+  const ws = useWebsite();
   return (
     <section id="hem" className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 overflow-hidden bg-soft-grid">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -13,7 +15,7 @@ export const Hero = () => {
           transition={{ duration: 0.6 }}
         >
           <span className="inline-flex items-center gap-2 rounded-full bg-[#166534]/10 text-[#166534] px-4 py-1.5 text-sm font-semibold mb-6">
-            <Leaf size={15} /> Svanenmärkt & miljöcertifierat
+            <Leaf size={15} /> {ws.hero_badge || "Svanenmärkt & miljöcertifierat"}
           </span>
           <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4rem] leading-[1.05] tracking-tight text-[#141414]">
             Renhet med norrländsk precision i Umeå.
