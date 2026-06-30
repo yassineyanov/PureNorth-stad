@@ -6359,6 +6359,19 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+@api_router.post("/admin/reset-economy")
+async def reset_economy(current=Depends(get_current_user)):
+    await db.invoices.delete_many({})
+    await db.expenses.delete_many({})
+    await db.costs.delete_many({})
+    await db.shifts.delete_many({})
+    await db.settings.update_one(
+        {"_key": "invoice"},
+        {"$set": {"next_invoice_number": 1001}},
+        upsert=True
+    )
+    return {"status": "ok", "message": "Economy reset complete"}
 # auto-remind deploy Fri Jun 26 22:44:29 UTC 2026
 # force deploy 1782606093
 
