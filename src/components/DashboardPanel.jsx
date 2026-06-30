@@ -43,20 +43,6 @@ function Section({ title, children, action }) {
       {children}
     </div>
 
-    {/* RESET BUTTON - FOR TESTING ONLY */}
-    <div className="mt-6 p-4 border-2 border-red-200 rounded-2xl bg-red-50">
-      <p className="text-sm font-semibold text-red-700 mb-2">⚠️ Testläge — Återställ ekonomi</p>
-      <p className="text-xs text-red-500 mb-3">Raderar alla fakturor, utgifter, kostnader och löneposter.</p>
-      <button onClick={async () => {
-        if (!window.confirm("Är du säker? Detta raderar ALL ekonomisk data!")) return;
-        try {
-          await api.post("/admin/reset-economy");
-          window.location.reload();
-        } catch { alert("Fel vid återställning."); }
-      }} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-full transition-colors">
-        🗑️ Återställ allt till 0
-      </button>
-    </div>
   );
 }
 
@@ -324,20 +310,6 @@ export default function DashboardPanel({ onNavigate, onRefresh }) {
       </div>
     </div>
 
-    {/* RESET BUTTON - FOR TESTING ONLY */}
-    <div className="mt-6 p-4 border-2 border-red-200 rounded-2xl bg-red-50">
-      <p className="text-sm font-semibold text-red-700 mb-2">⚠️ Testläge — Återställ ekonomi</p>
-      <p className="text-xs text-red-500 mb-3">Raderar alla fakturor, utgifter, kostnader och löneposter.</p>
-      <button onClick={async () => {
-        if (!window.confirm("Är du säker? Detta raderar ALL ekonomisk data!")) return;
-        try {
-          await api.post("/admin/reset-economy");
-          window.location.reload();
-        } catch { alert("Fel vid återställning."); }
-      }} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-full transition-colors">
-        🗑️ Återställ allt till 0
-      </button>
-    </div>
   );
 }
 
