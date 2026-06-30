@@ -30,7 +30,7 @@ export const Hero = () => {
               data-testid="hero-boka-btn"
               className="inline-flex items-center justify-center rounded-full bg-[#141414] hover:bg-[#000000] text-white px-8 py-4 text-base font-semibold transition-colors"
             >
-              Boka tid online
+              {ws.cta_text || "Boka tid online"}
             </a>
             <a
               href="tel:0706240403"
