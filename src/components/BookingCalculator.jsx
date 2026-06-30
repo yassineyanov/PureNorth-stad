@@ -210,3 +210,4 @@ export default function BookingCalculator({ booking, onCreateInvoice }) {
     </div>
   );
 }
+
