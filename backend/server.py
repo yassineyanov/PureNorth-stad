@@ -1421,7 +1421,7 @@ async def set_invoice_logo(request: Request, current=Depends(get_current_user)):
 async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_user)):
     inv_settings = await get_invoice_settings_obj()
     items = [i.model_dump() for i in payload.items]
-    if not payload.subtotal:
+    if payload.subtotal is None:
         amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
     else:
         amounts = {}
@@ -1436,7 +1436,7 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["paid_at"] = None
     # Use frontend amounts if provided, otherwise recalculate
-    if not payload.subtotal:
+    if payload.subtotal is None:
         doc.update(amounts)
 
     result = await db.invoices.insert_one(doc)
