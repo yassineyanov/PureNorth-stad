@@ -487,12 +487,20 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                 <label className="text-xs font-medium text-slate-700">Anteckning</label>
                 <textarea value={editBookingForm.other_description} onChange={e=>setEditBookingForm(f=>({...f,other_description:e.target.value}))} rows={2} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
               </div>
-              {/* RUT section */}
+              {/* Typ + RUT section */}
               <div className="rounded-xl border border-slate-200 p-3 space-y-2">
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Typ av kund</label>
+                  <div className="flex gap-2 mt-1.5">
+                    <button type="button" onClick={()=>setEditBookingForm(f=>({...f,customer_type:"private",rut_eligible:true}))} className={`flex-1 py-2 rounded-full text-xs font-semibold border transition-colors ${(editBookingForm.customer_type||"private")==="private"?"bg-[#141414] text-white border-[#141414]":"bg-white text-slate-600 border-slate-200"}`}>Privat</button>
+                    <button type="button" onClick={()=>setEditBookingForm(f=>({...f,customer_type:"company",rut_eligible:false}))} className={`flex-1 py-2 rounded-full text-xs font-semibold border transition-colors ${editBookingForm.customer_type==="company"?"bg-[#141414] text-white border-[#141414]":"bg-white text-slate-600 border-slate-200"}`}>Företag</button>
+                  </div>
+                </div>
+                {(editBookingForm.customer_type||"private")==="private" && (
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={editBookingForm.rut_eligible||false} onChange={e=>setEditBookingForm(f=>({...f,rut_eligible:e.target.checked}))} className="rounded"/>
                   <span className="text-sm font-medium text-slate-700">RUT-avdrag (50% av arbetskostnad)</span>
-                </label>
+                </label>)}
                 {editBookingForm.rut_eligible && (
                   <div>
                     <label className="text-xs font-medium text-slate-700">Personnummer</label>
