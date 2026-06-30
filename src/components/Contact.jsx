@@ -32,7 +32,7 @@ export const Contact = () => {
             {ws.contact_subtitle || "Vi finns i Umeå"}
           </h2>
           <p className="mt-5 text-lg text-slate-600 max-w-lg">
-            {ws.contact_description || "Har du frågor eller vill boka en städning? Hör av dig så hjälper vi dig."}
+            {(ws.contact_description && ws.contact_description.length > 0) ? ws.contact_description : "Har du frågor eller vill boka en städning? Hör av dig så hjälper vi dig."}
           </p>
 
           <div className="mt-9 space-y-4">
