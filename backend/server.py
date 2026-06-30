@@ -1447,7 +1447,13 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
 @api_router.get("/invoices", response_model=List[Invoice], response_model_by_alias=False)
 async def list_invoices(current=Depends(get_current_user)):
     docs = await db.invoices.find().sort("invoice_number", -1).to_list(2000)
-    return [Invoice(**{**d, "_id": str(d["_id"])}) for d in docs]
+    result = []
+    for d in docs:
+        try:
+            result.append(Invoice(**{**d, "_id": str(d["_id"])}))
+        except Exception as e:
+            logger.error(f"Invoice parse error {d.get('invoice_number')}: {e}")
+    return result
 
 
 
