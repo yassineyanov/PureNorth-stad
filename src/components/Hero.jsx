@@ -18,7 +18,7 @@ export const Hero = () => {
             <Leaf size={15} /> {ws.hero_badge || "Svanenmärkt & miljöcertifierat"}
           </span>
           <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4rem] leading-[1.05] tracking-tight text-[#141414]">
-            Renhet med norrländsk precision i Umeå.
+            {ws.hero_title || "Renhet med norrländsk precision i Umeå."}
           </h1>
           <p className="mt-6 text-lg text-slate-600 leading-relaxed max-w-xl">
             Vi definierar premiumstädning genom certifierad expertis och hållbara
