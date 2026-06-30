@@ -94,6 +94,13 @@ export default function DashboardPanel({ onNavigate, onRefresh }) {
           <button onClick={()=>{load();if(onRefresh)onRefresh();}} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
             <RefreshCw size={15}/>
           </button>
+          <button onClick={async () => {
+            if (!window.confirm("Återställ ALL ekonomisk data till 0?")) return;
+            try { await api.post("/admin/reset-economy"); window.location.reload(); }
+            catch(e) { alert("Fel vid återställning."); }
+          }} className="h-9 px-3 rounded-full border-2 border-red-300 bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition-colors" title="Återställ ekonomi">
+            🗑️ Reset
+          </button>
         </div>
       </div>
 
