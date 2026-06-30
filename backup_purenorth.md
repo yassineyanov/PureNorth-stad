@@ -1,3 +1,1255 @@
+# PureNorth Städ — Code Backup
+**Date:** 2026-06-29 09:46
+**Commit:** 80adde1
+
+---
+
+## Admin.jsx
+```jsx
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { LogOut, Trash2, Phone, Mail, Calendar, Maximize, Hash, RefreshCw, Check, X, Clock, LayoutDashboard, CalendarDays, Star, CalendarRange, UserMinus, Receipt, Banknote, FileText, Tag, TrendingUp, TrendingDown, Users, BarChart2, Search, MapPin, FileSpreadsheet, Settings, Bell } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate, useParams } from "react-router-dom";
+import { api } from "@/lib/api";
+import { Logo } from "@/components/Logo";
+import { StarRating } from "@/components/StarRating";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import SchedulePanel from "@/components/SchedulePanel";
+import AbsencePanel from "@/components/AbsencePanel";
+import ExpensePanel from "@/components/ExpensePanel";
+import PayrollPanel from "@/components/PayrollPanel";
+import InvoicePanel from "@/components/InvoicePanel";
+import PriceListPanel from "@/components/PriceListPanel";
+import EconomyPanel from "@/components/EconomyPanel";
+import CustomerPanel from "@/components/CustomerPanel";
+import CalendarPanel from "@/components/CalendarPanel";
+import StatsPanel from "@/components/StatsPanel";
+import UsersPanel from "@/components/UsersPanel";
+import CostsPanel from "@/components/CostsPanel";
+import SettingsPanel from "@/components/SettingsPanel";
+import DashboardPanel from "@/components/DashboardPanel";
+import BookingCalculator from "@/components/BookingCalculator";
+
+const STATUS = {
+  new: { label: "Ny", cls: "bg-blue-50 text-blue-700" },
+  contacted: { label: "Kontaktad", cls: "bg-amber-50 text-amber-700" },
+  done: { label: "Klar", cls: "bg-green-50 text-green-700" },
+};
+
+function LoginScreen({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const sendForgot = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    try {
+      await api.post("/auth/forgot-password", { email: forgotEmail });
+      setForgotSent(true);
+    } catch {
+      setForgotSent(true); // always show success
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await onLogin(email, password);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Inloggning misslyckades");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5] px-5">
+      {!forgotMode && <form onSubmit={submit} data-testid="admin-login-form" className="w-full max-w-sm bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center gap-3 mb-7">
+          <Logo className="h-10 w-10" />
+          <span className="font-display font-bold text-xl text-slate-900">PureNorth Städ</span>
+        </div>
+        <h1 className="font-display font-bold text-2xl text-slate-900 mb-1">Admin-inloggning</h1>
+        <p className="text-sm text-slate-500 mb-6">Logga in för att hantera bokningar och omdömen.</p>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="a-email">E-post</Label>
+            <Input id="a-email" type="email" data-testid="admin-email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5" />
+          </div>
+          <div>
+            <Label htmlFor="a-pass">Lösenord</Label>
+            <Input id="a-pass" type="password" data-testid="admin-password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1.5" />
+          </div>
+          {error && <p data-testid="admin-login-error" className="text-sm text-red-600">{error}</p>}
+          {!forgotMode && (
+            <button type="button" onClick={()=>setForgotMode(true)} className="w-full text-sm text-slate-400 hover:text-[#141414] transition-colors mt-1 text-center">
+              Glömt lösenordet?
+            </button>
+          )}
+          <button type="submit" disabled={loading} data-testid="admin-login-submit" className="w-full rounded-full bg-[#141414] hover:bg-[#000000] disabled:opacity-60 text-white py-3 font-semibold transition-colors">
+            {loading ? "Loggar in..." : "Logga in"}
+          </button>
+        </div>
+      </form>}
+      {forgotMode && (
+        <div className="w-full max-w-sm bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+          {forgotSent ? (
+            <div className="text-center py-4">
+              <p className="text-green-700 font-semibold mb-2">✅ Kontrollera din e-post!</p>
+              <p className="text-sm text-slate-500 mb-4">Om e-postadressen finns skickas en återställningslänk.</p>
+              <button onClick={()=>{setForgotMode(false);setForgotSent(false);}} className="text-sm text-slate-500 hover:text-[#141414] underline">Tillbaka till inloggning</button>
+            </div>
+          ) : (
+            <>
+              <h1 className="font-display font-bold text-2xl text-slate-900 mb-1">Glömt lösenord?</h1>
+              <p className="text-sm text-slate-500 mb-6">Ange din e-post så skickar vi en återställningslänk.</p>
+              <form onSubmit={sendForgot} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">E-postadress</label>
+                  <input type="email" value={forgotEmail} onChange={e=>setForgotEmail(e.target.value)} required placeholder="din@email.se"
+                    className="w-full rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+                <button type="submit" disabled={forgotLoading} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+                  {forgotLoading ? "Skickar..." : "Skicka återställningslänk"}
+                </button>
+                <button type="button" onClick={()=>setForgotMode(false)} className="w-full text-sm text-slate-400 hover:text-slate-600 py-1">
+                  ← Tillbaka till inloggning
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: setParentSelected }) {
+  const [bookings, setBookings] = useState([]);
+  const [selectedBooking, setSelectedBookingLocal] = React.useState(initialSelected || null);
+  React.useEffect(() => { if(initialSelected) setSelectedBookingLocal(initialSelected); }, [initialSelected]);
+  const setSelectedBooking = (id) => { setSelectedBookingLocal(id); if(setParentSelected) setParentSelected(id); };
+  const [bookingsLastUpdated, setBookingsLastUpdated] = React.useState(null);
+  const [loading, setLoading] = useState(true);
+  const [newBookingOpen, setNewBookingOpen] = useState(false);
+  const [expandedCalc, setExpandedCalc] = useState(null);
+  const [editingBooking, setEditingBooking] = useState(null);
+  const [editBookingForm, setEditBookingForm] = useState({});
+  const [editBookingSaving, setEditBookingSaving] = useState(false);
+  const [recurringOpen, setRecurringOpen] = useState(false);
+  const [recurringForm, setRecurringForm] = useState({ name:"", email:"", phone:"", kvm:"", services:[], preferred_date:"", other_description:"", recurrence:"biweekly", occurrences:6 });
+  const [recurringSaving, setRecurringSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", kvm: "", services: [], preferred_date: "", other_description: "" });
+  const [saving, setSaving] = useState(false);
+
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      setBookings((await api.get("/bookings")).data);
+    } catch {
+      if (!silent) toast.error("Kunde inte hämta bokningar.");
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+  useEffect(() => { load(); const interval = setInterval(() => load(true), 1000); return () => clearInterval(interval); }, []);
+
+  const setStatus = async (id, status) => {
+    try {
+      await api.patch(`/bookings/${id}/status`, { status });
+      setBookings((b) => b.map((x) => (x.id === id ? { ...x, status } : x)));
+    } catch {
+      toast.error("Kunde inte uppdatera status.");
+    }
+  };
+
+  const [allServices, setAllServices] = useState(["Hemstädning","Flyttstädning","Kontorsstädning","Storstädning","Fönsterputs","Byggstädning","Annat"]);
+  const SERVICE_OPTIONS = allServices;
+
+  useEffect(() => {
+    api.get("/settings/pricelist").then(r => {
+      const active = r.data.items?.filter(p => p.is_active && !p.service.includes("(fast)")).map(p => p.service) || [];
+      if (active.length > 0) setAllServices([...active, "Annat"].filter((s,i,a) => a.indexOf(s) === i));
+    }).catch(() => {});
+  }, []);
+
+  const toggleRecurringService = (svc) => {
+    setRecurringForm((f) => ({
+      ...f,
+      services: f.services.includes(svc) ? f.services.filter(s=>s!==svc) : [...f.services, svc]
+    }));
+  };
+
+  const createRecurring = async (e) => {
+    e.preventDefault();
+    if (!recurringForm.name || !recurringForm.phone || !recurringForm.preferred_date) return;
+    setRecurringSaving(true);
+    try {
+      const res = await api.post("/bookings/recurring", recurringForm);
+      toast.success(`${res.data.created} återkommande bokningar skapade! ✅`);
+      setRecurringOpen(false);
+      setRecurringForm({ name:"", email:"", phone:"", kvm:"", services:[], preferred_date:"", other_description:"", recurrence:"biweekly", occurrences:6 });
+      const updated = await api.get("/bookings");
+      setBookings(updated.data);
+    } catch {
+      toast.error("Kunde inte skapa återkommande bokningar.");
+    } finally {
+      setRecurringSaving(false);
+    }
+  };
+
+  const toggleService = (svc) => setForm((f) => ({
+    ...f, services: f.services.includes(svc) ? f.services.filter((s) => s !== svc) : [...f.services, svc]
+  }));
+
+  const createBooking = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.phone) return;
+    setSaving(true);
+    try {
+      const payload = { ...form, email: form.email || "admin@purenorth.se" };
+      const res = await api.post("/bookings", payload);
+      setBookings((b) => [res.data, ...b]);
+      toast.success("Bokning skapad!");
+      setNewBookingOpen(false);
+      setForm({ name: "", email: "", phone: "", kvm: "", services: [], preferred_date: "", other_description: "" });
+    } catch {
+      toast.error("Kunde inte skapa bokning.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const createInvoiceFromBooking = async (booking, invoiceItems, totals) => {
+    try {
+      const payload = {
+        customer_name: booking.name,
+        customer_email: booking.email,
+        customer_phone: booking.phone,
+        customer_address: "",
+        items: invoiceItems,
+        subtotal: totals.subtotal,
+        rut_deduction: totals.rut_deduction,
+        vat_amount: totals.vat_amount,
+        total_amount: totals.total_amount,
+        customer_pays: totals.customer_pays,
+        rut_eligible: totals.rut_eligible || false,
+        due_days: 30,
+        notes: `Bokning: ${booking.services?.join(", ")}`,
+        status: "draft",
+        booking_id: booking.id,
+      };
+      await api.post("/invoices", payload);
+      toast.success("Faktura skapad! Gå till Fakturor för att se den.");
+      setExpandedCalc(null);
+    } catch {
+      toast.error("Kunde inte skapa faktura.");
+    }
+  };
+  const openEditBooking = (b) => {
+    setEditingBooking(b.id);
+    setEditBookingForm({
+      name: b.name || "",
+      email: b.email || "",
+      phone: b.phone || "",
+      address: b.address || "",
+      kvm: b.kvm || "",
+      preferred_date: b.preferred_date || "",
+      other_description: b.other_description || "",
+      services: b.services || [],
+    });
+  };
+
+  const saveEditBooking = async (e) => {
+    e.preventDefault();
+    setEditBookingSaving(true);
+    try {
+      await api.patch(`/bookings/${editingBooking}`, editBookingForm);
+      setBookings(prev => prev.map(b => b.id === editingBooking ? {...b, ...editBookingForm} : b));
+      
+
+
+      toast.success("Bokning uppdaterad!");
+      setEditingBooking(null);
+    } catch {
+      toast.error("Kunde inte uppdatera bokningen.");
+    } finally {
+      setEditBookingSaving(false);
+    }
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm("Ta bort denna bokning?")) return;
+    try {
+      await api.delete(`/bookings/${id}`);
+      setBookings((b) => b.filter((x) => x.id !== id));
+      toast.success("Bokning borttagen.");
+    } catch {
+      toast.error("Kunde inte ta bort bokningen.");
+    }
+  };
+
+
+  return (
+    <>
+      <div className="flex justify-between items-center mb-5 flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          <h2 className="font-display font-bold text-xl text-slate-900">Bokningar</h2>
+          <button onClick={async ()=>{ await load(); setBookingsLastUpdated(new Date()); }} className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
+            <RefreshCw size={14}/>
+          </button>
+          {bookingsLastUpdated && <span className="text-xs text-slate-400">Uppdaterad {bookingsLastUpdated.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"})}</span>}
+        </div>
+        <div className="flex gap-2">
+
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            window.open(`${base}/api/bookings/export-pdf?token=${token}`, "_blank");
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> PDF
+          </button>
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/bookings/export-xlsx?token=${token}`;
+            a.download = "bokningar.xlsx";
+            a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
+          </button>
+          <button onClick={() => setRecurringOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 hover:border-[#141414] rounded-full px-4 py-2 transition-colors">
+            <RefreshCw size={14}/> Återkommande
+          </button>
+          <button onClick={() => setNewBookingOpen(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] hover:bg-black rounded-full px-4 py-2 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ny bokning
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: "Totalt", value: bookings.length },
+          { label: "Nya", value: bookings.filter((b) => b.status === "new").length },
+          { label: "Kontaktade", value: bookings.filter((b) => b.status === "contacted").length },
+          { label: "Klara", value: bookings.filter((b) => b.status === "done").length },
+        ].map((s) => (
+          <div key={s.label} className="rounded-2xl bg-white border border-slate-100 p-5">
+            <p className="text-3xl font-display font-bold text-slate-900">{s.value}</p>
+            <p className="text-sm text-slate-500">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="text-slate-500">Laddar...</p>
+      ) : bookings.length === 0 ? (
+        <div data-testid="admin-empty" className="rounded-2xl bg-white border border-slate-100 p-12 text-center text-slate-500">
+          Inga bokningar ännu.
+        </div>
+      ) : (
+        <div className="grid gap-4" data-testid="admin-bookings-list">
+          {bookings.map((b) => (<React.Fragment key={b.id}>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              id={`booking-${b.id}`}
+              data-testid={`booking-row-${b.id}`}
+              onClick={()=>setSelectedBooking(selectedBooking===b.id?null:b.id)}
+              className={`rounded-2xl border p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between cursor-pointer transition-all ${selectedBooking===b.id?"bg-blue-50 border-blue-300 shadow-lg shadow-blue-100":"bg-white border-slate-100 hover:shadow-sm"}`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="font-display font-semibold text-lg text-slate-900">{b.name}</h3>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS[b.status]?.cls}`}>
+                    {STATUS[b.status]?.label || b.status}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-slate-600">
+                  <a href={`tel:${b.phone}`} className="inline-flex items-center gap-1.5 hover:text-[#141414]"><Phone size={14} /> {b.phone}</a>
+                  <a href={`mailto:${b.email}`} className="inline-flex items-center gap-1.5 hover:text-[#141414]"><Mail size={14} /> {b.email}</a>
+                  {b.kvm && <span className="inline-flex items-center gap-1.5">{b.services?.some(s=>["Fönsterputs","Ugnstvätt","Kyl/frys rengöring","Trappstädning"].includes(s)) ? <Hash size={14}/> : <Maximize size={14}/>} {b.kvm} {b.services?.some(s=>["Fönsterputs","Ugnstvätt","Kyl/frys rengöring","Trappstädning"].includes(s)) ? "st" : "kvm"}</span>}
+                  {b.preferred_date && <span className="inline-flex items-center gap-1.5"><Calendar size={14} /> {b.preferred_date}</span>}
+                  {b.address && <span className="inline-flex items-center gap-1.5"><MapPin size={14} /> {b.address}</span>}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {b.services.map((s) => (
+                    <span key={s} className="text-xs bg-[#141414]/8 text-[#141414] px-2.5 py-1 rounded-full font-medium">{s}</span>
+                  ))}
+                </div>
+                {b.other_description && (
+                  <p className="mt-3 text-sm text-slate-600 bg-slate-50 rounded-xl p-3"><strong>Anteckning:</strong> {b.other_description}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <select
+                  value={b.status}
+                  onChange={(e) => setStatus(b.id, e.target.value)}
+                  data-testid={`booking-status-${b.id}`}
+                  className="rounded-full border border-slate-200 text-sm px-4 py-2 outline-none focus:border-[#141414]"
+                >
+                  <option value="new">Ny</option>
+                  <option value="contacted">Kontaktad</option>
+                  <option value="done">Klar</option>
+                </select>
+                <button onClick={() => setExpandedCalc(expandedCalc === b.id ? null : b.id)}
+                  className="h-9 px-3 rounded-full flex items-center gap-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#141414] transition-colors text-xs font-semibold border border-slate-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  Kalkyl
+                </button>
+                <button onClick={() => openEditBooking(b)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#141414] transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button onClick={() => remove(b.id)} data-testid={`booking-delete-${b.id}`} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+
+            </motion.div>
+            {expandedCalc === b.id && (
+              <div className="rounded-2xl bg-white border border-slate-100 p-5 -mt-2">
+                <BookingCalculator
+                  booking={b}
+                  onCreateInvoice={(items, totals) => createInvoiceFromBooking(b, items, totals)}
+                />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+        </div>
+      )}
+      {editingBooking && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4" onClick={() => setEditingBooking(null)}>
+          <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-xl p-6 max-h-[92vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold text-xl text-slate-900">Redigera bokning</h2>
+              <button onClick={() => setEditingBooking(null)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">✕</button>
+            </div>
+            <form onSubmit={saveEditBooking} className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-slate-700">Namn *</label>
+                <input value={editBookingForm.name} onChange={e=>setEditBookingForm(f=>({...f,name:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Telefon</label>
+                  <input value={editBookingForm.phone} onChange={e=>setEditBookingForm(f=>({...f,phone:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-700">E-post</label>
+                  <input type="email" value={editBookingForm.email} onChange={e=>setEditBookingForm(f=>({...f,email:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700">Tjänster</label>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  {SERVICE_OPTIONS.map(svc=>(
+                    <button key={svc} type="button"
+                      onClick={()=>setEditBookingForm(f=>({...f,services:f.services?.includes(svc)?f.services.filter(s=>s!==svc):[...(f.services||[]),svc]}))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${editBookingForm.services?.includes(svc)?"bg-[#141414] text-white border-[#141414]":"bg-white text-slate-600 border-slate-200"}`}>
+                      {svc}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700">Adress (städobjekt)</label>
+                <input value={editBookingForm.address || ""} onChange={(e) => setEditBookingForm((f) => ({...f, address: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="Storgatan 1, Umeå" />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Datum</label>
+                  <input type="date" value={editBookingForm.preferred_date} onChange={e=>setEditBookingForm(f=>({...f,preferred_date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-700">
+                    {editBookingForm.services?.some(s=>["Fönsterputs","Ugn/kyl rengöring","Trappstädning","Ugnstvätt","Kyl/frys rengöring"].includes(s)) ? "Antal (st)" : "Yta (kvm)"}
+                  </label>
+                  <input value={editBookingForm.kvm} onChange={e=>setEditBookingForm(f=>({...f,kvm:e.target.value}))}
+                    className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"
+                    placeholder={editBookingForm.services?.some(s=>["Fönsterputs","Ugn/kyl rengöring","Trappstädning"].includes(s)) ? "T.ex. 8" : "T.ex. 75"} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700">Anteckning</label>
+                <textarea value={editBookingForm.other_description} onChange={e=>setEditBookingForm(f=>({...f,other_description:e.target.value}))} rows={2} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
+              </div>
+              <button type="submit" disabled={editBookingSaving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+                {editBookingSaving ? "Sparar..." : "Spara ändringar"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+      {recurringOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4" onClick={() => setRecurringOpen(false)}>
+          <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-xl p-6 max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold text-xl text-slate-900">🔁 Återkommande bokning</h2>
+              <button onClick={() => setRecurringOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">✕</button>
+            </div>
+            <form onSubmit={createRecurring} className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-slate-700">Namn *</label>
+                <input value={recurringForm.name} onChange={(e) => setRecurringForm(f=>({...f,name:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="Kundens namn" />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Telefon *</label>
+                  <input value={recurringForm.phone} onChange={(e) => setRecurringForm(f=>({...f,phone:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="070-000 00 00" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-700">E-post</label>
+                  <input type="email" value={recurringForm.email} onChange={(e) => setRecurringForm(f=>({...f,email:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700">Första datum *</label>
+                <input type="date" value={recurringForm.preferred_date} onChange={(e) => setRecurringForm(f=>({...f,preferred_date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Upprepning</label>
+                  <select value={recurringForm.recurrence} onChange={(e) => setRecurringForm(f=>({...f,recurrence:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                    <option value="weekly">Varje vecka</option>
+                    <option value="biweekly">Varannan vecka</option>
+                    <option value="monthly">Varje månad</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Antal tillfällen</label>
+                  <select value={recurringForm.occurrences} onChange={(e) => setRecurringForm(f=>({...f,occurrences:parseInt(e.target.value)}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                    {[4,6,8,10,12,16,20,26,52].map(n=><option key={n} value={n}>{n} tillfällen</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700">Tjänster</label>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  {SERVICE_OPTIONS.map(svc=>(
+                    <button key={svc} type="button" onClick={()=>toggleRecurringService(svc)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${recurringForm.services.includes(svc)?"bg-[#141414] text-white border-[#141414]":"bg-white text-slate-600 border-slate-200"}`}>
+                      {svc}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs text-blue-800">
+                💡 Skapar <strong>{recurringForm.occurrences} bokningar</strong> {recurringForm.recurrence==="weekly"?"varje vecka":recurringForm.recurrence==="biweekly"?"varannan vecka":"varje månad"} från det valda datumet.
+              </div>
+              <button type="submit" disabled={recurringSaving||!recurringForm.name||!recurringForm.phone||!recurringForm.preferred_date} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+                {recurringSaving ? "Skapar..." : `Skapa ${recurringForm.occurrences} bokningar`}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+      {newBookingOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4" onClick={() => setNewBookingOpen(false)}>
+          <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-xl p-6 max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold text-xl text-slate-900">Ny bokning</h2>
+              <button onClick={() => setNewBookingOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">✕</button>
+            </div>
+            <form onSubmit={createBooking} className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-slate-700">Namn *</label>
+                <input value={form.name} onChange={(e) => setForm((f) => ({...f, name: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="För- och efternamn" />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Telefon *</label>
+                  <input value={form.phone} onChange={(e) => setForm((f) => ({...f, phone: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="070-000 00 00" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-700">E-post</label>
+                  <input type="email" value={form.email} onChange={(e) => setForm((f) => ({...f, email: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="@" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Datum</label>
+                  <input type="date" value={form.preferred_date} onChange={(e) => setForm((f) => ({...f, preferred_date: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Kvm</label>
+                  <input value={form.kvm} onChange={(e) => setForm((f) => ({...f, kvm: e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="T.ex. 75" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700">Tjänster</label>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  {SERVICE_OPTIONS.map((svc) => (
+                    <button key={svc} type="button" onClick={() => toggleService(svc)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${form.services.includes(svc) ? "bg-[#141414] text-white border-[#141414]" : "bg-white text-slate-600 border-slate-200"}`}>
+                      {svc}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-700">Anteckning</label>
+                <textarea value={form.other_description} onChange={(e) => setForm((f) => ({...f, other_description: e.target.value}))} rows={2} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" placeholder="Ev. önskemål..." />
+              </div>
+              <button type="submit" disabled={saving || !form.name || !form.phone} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+                {saving ? "Sparar..." : "Skapa bokning"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+    </>
+  );
+}
+
+function ReviewsPanel() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      setReviews((await api.get("/reviews")).data);
+    } catch {
+      toast.error("Kunde inte hämta omdömen.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { load(); }, []);
+
+  const setApproved = async (id, approved) => {
+    try {
+      await api.patch(`/reviews/${id}/approve`, { approved });
+      setReviews((r) => r.map((x) => (x.id === id ? { ...x, approved } : x)));
+      toast.success(approved ? "Omdöme publicerat." : "Omdöme avpublicerat.");
+    } catch {
+      toast.error("Kunde inte uppdatera omdömet.");
+    }
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm("Ta bort detta omdöme?")) return;
+    try {
+      await api.delete(`/reviews/${id}`);
+      setReviews((r) => r.filter((x) => x.id !== id));
+      toast.success("Omdöme borttaget.");
+    } catch {
+      toast.error("Kunde inte ta bort omdömet.");
+    }
+  };
+
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {[
+          { label: "Totalt", value: reviews.length },
+          { label: "Väntar", value: reviews.filter((r) => !r.approved).length },
+          { label: "Publicerade", value: reviews.filter((r) => r.approved).length },
+        ].map((s) => (
+          <div key={s.label} className="rounded-2xl bg-white border border-slate-100 p-5">
+            <p className="text-3xl font-display font-bold text-slate-900">{s.value}</p>
+            <p className="text-sm text-slate-500">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="text-slate-500">Laddar...</p>
+      ) : reviews.length === 0 ? (
+        <div data-testid="admin-reviews-empty" className="rounded-2xl bg-white border border-slate-100 p-12 text-center text-slate-500">
+          Inga omdömen ännu.
+        </div>
+      ) : (
+        <div className="grid gap-4" data-testid="admin-reviews-list">
+          {reviews.map((r) => (
+            <motion.div
+              key={r.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              data-testid={`review-row-${r.id}`}
+              className="rounded-2xl border border-slate-100 bg-white p-6 flex flex-col lg:flex-row lg:items-center gap-5 justify-between"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="font-display font-semibold text-lg text-slate-900">{r.name}</h3>
+                  {r.approved ? (
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-50 text-green-700">Publicerad</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700"><Clock size={12} /> Väntar</span>
+                  )}
+                </div>
+                <StarRating value={r.rating} className="mb-2" />
+                <p className="text-sm text-slate-600">"{r.text}"</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {r.approved ? (
+                  <button onClick={() => setApproved(r.id, false)} data-testid={`review-unpublish-${r.id}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-amber-400 hover:text-amber-600 transition-colors">
+                    <X size={15} /> Avpublicera
+                  </button>
+                ) : (
+                  <button onClick={() => setApproved(r.id, true)} data-testid={`review-approve-${r.id}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#166534] rounded-full px-4 py-2 hover:bg-[#14532d] transition-colors">
+                    <Check size={15} /> Godkänn
+                  </button>
+                )}
+                <button onClick={() => remove(r.id)} data-testid={`review-delete-${r.id}`} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+      {/* ── Settings Modal ─────────────────────────────────────────────── */}
+    </>
+  );
+}
+function Dashboard() {
+  const { logout, user } = useAuth();
+  const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
+  const [notifs, setNotifs] = useState([]);
+  const [unreadCount, setUnreadCount] = React.useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!notifOpen) return;
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    const t = setTimeout(() => document.addEventListener("click", handler), 100);
+    return () => { clearTimeout(t); document.removeEventListener("click", handler); };
+  }, [notifOpen]);
+  const [readIds, setReadIds] = React.useState([]);
+
+
+  const [baseCount, setBaseCount] = React.useState(null);
+
+
+  const [firstBookingId, setFirstBookingId] = React.useState(null);
+
+  const [knownIds, setKnownIds] = React.useState(null);
+
+  const loadNotifs = React.useCallback(async () => {
+    try {
+      const res = await api.get("/bookings");
+      const allBookings = res.data || [];
+      const allIds = allBookings.map(b => b.id);
+      setKnownIds(prev => {
+        if (prev === null) {
+          return allIds;
+        }
+        const newOnes = allBookings.filter(b => !prev.includes(b.id));
+        if (newOnes.length > 0) {
+          setNotifs(cur => {
+            const existingIds = cur.map(n => n.id);
+            const added = newOnes.filter(b => !existingIds.includes(b.id)).map(b => ({
+              id: b.id,
+              title: `Ny bokning: ${b.name}`,
+              sub: `${b.services?.[0] || b.service || ""} · ${b.date || ""}`,
+            }));
+            if(added.length>0) setUnreadCount(c=>c+added.length);
+            return [...cur, ...added];
+          });
+          return [...prev, ...newOnes.map(b => b.id)];
+        }
+        return prev;
+      });
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
+    loadNotifs();
+    const interval = setInterval(loadNotifs, 1000);
+    return () => clearInterval(interval);
+  }, [loadNotifs]);
+
+  const unseenCount = notifs.length;
+  const deleteNotif = (id) => { setNotifs(prev => prev.filter(n => n.id !== id)); };
+
+  const TRANS = {
+    sv: { "tabs.dashboard": "Översikt", "tabs.bookings": "Bokningar", "tabs.invoices": "Fakturor", "tabs.customers": "Kunder", "tabs.schema": "Schema", "tabs.payroll": "Lön", "tabs.absences": "Frånvaro", "tabs.expenses": "Utlägg", "tabs.costs": "Kostnader", "tabs.economy": "Ekonomi", "tabs.pricelist": "Prislista", "tabs.calendar": "Kalender", "tabs.stats": "Statistik", "tabs.reviews": "Omdömen", "tabs.users": "Användare", "tabs.settings": "Inställningar" },
+    en: { "tabs.dashboard": "Overview", "tabs.bookings": "Bookings", "tabs.invoices": "Invoices", "tabs.customers": "Customers", "tabs.schema": "Schedule", "tabs.payroll": "Payroll", "tabs.absences": "Absences", "tabs.expenses": "Expenses", "tabs.costs": "Costs", "tabs.economy": "Economy", "tabs.pricelist": "Price List", "tabs.calendar": "Calendar", "tabs.stats": "Statistics", "tabs.reviews": "Reviews", "tabs.users": "Users", "tabs.settings": "Settings" },
+  };
+  const t = (key) => (TRANS[lang] || TRANS.sv)[key] || key;
+
+  const toggleLang = () => {
+    const newLang = lang === "sv" ? "en" : "sv";
+    setLang(newLang);
+    localStorage.setItem("pn_language", newLang);
+  };
+  const { tab: urlTab } = useParams();
+  const navigate = useNavigate();
+  const [tab, setTabState] = useState(urlTab || "dashboard");
+  const [selectedBooking, setSelectedBooking] = React.useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsData, setSettingsData] = useState({
+    company_name: "", company_orgnr: "", company_address: "",
+    company_phone: "", company_email: "", company_website: "",
+    ob1_extra: 50, ob2_extra: 100, payment_terms_days: 30,
+  });
+  const [settingsSaving, setSettingsSaving] = useState(false);
+
+  const loadSettings = async () => {
+    try {
+      const [inv, pay] = await Promise.all([
+        api.get("/settings/invoice"),
+        api.get("/settings/payroll"),
+      ]);
+      setSettingsData({
+        company_name: inv.data.company_name || "",
+        company_orgnr: inv.data.company_orgnr || "",
+        company_address: inv.data.company_address || "",
+        company_phone: inv.data.company_phone || "",
+        company_email: inv.data.company_email || "",
+        company_website: inv.data.company_website || "",
+        ob1_extra: pay.data.ob1_extra || 50,
+        ob2_extra: pay.data.ob2_extra || 100,
+        payment_terms_days: inv.data.payment_terms_days || 30,
+      });
+    } catch {}
+  };
+
+  const saveSettings = async () => {
+    setSettingsSaving(true);
+    try {
+      await Promise.all([
+        api.patch("/settings/invoice", {
+          company_name: settingsData.company_name,
+          company_orgnr: settingsData.company_orgnr,
+          company_address: settingsData.company_address,
+          company_phone: settingsData.company_phone,
+          company_email: settingsData.company_email,
+          company_website: settingsData.company_website,
+          payment_terms_days: Number(settingsData.payment_terms_days),
+        }),
+        api.patch("/settings/payroll", {
+          ob1_extra: Number(settingsData.ob1_extra),
+          ob2_extra: Number(settingsData.ob2_extra),
+        }),
+      ]);
+      toast.success("Inställningar sparade!");
+      setSettingsOpen(false);
+    } catch { toast.error("Kunde inte spara."); }
+    finally { setSettingsSaving(false); }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  React.useEffect(() => { if (settingsOpen) loadSettings(); }, [settingsOpen]);
+
+
+
+
+
+
+  const setTab = (newTab) => {
+    setTabState(newTab);
+    navigate(`/admin/${newTab}`, { replace: true });
+  };
+
+  React.useEffect(() => {
+    if (urlTab && urlTab !== tab) setTabState(urlTab);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTab]);
+  const [searchQ, setSearchQ] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+
+  const doSearch = async (q) => {
+    setSearchQ(q);
+    if (q.length < 2) { setSearchResults([]); setSearchOpen(false); return; }
+    setSearching(true);
+    setSearchOpen(true);
+    try {
+      const res = await api.get("/search", { params: { q } });
+      setSearchResults(res.data.results || []);
+    } catch { setSearchResults([]); }
+    finally { setSearching(false); }
+  };
+
+  const TYPE_NAV = { booking: "bookings", customer: "customers", invoice: "invoices", employee: "schema" };
+  const TYPE_ICON = {
+    booking: <CalendarDays size={15} className="text-blue-600"/>,
+    customer: <Users size={15} className="text-green-600"/>,
+    invoice: <FileText size={15} className="text-amber-600"/>,
+    employee: <Users size={15} className="text-purple-600"/>,
+  };
+  const TYPE_LABEL = { booking: "Bokning", customer: "Kund", invoice: "Faktura", employee: "Anställd" };
+
+  useEffect(() => {
+    if (!user) return;
+    const staffOnly = ["schema", "absences"];
+    const salesAllowed = ["dashboard","bookings","reviews","schema","absences","expenses","payroll","invoices","pricelist","customers","calendar"];
+    if (user.role === "staff" && !staffOnly.includes(tab)) {
+      setTab("schema");
+    }
+    if (user.role === "sales" && !salesAllowed.includes(tab)) {
+      setTab("dashboard");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  return (
+    <div className="min-h-screen bg-[#F5F5F5]">
+      <header className="bg-white border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <Logo className="h-9 w-9" />
+            <div>
+              <span className="font-display font-bold text-lg text-slate-900 block leading-tight">PureNorth Städ</span>
+              <span className="text-xs text-slate-500">Adminpanel</span>
+            </div>
+          </div>
+          {/* Global Search */}
+          <div className="relative flex-1 max-w-xs hidden sm:block">
+            <div className="relative" ref={notifRef} tabIndex={-1} onBlur={e=>{if(!notifRef.current?.contains(e.relatedTarget)){setNotifOpen(false);}}}>
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+              <input
+                value={searchQ}
+                onChange={e => doSearch(e.target.value)}
+                onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
+                onFocus={() => searchQ.length >= 2 && setSearchOpen(true)}
+                placeholder="Sök bokningar, kunder, fakturor..."
+                className="w-full pl-9 pr-4 py-2 rounded-full border border-slate-200 text-sm outline-none focus:border-[#141414] bg-slate-50"
+              />
+            </div>
+            {searchOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden max-h-80 overflow-y-auto">
+                {searching ? (
+                  <p className="p-4 text-sm text-slate-400">Söker...</p>
+                ) : searchResults.length === 0 ? (
+                  <p className="p-4 text-sm text-slate-400">Inga resultat för "{searchQ}"</p>
+                ) : searchResults.map((r, i) => (
+                  <button key={i} onMouseDown={() => { setTab(TYPE_NAV[r.type] || "dashboard"); setSearchOpen(false); setSearchQ(""); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 text-left transition-colors">
+                    <span className="h-7 w-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">{TYPE_ICON[r.type]}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{r.title}</p>
+                      <p className="text-xs text-slate-500 truncate">{r.sub}</p>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-400 shrink-0">{TYPE_LABEL[r.type]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={toggleLang} className="h-9 px-2.5 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors text-sm font-semibold" title="Byt språk">
+              {lang === "sv" ? "🇸🇪" : "🇬🇧"}
+            </button>
+            <button onClick={()=>setTab("settings")} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+              <Settings size={16}/>
+            </button>
+            <div className="relative">
+              <button onClick={()=>setNotifOpen(o=>{if(o)setUnreadCount(0);return !o;})} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors relative">
+                <Bell size={16}/>
+                {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <p className="font-semibold text-sm text-slate-900">Nya bokningar</p>
+                    <button onClick={()=>setNotifOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={14}/></button>
+                  </div>
+                  {notifs.length === 0 ? (
+                    <p className="p-4 text-sm text-slate-400 text-center">Inga nya bokningar</p>
+                  ) : (
+                    <div className="max-h-72 overflow-y-auto">
+                      {notifs.map(n => (
+                        <div key={n.id} className="flex items-center px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 transition-colors">
+                          <button onClick={()=>{ setTab("bookings"); setNotifOpen(false); setSelectedBooking(n.id); setTimeout(()=>{const el=document.getElementById(`booking-${n.id}`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},400); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
+                            <div className="relative shrink-0">
+                              <span className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center"><CalendarDays size={14} className="text-blue-600"/></span>
+                              {!readIds.includes(n.id) && <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
+                              <p className="text-xs text-slate-500 truncate">{n.sub}</p>
+                            </div>
+                          </button>
+                          <button onClick={e=>{e.stopPropagation();deleteNotif(n.id);}} className="h-7 w-7 rounded-full flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 shrink-0 transition-colors ml-1">
+                            <Trash2 size={13}/>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <button onClick={logout} data-testid="admin-logout" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 rounded-full px-4 py-2 hover:border-[#141414] hover:text-[#141414] transition-colors">
+              <LogOut size={15} /> Logga ut
+            </button>
+          </div>
+        </div>
+        <div className="border-b border-slate-200"><div className="max-w-7xl mx-auto px-2 sm:px-8 flex gap-0.5 overflow-x-auto scrollbar-hide" style={{WebkitOverflowScrolling:"touch"}}>
+
+                    <button
+            onClick={() => setTab("dashboard")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "dashboard" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <LayoutDashboard size={14}/> {t("tabs.dashboard")}
+          </button>
+          <button
+            onClick={() => { 
+              setTab("bookings"); 
+              setNotifOpen(false);
+              localStorage.setItem("pn_bookings_last_visit", new Date().toISOString());
+            }}
+            data-testid="admin-tab-bookings"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "bookings" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <CalendarDays size={14}/> {t("tabs.bookings")}
+            {unreadCount > 0 && <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold">{unreadCount}</span>}
+          </button>
+          <button
+            onClick={() => setTab("invoices")}
+            data-testid="admin-tab-invoices"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "invoices" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <FileText size={14}/> {t("tabs.invoices")}
+          </button>
+          <button
+            onClick={() => setTab("customers")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "customers" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Users size={14}/> {t("tabs.customers")}
+          </button>
+          <button
+            onClick={() => setTab("schema")}
+            data-testid="admin-tab-schema"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "schema" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <CalendarRange size={14}/> {t("tabs.schema")}
+          </button>
+          <button
+            onClick={() => setTab("payroll")}
+            data-testid="admin-tab-payroll"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "payroll" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Banknote size={14}/> {t("tabs.payroll")}
+          </button>
+          <button
+            onClick={() => setTab("absences")}
+            data-testid="admin-tab-absences"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "absences" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <UserMinus size={14}/> {t("tabs.absences")}
+          </button>
+          <button
+            onClick={() => setTab("expenses")}
+            data-testid="admin-tab-expenses"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "expenses" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Receipt size={14}/> {t("tabs.expenses")}
+          </button>
+          <button
+            onClick={() => setTab("costs")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "costs" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <TrendingDown size={14}/> {t("tabs.costs")}
+          </button>
+          <button
+            onClick={() => setTab("economy")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "economy" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <TrendingUp size={14}/> {t("tabs.economy")}
+          </button>
+          <button
+            onClick={() => setTab("pricelist")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "pricelist" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Tag size={14}/> {t("tabs.pricelist")}
+          </button>
+          <button
+            onClick={() => setTab("calendar")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "calendar" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Calendar size={14}/> {t("tabs.calendar")}
+          </button>
+          <button
+            onClick={() => setTab("stats")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "stats" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <BarChart2 size={14}/> {t("tabs.stats")}
+          </button>
+          <button
+            onClick={() => setTab("reviews")}
+            data-testid="admin-tab-reviews"
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "reviews" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Star size={14}/> {t("tabs.reviews")}
+          </button>
+          <button
+            onClick={() => setTab("users")}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${tab === "users" ? "border-[#141414] text-[#141414]" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+          >
+            <Users size={14}/> {t("tabs.users")}
+          </button>
+</div></div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-3 sm:px-8 py-5 sm:py-10 w-full overflow-x-hidden">
+        {user?.role === "staff" ? (
+          tab === "absences" ? <AbsencePanel /> : <SchedulePanel />
+        ) : user?.role === "sales" ? (
+          tab === "bookings" ? <BookingsPanel selectedBooking={selectedBooking} setSelectedBooking={setSelectedBooking}/> : tab === "reviews" ? <ReviewsPanel /> :
+          tab === "schema" ? <SchedulePanel /> : tab === "absences" ? <AbsencePanel /> :
+          tab === "expenses" ? <ExpensePanel /> : tab === "payroll" ? <PayrollPanel /> :
+          tab === "invoices" ? <InvoicePanel /> : tab === "pricelist" ? <PriceListPanel /> :
+          tab === "customers" ? <CustomerPanel /> : tab === "calendar" ? <CalendarPanel /> :
+          <DashboardPanel onNavigate={setTab} />
+        ) : (
+          tab === "dashboard" ? <DashboardPanel onNavigate={setTab} /> : tab === "bookings" ? <BookingsPanel selectedBooking={selectedBooking} setSelectedBooking={setSelectedBooking}/> : tab === "reviews" ? <ReviewsPanel /> : tab === "schema" ? <SchedulePanel /> : tab === "absences" ? <AbsencePanel /> : tab === "expenses" ? <ExpensePanel /> : tab === "payroll" ? <PayrollPanel /> : tab === "invoices" ? <InvoicePanel /> : tab === "pricelist" ? <PriceListPanel /> : tab === "economy" ? <EconomyPanel /> : tab === "customers" ? <CustomerPanel /> : tab === "calendar" ? <CalendarPanel /> : tab === "stats" ? <StatsPanel /> : tab === "users" ? <UsersPanel /> : tab === "costs" ? <CostsPanel /> : tab === "settings" ? <SettingsPanel /> : <DashboardPanel onNavigate={setTab} />
+        )}
+      {/* ── Settings Modal ─────────────────────────────────────────────── */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-7">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Settings size={20} className="text-slate-700"/>
+                <h2 className="font-display font-bold text-xl text-slate-900">Inställningar</h2>
+              </div>
+              <button onClick={()=>setSettingsOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">
+                <X size={16}/>
+              </button>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Företagsuppgifter</h3>
+              <div className="space-y-3">
+                {[
+                  {label:"Företagsnamn", key:"company_name", placeholder:"PureNorth Städ"},
+                  {label:"Organisationsnummer", key:"company_orgnr", placeholder:"556123-4567"},
+                  {label:"Adress", key:"company_address", placeholder:"Storgatan 1, 903 25 Umeå"},
+                  {label:"Telefon", key:"company_phone", placeholder:"070-000 00 00"},
+                  {label:"E-post", key:"company_email", placeholder:"info@purenorth.se"},
+                  {label:"Webbplats", key:"company_website", placeholder:"www.purenorth.se"},
+                ].map(({label, key, placeholder}) => (
+                  <div key={key}>
+                    <label className="text-xs font-medium text-slate-600">{label}</label>
+                    <input value={settingsData[key]} onChange={e=>setSettingsData(d=>({...d,[key]:e.target.value}))} placeholder={placeholder} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Fakturainställningar</h3>
+              <div>
+                <label className="text-xs font-medium text-slate-600">Betalningsvillkor (dagar)</label>
+                <input type="number" value={settingsData.payment_terms_days} onChange={e=>setSettingsData(d=>({...d,payment_terms_days:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">OB-tillägg (kr/tim)</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB1 (kväll)</label>
+                  <input type="number" value={settingsData.ob1_extra} onChange={e=>setSettingsData(d=>({...d,ob1_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB2 (natt/helg)</label>
+                  <input type="number" value={settingsData.ob2_extra} onChange={e=>setSettingsData(d=>({...d,ob2_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+              </div>
+            </div>
+            <button onClick={saveSettings} disabled={settingsSaving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+              {settingsSaving ? "Sparar..." : "Spara inställningar"}
+            </button>
+          </div>
+        </div>
+      )}
+      </main>
+    </div>
+  );
+}
+
+export default function Admin() {
+  const { user, loading, login } = useAuth();
+  const [resetToken, setResetToken] = useState(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirm, setResetConfirm] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("reset_token");
+    if (token) setResetToken(token);
+  }, []);
+
+  const doReset = async (e) => {
+    e.preventDefault();
+    if (resetPassword !== resetConfirm) { toast.error("Lösenorden matchar inte."); return; }
+    setResetLoading(true);
+    try {
+      await api.post("/auth/reset-password", { token: resetToken, new_password: resetPassword });
+      setResetDone(true);
+      setResetToken(null);
+      window.history.replaceState({}, "", "/admin");
+      toast.success("Lösenordet uppdaterat! Logga in med ditt nya lösenord.");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Ogiltig eller utgången länk.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500">Laddar...</div>;
+  if (resetToken) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5] px-5">
+      <form onSubmit={doReset} className="w-full max-w-sm bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+        <h1 className="font-display font-bold text-2xl text-slate-900 mb-1">Nytt lösenord</h1>
+        <p className="text-sm text-slate-500 mb-6">Ange ditt nya lösenord nedan.</p>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Nytt lösenord</label>
+            <input type="password" value={resetPassword} onChange={e=>setResetPassword(e.target.value)} required minLength={6}
+              className="w-full rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="Minst 6 tecken"/>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Bekräfta lösenord</label>
+            <input type="password" value={resetConfirm} onChange={e=>setResetConfirm(e.target.value)} required
+              className="w-full rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="Upprepa lösenordet"/>
+          </div>
+          <button type="submit" disabled={resetLoading} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {resetLoading ? "Uppdaterar..." : "Spara nytt lösenord"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+  if (!user) {
+    return <LoginScreen onLogin={login} />;
+  }
+  return <Dashboard />;
+}
+
+```
+
+---
+
+## server.py
+```py
 from dotenv import load_dotenv
 from pathlib import Path
 import os
@@ -373,12 +1625,10 @@ async def get_next_invoice_number() -> int:
 
 # ---- Invoices (Fakturering) ----
 class InvoiceItemModel(BaseModel):
-    service: Optional[str] = None
     description: str = Field(..., min_length=1)
     quantity: float = 1
     unit_price: float = 0
     is_material: bool = False
-    kvm: Optional[float] = None
 
 
 class InvoiceCreate(BaseModel):
@@ -421,7 +1671,7 @@ class Invoice(BaseModel):
     rut_eligible: bool = True
     items: List[InvoiceItemModel]
     note: Optional[str] = None
-    due_date: Optional[str] = None
+    due_date: str
     status: str = "draft"
     labor_total: float = 0.0
     material_total: float = 0.0
@@ -500,12 +1750,17 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
             logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
     else:
         logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
+
     faktura_title = Paragraph(
-        f'<font size="22" color="#141414"><b>FAKTURA</b></font>  <font size="13" color="#888888">#{inv["invoice_number"]}</font>',
+        '<font size="28" color="#141414"><b>FAKTURA</b></font>',
         ps("ft", alignment=2)
     )
-    hdr = Table([[logo_cell, faktura_title]], colWidths=[90*mm, None])
+    faktura_nr = Paragraph(
+        f'<font size="9" color="#888888">Nr {inv["invoice_number"]}</font>',
+        ps("fnr", alignment=2)
+    )
 
+    hdr = Table([[logo_cell, [faktura_title, faktura_nr]]], colWidths=[90*mm, None])
     hdr.setStyle(TableStyle([
         ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
         ("ALIGN",(1,0),(1,0),"RIGHT"),
@@ -549,7 +1804,7 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     details = [
         [Paragraph("FAKTURADATUM", label_style), Paragraph(inv["created_at"][:10], value_style)],
         [Paragraph("FÖRFALLODATUM", label_style), Paragraph(inv["due_date"], bold_style)],
-        [Paragraph("BETALNINGSVILLKOR", label_style), Paragraph(f"{settings.payment_terms_days or inv.get('payment_terms_days') or inv.get('due_days') or 30} dagar netto", value_style)],
+        [Paragraph("BETALNINGSVILLKOR", label_style), Paragraph(f"{inv.get('due_days',30)} dagar netto", value_style)],
     ]
     if settings.bankgiro:
         details.append([Paragraph("BANKGIRO", label_style), Paragraph(settings.bankgiro, value_style)])
@@ -621,11 +1876,7 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
     ]
     if inv.get("rut_eligible") and inv.get("rut_deduction", 0) > 0:
         totals.append([f"RUT-avdrag (50% av arbetskostnad)", f"-{inv['rut_deduction']:,.2f} kr"])
-    reminder_fee_pdf = inv.get("reminder_fee", 0) or 0
-    att_betala = inv.get("customer_pays", 0)
-    if reminder_fee_pdf > 0:
-        totals.append([f"Påminnelseavgift", f"{reminder_fee_pdf:,.2f} kr"])
-    totals.append(["ATT BETALA", f"{att_betala:,.2f} kr"])
+        totals.append(["ATT BETALA", f"{inv['customer_pays']:,.2f} kr"])
 
     tot_styles = []
     last = len(totals) - 1
@@ -1444,23 +2695,226 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     return Invoice(**doc)
 
 
-@api_router.get("/invoices")
+@api_router.get("/invoices", response_model=List[Invoice], response_model_by_alias=False)
 async def list_invoices(current=Depends(get_current_user)):
     docs = await db.invoices.find().sort("invoice_number", -1).to_list(2000)
-    result = []
-    for d in docs:
-        d["id"] = str(d.pop("_id"))
-        for field in ["subtotal","vat_amount","total_amount","rut_deduction","customer_pays","labor_total","material_total"]:
-            if d.get(field) is None: d[field] = 0.0
-        result.append(d)
-    return result
+    return [Invoice(**{**d, "_id": str(d["_id"])}) for d in docs]
 
 
 
 # ── Auto Reminder Cron ────────────────────────────────────────────────────────
 @api_router.post("/invoices/auto-remind")
 async def auto_remind_overdue(request: Request):
-    return {"status": "disabled"}
+    """
+    Cron endpoint - call daily to auto-send reminders.
+    Protected by CRON_SECRET env var.
+    Logic:
+      - 1 dag efter due_date        → Påminnelse #1 (ingen avgift)
+      - payment_terms_days efter #1 → Påminnelse #2 (60 kr avgift)
+      - payment_terms_days efter #2 → Påminnelse #3 (inkasso-varning)
+    """
+    # Verify secret
+    secret = os.environ.get("CRON_SECRET", "")
+    auth = request.headers.get("x-cron-secret", "")
+    if secret and auth != secret:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    inv_settings = await get_invoice_settings_obj()
+    payment_days = inv_settings.payment_terms_days or 30
+    today = datetime.now(timezone.utc).date()
+    today_str = today.isoformat()
+
+    # Find all unpaid invoices (sent or overdue) with email
+    invoices = await db.invoices.find({
+        "status": {"$in": ["sent", "overdue"]},
+        "customer_email": {"$exists": True, "$ne": ""}
+    }).to_list(1000)
+
+    sent_count = 0
+    skipped_count = 0
+    results = []
+
+    for inv in invoices:
+        due_date_str = inv.get("due_date", "")
+        if not due_date_str:
+            continue
+
+        try:
+            from datetime import date as DateObj
+            due = DateObj.fromisoformat(due_date_str)
+        except:
+            continue
+
+        days_overdue = (today - due).days
+        if days_overdue < 1:
+            # Not yet overdue
+            skipped_count += 1
+            continue
+
+        reminder_count = inv.get("reminder_count", 0)
+        last_reminder = inv.get("last_reminder_at", "")
+
+        # Calculate when next reminder should be sent
+        if reminder_count == 0:
+            # First reminder: 1 day after due_date
+            should_remind = days_overdue >= 1
+        elif reminder_count == 1:
+            # Second reminder: payment_days after first reminder
+            if last_reminder:
+                try:
+                    last_dt = DateObj.fromisoformat(last_reminder[:10])
+                    should_remind = (today - last_dt).days >= payment_days
+                except:
+                    should_remind = False
+            else:
+                should_remind = days_overdue >= payment_days
+        elif reminder_count == 2:
+            # Third reminder: payment_days after second reminder
+            if last_reminder:
+                try:
+                    last_dt = DateObj.fromisoformat(last_reminder[:10])
+                    should_remind = (today - last_dt).days >= payment_days
+                except:
+                    should_remind = False
+            else:
+                should_remind = days_overdue >= payment_days * 2
+        else:
+            # Already sent 3+ reminders, skip
+            skipped_count += 1
+            continue
+
+        if not should_remind:
+            skipped_count += 1
+            continue
+
+        # Send reminder using existing logic
+        invoice_id = str(inv["_id"])
+        company = inv_settings.company_name or "PureNorth Stad"
+        inv_num = inv.get("invoice_number", "")
+        customer_name = inv.get("customer_name", "")
+        customer_email = inv.get("customer_email", "")
+        due_date = inv.get("due_date", "")
+        amount = inv.get("customer_pays", 0)
+        new_reminder_count = reminder_count + 1
+        reminder_fee = 60 if new_reminder_count >= 2 else 0
+        total_with_fee = amount + reminder_fee
+
+        resend.api_key = os.environ.get("RESEND_API_KEY", "")
+        if not resend.api_key:
+            results.append({"invoice": inv_num, "status": "skipped", "reason": "no resend key"})
+            continue
+
+        admin_email = os.environ.get("ADMIN_EMAIL", "")
+        subject = f"Paminnelse #{new_reminder_count}: Faktura #{inv_num} – {company}"
+        if new_reminder_count >= 3:
+            subject = f"Sista betalningspaminnelse: Faktura #{inv_num} – {company}"
+
+        html = f"""
+        <div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:520px;margin:0 auto;background:#fff;">
+          <div style="background:#dc2626;padding:28px 36px;">
+            <h1 style="color:#fff;font-size:20px;margin:0;font-weight:700;">{company}</h1>
+            <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;text-transform:uppercase;">
+              {"Paminnelse #" + str(new_reminder_count) if new_reminder_count < 3 else "Sista betalningspaminnelse"}
+            </p>
+          </div>
+          <div style="padding:36px;border:1px solid #e2e8f0;border-top:none;">
+            <p style="font-size:17px;color:#141414;font-weight:600;">Hej {customer_name},</p>
+            <p style="color:#64748b;font-size:15px;line-height:1.7;">
+              Vi har inte mottagit betalning for faktura <strong>#{inv_num}</strong>
+              som forfoll for <strong style="color:#dc2626;">{days_overdue} dagar sedan</strong>.
+            </p>
+            <div style="background:#fef2f2;border-radius:8px;padding:20px;margin:24px 0;border-left:3px solid #dc2626;">
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Fakturanummer</span> &nbsp; <strong>#{inv_num}</strong></p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Forfallodatum</span> &nbsp; <strong>{due_date}</strong></p>
+              <p style="margin:0 0 8px;font-size:14px;"><span style="color:#64748b;">Ursprungligt belopp</span> &nbsp; <strong>{amount:.2f} kr</strong></p>
+              {"<p style=margin:0 0 8px;font-size:14px;><span style=color:#64748b;>Paminnelseavgift</span> &nbsp; <strong>" + str(reminder_fee) + " kr</strong></p>" if reminder_fee > 0 else ""}
+              <p style="margin:0;font-size:16px;font-weight:700;color:#dc2626;">Att betala: {total_with_fee:.2f} kr</p>
+            </div>
+            {"<div style=background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px 16px;margin:0 0 16px;><p style=color:#dc2626;font-size:13px;font-weight:600;margin:0;>Om betalning inte inkommer inom 10 dagar lamnas arendet till inkassobolag.</p></div>" if new_reminder_count >= 2 else ""}
+            <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+            <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">{company} · Automatisk paminnelse</p>
+          </div>
+        </div>
+        """
+
+        try:
+            pdf_bytes = build_invoice_pdf(inv, inv_settings)
+            import base64
+            pdf_b64 = base64.b64encode(pdf_bytes).decode()
+
+            resend.Emails.send({
+                "from": f"{company} <onboarding@resend.dev>",
+                "to": admin_email,
+                "subject": subject,
+                "html": html,
+                "attachments": [{
+                    "filename": f"faktura_{inv_num}.pdf",
+                    "content": pdf_b64,
+                }]
+            })
+
+            # Update invoice
+            update_fields = {
+                "status": "overdue",
+                "reminder_count": new_reminder_count,
+                "last_reminder_at": datetime.now(timezone.utc).isoformat()
+            }
+
+            if reminder_fee > 0:
+                items = inv.get("items", [])
+                items = [i for i in items if i.get("service") != "Paminnelseavgift"]
+                items.append({
+                    "service": "Paminnelseavgift",
+                    "description": "Paminnelseavgift enligt inkassolagen (ingen moms)",
+                    "quantity": 1,
+                    "unit_price": reminder_fee,
+                    "is_material": False,
+                })
+                work_items = [i for i in items if i.get("service") != "Paminnelseavgift"]
+                subtotal = sum(i["quantity"] * i["unit_price"] for i in work_items)
+                vat_amount = round(subtotal * 0.25, 2)
+                rut_deduction = inv.get("rut_deduction", 0)
+                customer_pays = round(subtotal + vat_amount - rut_deduction + reminder_fee, 2)
+                update_fields["items"] = items
+                update_fields["subtotal"] = round(subtotal, 2)
+                update_fields["vat_amount"] = vat_amount
+                update_fields["customer_pays"] = customer_pays
+
+            await db.invoices.update_one(
+                {"_id": to_object_id(invoice_id)},
+                {"$set": update_fields}
+            )
+
+            sent_count += 1
+            results.append({
+                "invoice": inv_num,
+                "customer": customer_name,
+                "reminder_count": new_reminder_count,
+                "reminder_fee": reminder_fee,
+                "status": "sent"
+            })
+
+        except Exception as e:
+            results.append({"invoice": inv_num, "status": "error", "reason": str(e)})
+
+    return {
+        "date": today_str,
+        "sent": sent_count,
+        "skipped": skipped_count,
+        "payment_terms_days": payment_days,
+        "results": results
+    }
+
+@api_router.patch("/invoices/{invoice_id}/status")
+async def update_invoice_status(invoice_id: str, payload: InvoiceStatusUpdate, current=Depends(get_current_user)):
+    updates = {"status": payload.status}
+    if payload.status == "paid":
+        updates["paid_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.invoices.update_one({"_id": to_object_id(invoice_id)}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Faktura hittades inte")
+    return {"success": True}
+
 
 @api_router.delete("/invoices/{invoice_id}")
 async def delete_invoice(invoice_id: str, current=Depends(get_current_user)):
@@ -1738,12 +3192,12 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     }).to_list(2000)
 
     # Core revenue calculations
-    forsaljning_excl_moms = sum(i.get("subtotal") or 0 for i in invoices)
-    utgaende_moms = sum(i.get("vat_amount") or 0 for i in invoices)
-    rut_avdrag = sum(i.get("rut_deduction") or 0 for i in invoices)
-    kund_betalar = sum(i.get("customer_pays") or 0 for i in invoices)
-    betalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") not in ["paid", "cancelled"])
+    forsaljning_excl_moms = sum(i.get("subtotal", 0) for i in invoices)
+    utgaende_moms = sum(i.get("vat_amount", 0) for i in invoices)
+    rut_avdrag = sum(i.get("rut_deduction", 0) for i in invoices)
+    kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
+    betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled"])
 
     # Påminnelseavgifter (no moms)
     paminnelse_avgifter = sum(
@@ -4353,43 +5807,13 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
       </div>
     </div>
     """
+
     try:
-        # 1. Build update_fields first
-        update_fields = {
-            "status": "overdue",
-            "reminder_count": reminder_count,
-            "last_reminder_at": datetime.now(timezone.utc).isoformat()
-        }
-        if reminder_fee > 0:
-            items = [i for i in doc.get("items", []) if i.get("service") not in ("Påminnelseavgift", "Paminnelseavgift")]
-            items.append({
-                "service": "Påminnelseavgift",
-                "description": "Påminnelseavgift enligt inkassolagen (ingen moms)",
-                "quantity": 1,
-                "unit_price": reminder_fee,
-                "is_material": False,
-            })
-            work_items = [i for i in items if i.get("service") != "Påminnelseavgift"]
-            subtotal = sum(i["quantity"] * i["unit_price"] for i in work_items)
-            vat_amount = round(subtotal * 0.25, 2)
-            rut_deduction = doc.get("rut_deduction", 0) or 0
-            customer_pays = round(subtotal + vat_amount - rut_deduction + reminder_fee, 2)
-            update_fields["items"] = items
-            update_fields["subtotal"] = round(subtotal, 2)
-            update_fields["vat_amount"] = vat_amount
-            update_fields["total_amount"] = round(subtotal + vat_amount, 2)
-            update_fields["customer_pays"] = customer_pays
-        # 2. Save to DB first
-        await db.invoices.update_one(
-            {"_id": to_object_id(invoice_id)},
-            {"$set": update_fields}
-        )
-        # 3. Fetch updated and generate PDF
-        updated_doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
-        updated_doc["_id"] = str(updated_doc["_id"])
-        pdf_bytes = build_invoice_pdf(updated_doc, inv_settings)
+        # Generate PDF
+        pdf_bytes = build_invoice_pdf(doc, inv_settings)
         import base64
         pdf_b64 = base64.b64encode(pdf_bytes).decode()
+
         resend.Emails.send({
             "from": f"{company} <onboarding@resend.dev>",
             "to": admin_email,
@@ -4400,6 +5824,48 @@ async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_use
                 "content": pdf_b64,
             }]
         })
+
+        # Update invoice - add reminder fee if reminder_count >= 2
+        update_fields = {
+            "status": "overdue",
+            "reminder_count": reminder_count,
+            "last_reminder_at": datetime.now(timezone.utc).isoformat()
+        }
+
+        if reminder_fee > 0:
+            # Add påminnelseavgift to invoice items (NO moms on reminder fee)
+            items = doc.get("items", [])
+            # Remove old reminder fee if exists
+            items = [i for i in items if i.get("service") != "Påminnelseavgift"]
+            # Add new reminder fee
+            items.append({
+                "service": "Påminnelseavgift",
+                "description": "Påminnelseavgift enligt inkassolagen (ingen moms)",
+                "quantity": 1,
+                "unit_price": reminder_fee,
+                "is_material": False,
+            })
+
+            # Recalculate: reminder fee is AFTER moms and RUT
+            work_items = [i for i in items if i.get("service") != "Påminnelseavgift"]
+            subtotal = sum(i["quantity"] * i["unit_price"] for i in work_items)
+            vat_rate = doc.get("vat_amount", 0) / doc.get("subtotal", 1) * 100 if doc.get("subtotal", 0) > 0 else 25
+            vat_amount = round(subtotal * vat_rate / 100, 2)
+            rut_deduction = doc.get("rut_deduction", 0)
+            total_excl_reminder = round(subtotal + vat_amount - rut_deduction, 2)
+            customer_pays = round(total_excl_reminder + reminder_fee, 2)
+            total_amount = round(subtotal + vat_amount + reminder_fee, 2)
+
+            update_fields["items"] = items
+            update_fields["subtotal"] = round(subtotal, 2)
+            update_fields["vat_amount"] = vat_amount
+            update_fields["total_amount"] = total_amount
+            update_fields["customer_pays"] = customer_pays
+
+        await db.invoices.update_one(
+            {"_id": to_object_id(invoice_id)},
+            {"$set": update_fields}
+        )
 
         return {
             "success": True,
@@ -6322,16 +7788,6 @@ async def sync_invoice_from_booking(booking_id: str, payload: dict, current=Depe
     
     return {"updated": False, "message": "Nothing to update"}
 
-
-@api_router.delete("/reset/economy")
-async def reset_economy(current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") not in ("admin", "superadmin"):
-        raise HTTPException(status_code=403, detail="Ingen behörighet")
-    await db.invoices.delete_many({})
-    await db.expenses.delete_many({})
-    await db.costs.delete_many({})
-    return {"ok": True, "message": "Ekonomi återställd"}
-
 app.include_router(api_router)
 
 @app.get("/api/health")
@@ -6377,4 +7833,2483 @@ async def shutdown_db_client():
     client.close()
 # auto-remind deploy Fri Jun 26 22:44:29 UTC 2026
 # force deploy 1782606093
+
+```
+
+---
+
+## DashboardPanel.jsx
+```jsx
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { Calendar, Users, FileText, AlertCircle, Clock, TrendingUp, TrendingDown, Phone, Mail, RefreshCw, CalendarClock, ClipboardList, CalendarDays, Wallet, Landmark, Banknote, Receipt } from "lucide-react";
+import { api } from "@/lib/api";
+
+function kr(v) { return `${(v||0).toLocaleString("sv-SE",{minimumFractionDigits:2,maximumFractionDigits:2})} kr`; }
+
+function StatCard({ title, value, sub, color="slate", icon: Icon, onClick }) {
+  const colors = {
+    green: "bg-green-50 border-green-100",
+    red: "bg-red-50 border-red-100",
+    blue: "bg-blue-50 border-blue-100",
+    amber: "bg-amber-50 border-amber-100",
+    slate: "bg-white border-slate-100",
+    purple: "bg-purple-50 border-purple-100",
+  };
+  const textColors = {
+    green:"text-green-700", red:"text-red-700", blue:"text-blue-700",
+    amber:"text-amber-700", slate:"text-slate-700", purple:"text-purple-700"
+  };
+  return (
+    <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}
+      onClick={onClick}
+      className={`rounded-2xl border p-5 ${colors[color]} ${onClick?"cursor-pointer hover:shadow-md transition-shadow":""}`}>
+      <div className="flex items-start justify-between mb-2">
+        <p className={`text-xs font-semibold uppercase tracking-wide opacity-70 ${textColors[color]}`}>{title}</p>
+        {Icon && <Icon size={18} className={`${textColors[color]} opacity-60`}/>}
+      </div>
+      <p className={`text-3xl font-display font-bold ${textColors[color]}`}>{value}</p>
+      {sub && <p className={`text-xs mt-1 opacity-70 ${textColors[color]}`}>{sub}</p>}
+    </motion.div>
+  );
+}
+
+function Section({ title, children, action }) {
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-display font-bold text-base text-slate-900">{title}</h3>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export default function DashboardPanel({ onNavigate, onRefresh }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
+
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const res = await api.get("/dashboard");
+      setData(res.data);
+      setLastUpdated(new Date());
+    } catch { if (!silent) toast.error("Kunde inte hämta dashboard."); }
+    finally { if (!silent) setLoading(false); }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(()=>{ 
+    load();
+    const interval = setInterval(() => load(true), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const todayStr = new Date().toLocaleDateString("sv-SE", { weekday:"long", day:"numeric", month:"long" });
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20 text-slate-400">
+      <RefreshCw size={24} className="animate-spin mr-2"/> Laddar dashboard...
+    </div>
+  );
+
+  if (!data) return null;
+
+  const STATUS_CLS = { new:"bg-blue-50 text-blue-700", contacted:"bg-amber-50 text-amber-700", done:"bg-green-50 text-green-700" };
+  const STATUS_LBL = { new:"Ny", contacted:"Kontaktad", done:"Klar" };
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-display font-bold text-xl text-slate-900">Översikt</h2>
+          <p className="text-sm text-slate-500 capitalize">{todayStr}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {lastUpdated && <span className="text-xs text-slate-400">Uppdaterad {lastUpdated.toLocaleTimeString("sv-SE", {hour:"2-digit", minute:"2-digit"})}</span>}
+          <button onClick={()=>{load();if(onRefresh)onRefresh();}} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
+            <RefreshCw size={15}/>
+          </button>
+        </div>
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <StatCard title="Pass idag" value={data.todays_shift_count} icon={Clock}
+          color={data.todays_shift_count>0?"blue":"slate"}
+          sub={data.absent_today_count>0 ? `${data.absent_today_count} frånvaro` : "Inga frånvaron"}
+          onClick={()=>onNavigate("schema")} />
+        <StatCard title="Nya bokningar" value={data.new_bookings_count} icon={Calendar}
+          color={data.new_bookings_count>0?"amber":"slate"}
+          sub="Väntar på svar"
+          onClick={()=>onNavigate("bookings")} />
+        <StatCard title="Obetalda fakturor" value={data.unpaid_invoices_count} icon={FileText}
+          color={data.overdue_count>0?"red":data.unpaid_invoices_count>0?"amber":"green"}
+          sub={data.overdue_count>0 ? `${data.overdue_count} förfallna!` : kr(data.unpaid_total)}
+          onClick={()=>onNavigate("invoices")} />
+        <StatCard title="Intäkter (månaden)" value={kr(data.month.revenue)} icon={TrendingUp}
+          color="green"
+          sub={`${data.month.invoice_count} fakturor, ${kr(data.month.paid)} betalt`}
+          onClick={()=>onNavigate("economy")} />
+        {data.month_material_cost > 0 && (
+          <StatCard title="Materialkost. (månaden)" value={kr(data.month_material_cost)} icon={TrendingDown}
+            color="amber"
+            sub={`${data.month_costs_count} kostnadsposter`}
+            onClick={()=>onNavigate("costs")} />
+        )}
+      </div>
+
+      {/* Payment Reminders */}
+      {(() => {
+        const today = new Date();
+        const day = today.getDate();
+        const month = today.toLocaleString("sv-SE", { month: "long" });
+        const year = today.getFullYear();
+        const mon = String(today.getMonth()+1).padStart(2,"0");
+        const reminders = [];
+
+        // AGI reminder - due 12th
+        const agiDate = new Date(year, today.getMonth(), 12);
+        const daysToAgi = Math.ceil((agiDate - today) / (1000*60*60*24));
+        if (daysToAgi >= 0 && daysToAgi <= 5) {
+          reminders.push({ type: "red", iconType: "agi", title: "AGI förfaller om " + daysToAgi + " dag(ar)!", desc: "Arbetsgivaravgift + prelskatt ska betalas till Skatteverket (Bankgiro: 5050-1055)", date: `${year}-${mon}-12` });
+        }
+
+        // Salary reminder - due 25th
+        const salaryDate = new Date(year, today.getMonth(), 25);
+        const daysToSalary = Math.ceil((salaryDate - today) / (1000*60*60*24));
+        if (daysToSalary >= 0 && daysToSalary <= 5) {
+          reminders.push({ type: "amber", iconType: "lon", title: "Löneutbetalning om " + daysToSalary + " dag(ar)", desc: "Nettolön ska betalas till anställdas bankkonton (kolla Lön-fliken)", date: `${year}-${mon}-25` });
+        }
+
+        // Moms reminder - due 26th (quarterly/monthly)
+        const momsDate = new Date(year, today.getMonth(), 26);
+        const daysMoms = Math.ceil((momsDate - today) / (1000*60*60*24));
+        if (daysMoms >= 0 && daysMoms <= 5) {
+          reminders.push({ type: "amber", iconType: "moms", title: "Momsdeklaration om " + daysMoms + " dag(ar)", desc: "Skicka momsredovisning och betala moms till Skatteverket", date: `${year}-${mon}-26` });
+        }
+
+        if (reminders.length === 0) return null;
+        return (
+          <div className="space-y-2 mb-2">
+            {reminders.map((r, i) => (
+              <div key={i} className={`rounded-2xl p-4 flex items-start gap-3 ${r.type==="red" ? "bg-red-50 border border-red-100" : "bg-amber-50 border border-amber-100"}`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${r.type==="red" ? "bg-red-100" : "bg-amber-100"}`}>
+                  {r.iconType==="agi" && <Landmark size={18} className={r.type==="red"?"text-red-600":"text-amber-600"}/>}
+                  {r.iconType==="lon" && <Banknote size={18} className={r.type==="red"?"text-red-600":"text-amber-600"}/>}
+                  {r.iconType==="moms" && <Receipt size={18} className={r.type==="red"?"text-red-600":"text-amber-600"}/>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-bold text-sm ${r.type==="red" ? "text-red-800" : "text-amber-800"}`}>{r.title}</p>
+                  <p className="text-xs text-slate-600 mt-0.5">{r.desc}</p>
+                  <p className={`text-xs font-semibold mt-1 ${r.type==="red" ? "text-red-600" : "text-amber-600"}`}>Förfallodatum: {r.date}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Alerts */}
+      {(data.sick_today.length>0 || data.overdue_count>0) && (
+        <div className="space-y-2 mb-6">
+          {data.sick_today.length>0 && (
+            <div className="rounded-2xl bg-red-50 border border-red-100 p-4 flex items-center gap-3">
+              <AlertCircle size={18} className="text-red-600 shrink-0"/>
+              <p className="text-sm text-red-800">
+                <strong>Sjuk idag:</strong> {data.sick_today.join(", ")}
+              </p>
+            </div>
+          )}
+          {data.overdue_count>0 && (
+            <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 flex items-center gap-3">
+              <AlertCircle size={18} className="text-amber-600 shrink-0"/>
+              <p className="text-sm text-amber-800">
+                <strong>{data.overdue_count} förfallna fakturor</strong> — {kr(data.unpaid_total)} totalt obetalt
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Today's shifts */}
+        <Section title={<span className="flex items-center gap-2"><Clock size={16} className="text-blue-500"/> Pass idag ({data.todays_shift_count})</span>}
+          action={<button onClick={()=>onNavigate("schema")} className="text-xs text-slate-400 hover:text-[#141414]">Se schema →</button>}>
+          <div className="rounded-2xl bg-white border border-slate-100 overflow-hidden">
+            {data.todays_shifts.length===0 ? (
+              <p className="p-5 text-sm text-slate-400">Inga pass inlagda idag.</p>
+            ) : data.todays_shifts.map(s=>(
+              <div key={s._id} className="flex items-center gap-3 p-4 border-b border-slate-50 last:border-b-0">
+                <div className="h-8 w-1.5 rounded-full shrink-0" style={{backgroundColor:s.employee_color}}/>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">{s.employee_name}</p>
+                  <p className="text-xs text-slate-500">{s.title}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs font-semibold text-slate-700">{s.start_time}–{s.end_time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* New bookings */}
+        <Section title={<span className="flex items-center gap-2"><ClipboardList size={16} className="text-amber-500"/> Nya bokningar ({data.new_bookings_count})</span>}
+          action={<button onClick={()=>onNavigate("bookings")} className="text-xs text-slate-400 hover:text-[#141414]">Se alla →</button>}>
+          <div className="rounded-2xl bg-white border border-slate-100 overflow-hidden">
+            {data.new_bookings.length===0 ? (
+              <p className="p-5 text-sm text-slate-400">Inga nya bokningar.</p>
+            ) : data.new_bookings.map(b=>(
+              <div key={b._id} className="p-4 border-b border-slate-50 last:border-b-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 truncate">{b.name}</p>
+                    <p className="text-xs text-slate-500">{b.services?.join(", ")}</p>
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full shrink-0 ${STATUS_CLS[b.status]}`}>{STATUS_LBL[b.status]}</span>
+                </div>
+                <div className="flex gap-3 mt-2 text-xs text-slate-500">
+                  {b.phone && <a href={`tel:${b.phone}`} className="flex items-center gap-1 hover:text-[#141414]"><Phone size={11}/>{b.phone}</a>}
+                  {b.preferred_date && <span className="flex items-center gap-1"><Calendar size={11}/>{b.preferred_date}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* Upcoming bookings */}
+        <Section title={<span className="flex items-center gap-2"><CalendarDays size={16} className="text-green-500"/> Kommande bokningar (veckan)</span>}
+          action={<button onClick={()=>onNavigate("bookings")} className="text-xs text-slate-400 hover:text-[#141414]">Se alla →</button>}>
+          <div className="rounded-2xl bg-white border border-slate-100 overflow-hidden">
+            {data.upcoming_bookings.length===0 ? (
+              <p className="p-5 text-sm text-slate-400">Inga kommande bokningar denna vecka.</p>
+            ) : data.upcoming_bookings.map(b=>(
+              <div key={b._id} className="flex items-center justify-between gap-3 p-4 border-b border-slate-50 last:border-b-0">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">{b.name}</p>
+                  <p className="text-xs text-slate-500">{b.services?.join(", ")}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs font-semibold text-slate-700">{b.preferred_date}</p>
+                  {b.kvm && <p className="text-xs text-slate-400">{b.kvm} kvm</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* Unpaid invoices */}
+        <Section title={<span className="flex items-center gap-2"><Wallet size={16} className="text-red-500"/> Obetalda fakturor ({data.unpaid_invoices_count})</span>}
+          action={<button onClick={()=>onNavigate("invoices")} className="text-xs text-slate-400 hover:text-[#141414]">Se alla →</button>}>
+          <div className="rounded-2xl bg-white border border-slate-100 overflow-hidden">
+            {data.unpaid_invoices.length===0 ? (
+              <p className="p-5 text-sm text-green-600 font-semibold">Inga obetalda fakturor!</p>
+            ) : data.unpaid_invoices.map(inv=>(
+              <div key={inv._id} className={`flex items-center justify-between gap-3 p-4 border-b border-slate-50 last:border-b-0 ${inv.due_date < data.today ? "bg-red-50" : ""}`}>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">#{inv.invoice_number} · {inv.customer_name}</p>
+                  <p className={`text-xs ${inv.due_date < data.today ? "text-red-600 font-semibold" : "text-slate-500"}`}>
+                    {inv.due_date < data.today ? "Förfallen" : "Förfaller"} {inv.due_date}
+                  </p>
+                </div>
+                <p className="text-sm font-bold text-slate-900 shrink-0">{kr(inv.customer_pays)}</p>
+              </div>
+            ))}
+            {data.unpaid_invoices_count>0 && (
+              <div className="p-4 bg-slate-50 flex justify-between items-center">
+                <span className="text-xs font-semibold text-slate-500">Totalt obetalt</span>
+                <span className="text-sm font-bold text-slate-900">{kr(data.unpaid_total)}</span>
+              </div>
+            )}
+          </div>
+        </Section>
+      </div>
+
+      {/* Week summary */}
+      <div className="rounded-2xl bg-white border border-slate-100 p-5 mt-2">
+        <h3 className="font-semibold text-slate-900 mb-4">Veckans sammanfattning</h3>
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p className="text-2xl font-bold text-slate-900">{data.week.shifts}</p>
+            <p className="text-xs text-slate-500">Pass inlagda</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-slate-900">{data.week.new_bookings}</p>
+            <p className="text-xs text-slate-500">Nya bokningar</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-slate-900">{data.employee_count}</p>
+            <p className="text-xs text-slate-500">Anställda</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
+---
+
+## BookingForm.jsx
+```jsx
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { Phone, Send, CheckCircle2, ChevronDown, ChevronUp, Check, X } from "lucide-react";
+import { api } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// SERVICE_OPTIONS loaded dynamically from Prislista
+
+const initialForm = {
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+  kvm: "",
+  preferred_date: "",
+  other_description: "",
+};
+
+const darkInput =
+  "mt-1.5 bg-white/[0.06] border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30";
+
+export const BookingForm = () => {
+  const [form, setForm] = useState(initialForm);
+  const [services, setServices] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [serviceOptions, setServiceOptions] = useState(["Hemstädning", "Flyttstädning", "Kontorsstädning", "Storstädning", "Annat"]);
+  const [priceItems, setPriceItems] = useState([]);
+  const KVM_SERVICES = ["Hemstädning", "Flyttstädning", "Storstädning", "Byggstädning"];
+  const needsKvm = services.some(s => KVM_SERVICES.includes(s));
+  const quantityInfo = (() => {
+    if (services.length === 0) return null;
+    if (priceItems.length > 0) {
+      const units = services.map(s => { const item = priceItems.find(p => p.service === s); return item ? item.unit : null; }).filter(Boolean);
+      if (units.includes("st")) return { label: "Antal (st)", placeholder: "T.ex. 5" };
+      if (units.includes("kvm") || units.includes("tim")) return { label: "Yta (kvm)", placeholder: "T.ex. 75" };
+      return null;
+    }
+    if (needsKvm) return { label: "Yta (kvm)", placeholder: "T.ex. 75" };
+    return null;
+  })();
+
+  useEffect(() => {
+    api.get("/settings/pricelist").then((res) => {
+      const items = res.data.items?.filter((p) => p.is_active && !p.service.includes("(fast)")) || [];
+      const active = items.map((p) => p.service);
+      setPriceItems(items);
+      if (active.length > 0) {
+        setServiceOptions([...active, "Annat"].filter((s, i, arr) => arr.indexOf(s) === i));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const annatSelected = services.includes("Annat") || services.some((s) => !serviceOptions.slice(0, -1).includes(s));
+
+  const toggleService = (s, closeDropdown = true) => {
+    setServices((prev) => {
+      if (s === "Annat") {
+        return prev.includes(s) ? [] : ["Annat"];
+      } else {
+        const without = prev.filter((x) => x !== "Annat");
+        return without.includes(s) ? without.filter((x) => x !== s) : [...without, s];
+      }
+    });
+    if (closeDropdown) setServiceDropdownOpen(false);
+  };
+
+  const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.email || !form.phone) {
+      toast.error("Fyll i namn, e-post och telefonnummer.");
+      return;
+    }
+    if (services.length === 0) {
+      toast.error("Välj minst en tjänst.");
+      return;
+    }
+    if (annatSelected && !form.other_description.trim()) {
+      toast.error("Beskriv vilken tjänst du önskar under 'Annat'.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.post("/bookings", { ...form, services });
+      setDone(true);
+      toast.success("Tack! Din bokningsförfrågan har skickats.");
+      setForm(initialForm);
+      setServices([]);
+    } catch (err) {
+      toast.error("Något gick fel. Försök igen eller ring oss.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section id="boka" className="py-24 sm:py-32 bg-[#141414] text-white">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-5 gap-12">
+        {/* Left intro */}
+        <div className="lg:col-span-2">
+          <p className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-3">
+            Boka tid
+          </p>
+          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-white leading-tight">
+            Boka online eller ring oss
+          </h2>
+          <p className="mt-5 text-lg text-white/70 leading-relaxed">
+            Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata
+            med oss direkt? Slå en signal.
+          </p>
+          <a
+            href="tel:0706240403"
+            data-testid="booking-call-btn"
+            className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.06] px-6 py-4 hover:border-white/40 transition-colors"
+          >
+            <span className="h-11 w-11 rounded-full bg-white text-[#141414] flex items-center justify-center">
+              <Phone size={18} />
+            </span>
+            <span>
+              <span className="block text-xs text-white/50">Ring oss</span>
+              <span className="block font-semibold text-white">070-624 04 03</span>
+            </span>
+          </a>
+        </div>
+
+        {/* Form */}
+        <div className="lg:col-span-3">
+          {done ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              data-testid="booking-success"
+              className="rounded-3xl border border-white/10 bg-white/[0.06] p-10 text-center"
+            >
+              <CheckCircle2 size={48} className="text-[#4ade80] mx-auto mb-4" />
+              <h3 className="font-display font-bold text-2xl text-white mb-2">
+                Tack för din förfrågan!
+              </h3>
+              <p className="text-white/70">
+                Vi har tagit emot din bokning och återkommer så snart vi kan.
+              </p>
+              <button
+                onClick={() => setDone(false)}
+                data-testid="booking-new-btn"
+                className="mt-6 rounded-full bg-white hover:bg-white/90 text-[#141414] px-7 py-3 font-semibold transition-colors"
+              >
+                Gör en ny bokning
+              </button>
+            </motion.div>
+          ) : (
+            <form
+              onSubmit={submit}
+              data-testid="booking-form"
+              className="rounded-3xl border border-white/10 bg-white/[0.04] p-7 sm:p-9 space-y-5"
+            >
+              <div className="grid sm:grid-cols-2 gap-5">
+                <div>
+                  <Label htmlFor="name" className="text-white/70">Namn eller företagsnamn *</Label>
+                  <Input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className={darkInput} />
+                </div>
+                <div>
+                  <Label htmlFor="email" className="text-white/70">E-post *</Label>
+                  <Input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className={darkInput} />
+                </div>
+                <div>
+                  <Label htmlFor="phone" className="text-white/70">Telefonnummer *</Label>
+                  <Input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} />
+                </div>
+                <div>
+                  <Label htmlFor="address" className="text-white/70">Adress (städobjekt)</Label>
+                  <Input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" className={darkInput} />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-white/70">Vilka tjänster? *</Label>
+                <div className="mt-2 relative">
+                  <button
+                    type="button"
+                    onClick={() => setServiceDropdownOpen((o) => !o)}
+                    className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${
+                      services.length > 0 ? "border-white/60 bg-white/10" : "border-white/15 hover:border-white/30"
+                    }`}
+                  >
+                    <span className="text-[15px] text-white/90">
+                      {services.length === 0
+                        ? "Välj tjänster..."
+                        : services.length === 1 ? services[0] : `${services.length} tjänster valda`}
+                    </span>
+                    {serviceDropdownOpen ? <ChevronUp size={18} className="text-white/60 shrink-0" /> : <ChevronDown size={18} className="text-white/60 shrink-0" />}
+                  </button>
+                  {services.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {services.map(s => (
+                        <span key={s} className="inline-flex items-center gap-1.5 bg-white/15 border border-white/30 text-white text-xs font-medium px-3 py-1.5 rounded-full">
+                          {s}
+                          <button type="button" onClick={(e) => { e.stopPropagation(); toggleService(s, false); }} className="text-white/60 hover:text-white transition-colors ml-0.5">
+                            <X size={12}/>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {serviceDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-1 rounded-xl border border-white/20 bg-[#1a1a1a] overflow-hidden z-10 relative max-h-56 overflow-y-auto"
+                    >
+                      {serviceOptions.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          data-testid={`booking-service-${s}`}
+                          onClick={() => toggleService(s)}
+                          className={`w-full flex items-center justify-between px-4 py-3 text-left text-[15px] transition-colors border-b border-white/10 last:border-b-0 ${
+                            services.includes(s)
+                              ? "text-white bg-white/10"
+                              : "text-white/70 hover:bg-white/5 hover:text-white"
+                          }`}
+                        >
+                          <span>{s}</span>
+                          {services.includes(s) && <Check size={16} className="text-white shrink-0" />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+
+              {annatSelected && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                >
+                  <Label htmlFor="other" className="text-white/70">
+                    Beskriv vilken tjänst du önskar *
+                  </Label>
+                  <Textarea
+                    id="other"
+                    data-testid="booking-other"
+                    value={form.other_description}
+                    onChange={update("other_description")}
+                    placeholder="Berätta vad du behöver hjälp med..."
+                    className={`${darkInput} min-h-[100px]`}
+                  />
+                </motion.div>
+              )}
+
+              {quantityInfo && (
+                <div>
+                  <Label htmlFor="kvm" className="text-white/70">{quantityInfo.label}</Label>
+                  <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} />
+                </div>
+              )}
+              <div>
+                <Label htmlFor="date" className="text-white/70">Önskat datum för bokning</Label>
+                <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} min={new Date().toISOString().split("T")[0]} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                data-testid="booking-submit"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white hover:bg-white/90 disabled:opacity-60 text-[#141414] px-8 py-4 text-base font-semibold transition-colors"
+              >
+                {submitting ? "Skickar..." : <>Skicka bokningsförfrågan <Send size={17} /></>}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+```
+
+---
+
+## BookingCalculator.jsx
+```jsx
+import React, { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { FileText } from "lucide-react";
+
+// ── Service type detection ────────────────────────────────────────────────────
+const ST_KEYWORDS  = ["fönsterputs","ugnstvätt","kyl/frys","trappstädning"];
+const TIM_KEYWORDS = ["hemstädning","storstädning","kontorsstädning","byggstädning"];
+const KVM_KEYWORDS = ["flyttstädning"];
+
+const SPEED = { "hemstädning":30, "storstädning":20, "kontorsstädning":35, "byggstädning":18 };
+
+function getType(svcName, unit) {
+  const n = svcName.toLowerCase();
+  if (unit === "fast") return "fast";
+  if (ST_KEYWORDS.some(k  => n.includes(k))) return "st";
+  if (KVM_KEYWORDS.some(k => n.includes(k))) return "kvm";
+  if (TIM_KEYWORDS.some(k => n.includes(k))) return "tim";
+  if (unit === "st")  return "st";
+  if (unit === "kvm") return "kvm";
+  return "tim";
+}
+
+function roundUp(h) { return Math.ceil(h * 2) / 2; }
+function fmtKr(n)   { return Math.round(n).toLocaleString("sv-SE") + " kr"; }
+
+// ── Build one row from service + priceItem + booking qty ──────────────────────
+function buildRow(svcName, priceItem, bookingQty) {
+  const q    = parseInt(bookingQty) || 0;
+  const rate = priceItem.price;
+  const isRut = priceItem.is_rut_eligible;
+  const type  = getType(svcName, priceItem.unit);
+  const speedVal = Object.entries(SPEED).find(([k]) => svcName.toLowerCase().includes(k))?.[1] || 30;
+
+  let tim = 0, kvm = 0, antal = 0, lineTotal = 0;
+  let invoiceDesc = priceItem.service;
+  let invoiceQty  = 1;
+
+  switch (type) {
+    case "fast":
+      lineTotal   = rate;
+      invoiceDesc = priceItem.service;
+      invoiceQty  = 1;
+      break;
+
+    case "st":
+      antal       = q || 1;
+      lineTotal   = antal * rate;
+      tim         = roundUp(antal * 0.2);
+      invoiceDesc = priceItem.service;
+      invoiceQty  = antal;
+      break;
+
+    case "kvm":
+      kvm         = q || 1;
+      lineTotal   = kvm * rate;
+      tim         = roundUp(kvm / 15);
+      invoiceDesc = `${priceItem.service} (${kvm} kvm)`;
+      invoiceQty  = kvm;
+      break;
+
+    case "tim":
+    default:
+      kvm         = q || 0;
+      tim         = kvm > 0 ? roundUp(kvm / speedVal) : 1;
+      lineTotal   = tim * rate;
+      invoiceDesc = `${priceItem.service} (${kvm} kvm → ${tim} tim)`;
+      invoiceQty  = tim;
+      break;
+  }
+
+  return { label: priceItem.service, type, tim, kvm, antal, rate, lineTotal, isRut, invoiceDesc, invoiceQty };
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+export default function BookingCalculator({ booking, onCreateInvoice }) {
+  const [rows,    setRows]    = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!booking) return;
+    setLoading(true);
+    api.get("/settings/pricelist")
+      .then(r => {
+        const active = (r.data.items || []).filter(i => i.is_active);
+        const built  = (booking.services || []).map(svc => {
+          const item = active.find(p =>
+            p.service.toLowerCase().includes(svc.toLowerCase()) ||
+            svc.toLowerCase().includes(p.service.toLowerCase())
+          );
+          return item ? buildRow(svc, item, booking.kvm) : null;
+        }).filter(Boolean);
+        setRows(built);
+      })
+      .catch(() => toast.error("Kunde inte hämta prislista."))
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking]);
+
+  // ── Totals ─────────────────────────────────────────────────────────────────
+  const subtotal      = rows.reduce((s, r) => s + r.lineTotal, 0);
+  const rutDeduction  = rows.filter(r => r.isRut).reduce((s, r) => s + r.lineTotal * 0.5, 0);
+  const moms          = subtotal * 0.25;
+  const totalInclMoms = subtotal + moms;
+  const attBetala     = totalInclMoms - rutDeduction;
+
+  // ── Create invoice ─────────────────────────────────────────────────────────
+  const handleCreate = async () => {
+    try {
+      const invoiceItems = rows.map(r => ({
+        service:     r.label,
+        description: r.invoiceDesc,
+        quantity:    r.invoiceQty,
+        unit_price:  r.rate,
+        is_material: false,
+      }));
+      const hasRut = rows.some(r => r.isRut);
+      const totals = {
+        subtotal:      Math.round(subtotal),
+        rut_deduction: Math.round(rutDeduction),
+        vat_amount:    Math.round(moms),
+        total_amount:  Math.round(totalInclMoms),
+        customer_pays: Math.round(attBetala),
+        rut_eligible:  hasRut,
+      };
+      await onCreateInvoice(invoiceItems, totals);
+    } catch { toast.error("Kunde inte skapa faktura."); }
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  if (loading) return <p className="text-sm text-slate-400 p-4">Hämtar priser...</p>;
+  if (!rows.length) return (
+    <p className="text-sm text-slate-400 p-4 text-center">
+      Inga matchande tjänster i prislistan. Kontrollera Prislista.
+    </p>
+  );
+
+  return (
+    <div className="space-y-4">
+
+      {/* ── Items table ── */}
+      <div className="rounded-xl border border-slate-100 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-slate-50 text-xs text-slate-400 uppercase tracking-wide">
+              <th className="p-3 text-left">Tjänst</th>
+              <th className="p-3 text-right">Beräkning</th>
+              <th className="p-3 text-right">À-pris</th>
+              <th className="p-3 text-right">Belopp</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} className={`border-t border-slate-50 ${i%2===1?"bg-slate-50/40":""}`}>
+                <td className="p-3 font-medium text-slate-900">
+                  {r.label}
+                  {r.isRut && <span className="ml-2 text-xs bg-green-50 text-green-700 font-semibold px-1.5 py-0.5 rounded-full">RUT</span>}
+                </td>
+                <td className="p-3 text-right text-slate-500 text-xs">
+                  {r.type === "st"   && `${r.antal} st`}
+                  {r.type === "kvm"  && `${r.kvm} kvm`}
+                  {r.type === "tim"  && `${r.kvm} kvm → ${r.tim} tim`}
+                  {r.type === "fast" && "Fast pris"}
+                </td>
+                <td className="p-3 text-right text-slate-500">
+                  {r.type === "st"   && `${fmtKr(r.rate)}/st`}
+                  {r.type === "kvm"  && `${fmtKr(r.rate)}/kvm`}
+                  {r.type === "tim"  && `${fmtKr(r.rate)}/tim`}
+                  {r.type === "fast" && fmtKr(r.rate)}
+                </td>
+                <td className="p-3 text-right font-semibold">{fmtKr(r.lineTotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── Summary ── */}
+      <div className="rounded-xl bg-slate-50 border border-slate-100 p-4 space-y-2">
+        <div className="flex justify-between text-sm">
+          <span className="text-slate-500">Delsumma (exkl. moms)</span>
+          <span className="font-medium">{fmtKr(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-slate-500">Moms (25%)</span>
+          <span className="font-medium">{fmtKr(moms)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-slate-500">Totalt inkl. moms</span>
+          <span className="font-medium">{fmtKr(totalInclMoms)}</span>
+        </div>
+        {rutDeduction > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-green-600">RUT-avdrag (50% av arbetskostnad)</span>
+            <span className="font-medium text-green-600">-{fmtKr(rutDeduction)}</span>
+          </div>
+        )}
+        <div className="flex justify-between text-base font-bold border-t border-slate-200 pt-2 mt-1">
+          <span>ATT BETALA</span>
+          <span className="text-green-700">{fmtKr(attBetala)}</span>
+        </div>
+      </div>
+
+      {/* ── Button ── */}
+      <button onClick={handleCreate}
+        className="w-full flex items-center justify-center gap-2 rounded-full bg-[#141414] hover:bg-black text-white font-semibold py-3 transition-colors">
+        <FileText size={16}/> Skapa faktura automatiskt
+      </button>
+
+    </div>
+  );
+}
+
+```
+
+---
+
+## ExpensePanel.jsx
+```jsx
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, X, Trash2, Receipt, Check, Upload, FileText, FileSpreadsheet, Eye, Pencil } from "lucide-react";
+import { api } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const EXPENSE_CATS = [
+  { value: "Material",       moms: 25, label: "Material (25%)" },
+  { value: "Bränsle",        moms: 25, label: "Bränsle (25%)" },
+  { value: "Parkering",      moms: 25, label: "Parkering (25%)" },
+  { value: "Milersättning",  moms: 0,  label: "Milersättning (0%)" },
+  { value: "Övrigt",         moms: 25, label: "Övrigt" },
+];
+const STATUS = {
+  pending: { label: "Väntar", cls: "bg-amber-50 text-amber-700" },
+  approved: { label: "Godkänd", cls: "bg-blue-50 text-blue-700" },
+  paid: { label: "Utbetald", cls: "bg-green-50 text-green-700" },
+};
+
+function ExpenseModal({ employees, onClose, onSave }) {
+  const [employeeId, setEmployeeId] = useState(employees[0]?.id || "");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [amount, setAmount] = useState("");
+  const [antal, setAntal] = useState(1);
+  const [unitPrice, setUnitPrice] = useState("");
+  const [momsRate, setMomsRate] = useState(25);
+  const [category, setCategory] = useState("Material");
+  const [description, setDescription] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [receiptImage, setReceiptImage] = useState(null);
+  const handlePhoto = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { setPreview(ev.target.result); setReceiptImage(ev.target.result); };
+    reader.readAsDataURL(f);
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!employeeId || !date || !amount) return;
+    setSaving(true);
+    try {
+      await onSave({ employee_id: employeeId, date, amount: parseFloat(amount), antal: parseInt(antal)||1, unit_price: parseFloat(unitPrice)||0, moms_rate: momsRate, category, description: description.trim() || null, receipt_image: receiptImage });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4" onClick={onClose}>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl border border-slate-100 shadow-xl p-6 sm:p-7 max-h-[92vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display font-bold text-xl text-slate-900">Nytt utlägg</h2>
+          <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100"><X size={16} /></button>
+        </div>
+        <form onSubmit={submit} className="space-y-3">
+          <div>
+            <Label>Anställd</Label>
+            <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+              {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="e-date">Datum</Label>
+            <Input id="e-date" type="date" style={{WebkitAppearance:"none", appearance:"none"}} value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <Label htmlFor="e-amount">Belopp inkl. moms (kr)</Label>
+              <Input id="e-amount" type="number" step="0.01" value={unitPrice} onChange={e=>{const up=parseFloat(e.target.value)||0;setUnitPrice(e.target.value);setAmount((up*(parseInt(antal)||1)).toFixed(2));}} className="mt-1.5" placeholder="0.00" />
+            </div>
+            <div>
+              <Label>Antal</Label>
+              <Input type="number" min="1" value={antal} onChange={e=>{setAntal(e.target.value);const up=parseFloat(unitPrice)||0;if(up>0)setAmount((up*(parseInt(e.target.value)||1)).toFixed(2));}} className="mt-1.5" placeholder="1"/>
+            </div>
+            <div className="col-span-2">
+              <Label>Total (kr)</Label>
+              <div className="mt-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900">{amount ? `${parseFloat(amount).toFixed(2)} kr` : "0.00 kr"}</div>
+            </div>
+            <div>
+              <Label>Kategori</Label>
+              <select value={category} onChange={e=>{const cat=EXPENSE_CATS.find(c=>c.value===e.target.value);setCategory(e.target.value);if(cat)setMomsRate(cat.moms);}} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                {EXPENSE_CATS.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <Label>Moms %</Label>
+              <select value={momsRate} onChange={e=>setMomsRate(+e.target.value)} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value={25}>25%</option>
+                <option value={12}>12%</option>
+                <option value={6}>6%</option>
+                <option value={0}>0%</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="e-desc">Beskrivning (valfritt)</Label>
+            <textarea id="e-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
+          </div>
+          <div>
+            <Label>Kvittobild (valfritt)</Label>
+            <div className="mt-1.5 border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-[#141414] transition-colors" onClick={()=>document.getElementById('nytt-receipt').click()}>
+              {preview ? <img src={preview} alt="kvitto" className="max-h-32 mx-auto rounded-lg object-contain"/> : <p className="text-slate-400 text-sm">Tryck för att ladda upp kvitto</p>}
+              <input id="nytt-receipt" type="file" accept="image/*" className="hidden" onChange={handlePhoto}/>
+            </div>
+          </div>
+          <button type="submit" disabled={saving || !employeeId || !date || !amount} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {saving ? "Sparar..." : "Lägg till utlägg"}
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+
+function EditExpenseModal({ expense, employees, onClose, onSave, onViewKvitto }) {
+  const [form, setForm] = React.useState({
+    employee_id: expense.employee_id || "",
+    date: expense.date || "",
+    amount: expense.amount ? String(expense.amount) : "",
+    antal: expense.antal || 1,
+    unit_price: expense.unit_price ? String(expense.unit_price) : (expense.amount ? String(expense.amount) : ""),
+    moms_rate: expense.moms_rate || 25,
+    category: expense.category || "Material",
+    description: expense.description || "",
+    receipt_image: expense.receipt_image || null,
+  });
+  const [saving, setSaving] = React.useState(false);
+  const [preview, setPreview] = React.useState(expense.receipt_image || null);
+
+  const CATS = [
+    { value: "Material", label: "Material (25%)" },
+    { value: "Bränsle", label: "Bränsle (25%)" },
+    { value: "Parkering", label: "Parkering (25%)" },
+    { value: "Milersättning", label: "Milersättning (0%)" },
+    { value: "Övrigt", label: "Övrigt" },
+  ];
+
+  const handlePhoto = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { setPreview(ev.target.result); setForm(fm=>({...fm, receipt_image: ev.target.result})); };
+    reader.readAsDataURL(f);
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try { await onSave({ ...form, amount: parseFloat(form.amount), antal: parseInt(form.antal)||1, unit_price: parseFloat(form.unit_price)||0 }); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display font-bold text-xl">Redigera utlägg</h2>
+          <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100"><X size={16}/></button>
+        </div>
+        <form onSubmit={submit} className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-slate-700">Anställd</label>
+            <select value={form.employee_id} onChange={e=>setForm(f=>({...f,employee_id:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+              {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Datum</label>
+            <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs font-medium text-slate-700">Belopp inkl. moms (kr)</label>
+              <input type="number" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Antal</label>
+              <input type="number" min="1" value={form.antal} onChange={e=>{const ant=parseInt(e.target.value)||1;const up=parseFloat(form.unit_price)||0;setForm(f=>({...f,antal:e.target.value,amount:up>0?(up*ant).toFixed(2):f.amount}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-700">Total (kr)</label>
+              <div className="w-full mt-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900">{form.amount ? `${parseFloat(form.amount).toFixed(2)} kr` : "0.00 kr"}</div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Kategori</label>
+              <select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                {CATS.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Moms %</label>
+              <select value={form.moms_rate} onChange={e=>setForm(f=>({...f,moms_rate:+e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value={25}>25%</option>
+                <option value={12}>12%</option>
+                <option value={6}>6%</option>
+                <option value={0}>0%</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Beskrivning</label>
+            <input value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Kvitto</label>
+            {preview && <img src={preview} alt="kvitto" className="w-full max-h-40 object-contain rounded-xl border border-slate-200 mb-2 cursor-pointer mt-1" onClick={()=>onViewKvitto(preview)}/>}
+            <div className="border-2 border-dashed border-slate-200 rounded-xl p-3 text-center cursor-pointer hover:border-[#141414] transition-colors" onClick={()=>document.getElementById('edit-receipt').click()}>
+              <p className="text-sm text-slate-400">{preview ? "Ersätt kvitto" : "Lägg till kvitto"}</p>
+              <input id="edit-receipt" type="file" accept="image/*" className="hidden" onChange={handlePhoto}/>
+            </div>
+          </div>
+          <button type="submit" disabled={saving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {saving ? "Sparar..." : "Spara ändringar"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── Staff Receipt Submission ──────────────────────────────────────────────────
+function SubmitReceiptModal({ employees, onClose, onSubmit }) {
+  const [form, setForm] = useState({
+    employee_id: "", date: new Date().toISOString().split("T")[0],
+    amount: "", antal: 1, unit_price: "", moms_rate: 25, category: "Material", description: ""
+  });
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const CATS = [
+    { value: "Material", moms: 25, label: "Material (25%)" },
+    { value: "Bränsle", moms: 25, label: "Bränsle (25%)" },
+    { value: "Parkering", moms: 25, label: "Parkering (25%)" },
+    { value: "Milersättning", moms: 0, label: "Milersättning (0%)" },
+    { value: "Övrigt", moms: 25, label: "Övrigt" },
+  ];
+
+  const handleFile = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    setFile(f);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPreview(ev.target.result);
+    reader.readAsDataURL(f);
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.employee_id || !form.amount || !form.date) return;
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      const ant = parseInt(form.antal) || 1;
+      const totalAmount = parseFloat(form.amount) || 0;
+      const unitPr = form.unit_price ? parseFloat(form.unit_price) : totalAmount / ant;
+      Object.entries({...form, unit_price: unitPr, antal: ant, amount: totalAmount}).forEach(([k,v]) => fd.append(k, v));
+      if (file) fd.append("receipt", file);
+      await onSubmit(fd);
+      onClose();
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4" onClick={onClose}>
+      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-xl p-6 max-h-[92vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display font-bold text-xl">Skicka kvitto</h2>
+          <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100"><X size={16}/></button>
+        </div>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="text-xs font-medium text-slate-700">Anställd *</label>
+            <select value={form.employee_id} onChange={e=>setForm(f=>({...f,employee_id:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+              <option value="">Välj anställd...</option>
+              {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Datum *</label>
+            <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-slate-700">Belopp inkl. moms (kr)</label>
+              <input type="number" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Antal</label>
+              <input type="number" min="1" value={form.antal} onChange={e=>{const ant=parseInt(e.target.value)||1;const up=parseFloat(form.unit_price)||0;setForm(f=>({...f,antal:e.target.value,amount:up>0?(up*ant).toFixed(2):f.amount}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="1"/>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-700">Total (kr)</label>
+              <div className="w-full mt-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900">{form.amount ? `${parseFloat(form.amount).toFixed(2)} kr` : "0.00 kr"}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-slate-700">Kategori</label>
+              <select value={form.category} onChange={e=>{
+                const cat = CATS.find(c=>c.value===e.target.value);
+                setForm(f=>({...f,category:e.target.value,moms_rate:cat?.moms||25}));
+              }} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                {CATS.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Moms %</label>
+              <select value={form.moms_rate} onChange={e=>setForm(f=>({...f,moms_rate:+e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value={25}>25%</option>
+                <option value={12}>12%</option>
+                <option value={6}>6%</option>
+                <option value={0}>0%</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Beskrivning</label>
+            <input value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="T.ex. Rengöringsmedel ICA"/>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Kvittobild (valfritt)</label>
+            <div className="mt-1 border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-[#141414] transition-colors" onClick={()=>document.getElementById('receipt-upload').click()}>
+              {preview ? (
+                <img src={preview} alt="kvitto" className="max-h-40 mx-auto rounded-lg object-contain"/>
+              ) : (
+                <div>
+                  <p className="text-slate-400 text-sm">Tryck för att ladda upp bild</p>
+                  <p className="text-slate-300 text-xs mt-1">JPG, PNG max 5MB</p>
+                </div>
+              )}
+              <input id="receipt-upload" type="file" accept="image/*" className="hidden" onChange={handleFile}/>
+            </div>
+          </div>
+          <button type="submit" disabled={saving||!form.employee_id||!form.amount} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {saving ? "Skickar..." : "Skicka kvitto"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default function ExpensePanel() {
+  const [employees, setEmployees] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const [pendingExpenses, setPendingExpenses] = useState([]);
+  const [receiptModal, setReceiptModal] = useState(false);
+  const [kvittoView, setKvittoView] = useState(null);
+  const [kvittoEdit, setKvittoEdit] = useState(null);
+
+  const loadPending = async () => {
+    try {
+      const res = await api.get("/expenses/pending");
+      setPendingExpenses(res.data);
+    } catch {}
+  };
+
+  const submitReceipt = async (formData) => {
+    try {
+      await api.post("/expenses/submit", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      toast.success("Kvitto skickat! Admin granskar det.");
+      loadPending();
+    } catch { toast.error("Kunde inte skicka kvitto."); }
+  };
+
+  const approveExpense = async (id, empId) => {
+    try {
+      await api.patch(`/expenses/${id}/approve`);
+      toast.success("Utlägg godkänt!");
+      loadPending();
+      load();
+    } catch { toast.error("Kunde inte godkänna."); }
+  };
+
+  const rejectExpense = async (id) => {
+    try {
+      await api.patch(`/expenses/${id}/reject`);
+      toast.success("Utlägg avvisat.");
+      loadPending();
+    } catch { toast.error("Kunde inte avvisa."); }
+  };
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [empRes, expRes] = await Promise.all([api.get("/employees"), api.get("/expenses")]);
+      setEmployees(empRes.data);
+      setExpenses(expRes.data);
+    } catch {
+      toast.error("Kunde inte hämta utlägg.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); loadPending(); }, []);
+
+  const employeeName = (id) => employees.find((e) => e.id === id)?.name || "Okänd";
+
+  const save = async (payload) => {
+    try {
+      const res = await api.post("/expenses", payload);
+      setExpenses((e) => [res.data, ...e]);
+      toast.success("Utlägg tillagt.");
+      setModalOpen(false);
+    } catch {
+      toast.error("Kunde inte spara utlägget.");
+    }
+  };
+
+  const setStatus = async (id, status) => {
+    try {
+      const res = await api.patch(`/expenses/${id}`, { status });
+      setExpenses((e) => e.map((x) => (x.id === id ? res.data : x)));
+      toast.success("Status uppdaterad.");
+    } catch {
+      toast.error("Kunde inte uppdatera status.");
+    }
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm("Ta bort detta utlägg?")) return;
+    try {
+      await api.delete(`/expenses/${id}`);
+      setExpenses((e) => e.filter((x) => x.id !== id));
+      toast.success("Utlägg borttaget.");
+    } catch {
+      toast.error("Kunde inte ta bort utlägget.");
+    }
+  };
+
+  const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+  const handleKvittoEdit = async (expId, file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        await api.patch(`/expenses/${expId}`, { receipt_image: ev.target.result });
+        toast.success("Kvitto uppdaterat!");
+        setKvittoEdit(null);
+        load();
+      } catch { toast.error("Kunde inte uppdatera kvitto."); }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <>
+      {/* Kvitto Edit Modal */}
+      {kvittoEdit && (
+        <EditExpenseModal
+          expense={kvittoEdit}
+          employees={employees}
+          onClose={()=>setKvittoEdit(null)}
+          onViewKvitto={setKvittoView}
+          onSave={async (updates) => {
+            try {
+              await api.patch(`/expenses/${kvittoEdit.id}`, updates);
+              toast.success("Utlägg uppdaterat!");
+              setKvittoEdit(null);
+              load();
+            } catch { toast.error("Kunde inte uppdatera."); }
+          }}
+        />
+      )}
+      {/* Kvitto Lightbox */}
+      {kvittoView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={()=>setKvittoView(null)}>
+          <div className="relative max-w-3xl max-h-[90vh] p-4" onClick={e=>e.stopPropagation()}>
+            <button onClick={()=>setKvittoView(null)} className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white flex items-center justify-center text-slate-700 hover:bg-slate-100 z-10">✕</button>
+            <img src={kvittoView} alt="kvitto" className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl"/>
+          </div>
+        </div>
+      )}
+      {pendingExpenses.length > 0 && (
+        <div className="mb-6 rounded-2xl bg-amber-50 border border-amber-100 p-4">
+          <p className="font-semibold text-amber-800 mb-3">⏳ {pendingExpenses.length} kvitto(n) väntar på godkännande</p>
+          <div className="space-y-3">
+            {pendingExpenses.map(exp => (
+              <div key={exp._id} className="bg-white rounded-xl p-3 border border-amber-100">
+                <div className="flex items-start gap-3">
+                  {exp.receipt_image && (
+                    <img src={exp.receipt_image} alt="kvitto" className="w-16 h-16 object-cover rounded-lg border cursor-pointer flex-shrink-0"
+                      onClick={()=>window.open(exp.receipt_image,"_blank")}/>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{exp.employee_name}</p>
+                    <p className="text-xs text-slate-500">{exp.date} · {exp.category} · <strong>{exp.amount?.toFixed(2)} kr</strong></p>
+                    {exp.description && <p className="text-xs text-slate-400">{exp.description}</p>}
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button onClick={()=>approveExpense(exp._id, exp.employee_id)} className="text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-full">✓ Godkänn</button>
+                    <button onClick={()=>rejectExpense(exp._id)} className="text-xs font-semibold bg-red-50 text-red-600 px-3 py-1.5 rounded-full">✕ Avvisa</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+        <div>
+          <h2 className="font-display font-bold text-xl text-slate-900">Utlägg</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Totalt: {total.toFixed(2)} kr</p>
+        </div>
+        <button onClick={()=>setReceiptModal(true)}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 border border-slate-200 hover:border-[#141414] rounded-full px-4 py-2 transition-colors">
+          <Upload size={14}/> Skicka kvitto
+        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            window.open(`${base}/api/expenses/export-pdf?token=${token}`, "_blank");
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> PDF
+          </button>
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/expenses/export-xlsx?token=${token}`;
+            a.download = "utlagg.xlsx";
+            a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
+          </button>
+
+          <button
+            onClick={() => { if (employees.length === 0) { toast.error("Lägg till en anställd i Schema-fliken först."); return; } setModalOpen(true); }}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] rounded-full px-4 py-2 hover:bg-black transition-colors"
+          >
+            <Plus size={15} /> Nytt utlägg
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-slate-500">Laddar...</p>
+      ) : expenses.length === 0 ? (
+        <div className="rounded-2xl bg-white border border-slate-100 p-12 text-center text-slate-500 flex flex-col items-center gap-2">
+          <Receipt size={28} className="text-slate-300" />
+          Inga utlägg registrerade ännu.
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {expenses.map((e) => (
+            <motion.div key={e.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-white border border-slate-100 p-5 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <h3 className="font-semibold text-slate-900">{employeeName(e.employee_id)}</h3>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS[e.status]?.cls}`}>{STATUS[e.status]?.label}</span>
+                </div>
+                <p className="text-sm text-slate-600">{e.date} · {e.category} · <strong>{e.amount.toFixed(2)} kr</strong></p>
+                {e.moms_rate > 0 && <p className="text-xs text-blue-600">Ingående moms ({e.moms_rate}%): {(e.amount - e.amount/(1+e.moms_rate/100)).toFixed(2)} kr</p>}
+                {e.description && <p className="text-sm text-slate-500 mt-1">{e.description}</p>}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {e.status !== "paid" && (
+                  <select value={e.status} onChange={(ev) => setStatus(e.id, ev.target.value)} className="rounded-full border border-slate-200 text-sm px-3.5 py-2 outline-none focus:border-[#141414]">
+                    <option value="pending">Väntar</option>
+                    <option value="approved">Godkänd</option>
+                    <option value="paid">Utbetald</option>
+                  </select>
+                )}
+                {e.receipt_image && (
+                  <button onClick={()=>setKvittoView(e.receipt_image)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Visa kvitto">
+                    <Eye size={16}/>
+                  </button>
+                )}
+                <button onClick={()=>setKvittoEdit(e)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors" title="Redigera utlägg">
+                  <Pencil size={16}/>
+                </button>
+                <button onClick={() => remove(e.id)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {modalOpen && <ExpenseModal employees={employees} onClose={() => setModalOpen(false)} onSave={save} />}
+      </AnimatePresence>
+      {receiptModal && (
+        <SubmitReceiptModal
+          employees={employees}
+          onClose={()=>setReceiptModal(false)}
+          onSubmit={submitReceipt}
+        />
+      )}
+    </>
+  );
+}
+
+```
+
+---
+
+## InvoicePanel.jsx
+```jsx
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, FileSpreadsheet, X, Trash2, Download, Settings, ChevronDown, ChevronUp, FileText, Link2, Pencil, Eye, Upload } from "lucide-react";
+import { api } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const STATUS = {
+  draft: { label: "Utkast", cls: "bg-slate-100 text-slate-600" },
+  sent: { label: "Skickad", cls: "bg-blue-50 text-blue-700" },
+  paid: { label: "Betald", cls: "bg-green-50 text-green-700" },
+  overdue: { label: "Förfallen", cls: "bg-red-50 text-red-700" },
+};
+
+// SERVICE_TYPES now comes from priceList dynamically
+
+function defaultDueDate(paymentTermsDays) {
+  const d = new Date();
+  d.setDate(d.getDate() + (paymentTermsDays || 30));
+  return d.toISOString().slice(0, 10);
+}
+
+function inferItems(initialItems, defaultService = "Hemstädning", defaultPrice = 0) {
+  if (!initialItems || initialItems.length === 0) {
+    return [{ service: defaultService, description: defaultService, quantity: 1, unit_price: defaultPrice, is_material: false }];
+  }
+  return initialItems.map((it) => {
+    // Clean service name - remove kvm/tim info added by calculator
+    const cleanService = (s) => s ? s.replace(/\s*\(.*?\)\s*/g, "").trim() : s;
+    const svc = cleanService(it.service || it.description || defaultService);
+    const desc = it.description || it.service || defaultService;
+    // Detect Påminnelseavgift from either field
+    const isPaminnelse = svc.includes("Påminnelse") || desc.includes("Påminnelse") ||
+                         (it.unit_price === 60 && it.quantity === 1 && !it.is_material && 
+                          (it.description || "").includes("inkasso"));
+    return {
+      service: isPaminnelse ? "Påminnelseavgift" : svc,
+      description: isPaminnelse ? "Påminnelseavgift enligt inkassolagen" : desc,
+      quantity: it.quantity,
+      unit_price: it.unit_price,
+      is_material: it.is_material,
+    };
+  });
+}
+
+function InvoiceSettingsPanel({ settings, onSave }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(settings);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setForm(settings); }, [settings]);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave(form);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!form) return null;
+
+  return (
+    <div className="rounded-2xl bg-white border border-slate-100 mb-6">
+      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center justify-between px-6 py-4">
+        <span className="inline-flex items-center gap-2 font-semibold text-slate-900"><Settings size={16} /> Företagsuppgifter och betalning</span>
+        {open ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+      </button>
+      {open && (
+        <form onSubmit={submit} className="px-6 pb-6 space-y-4 border-t border-slate-100 pt-5">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Företagsnamn</Label>
+              <Input value={form.company_name} onChange={(e) => setForm((f) => ({ ...f, company_name: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Organisationsnummer</Label>
+              <Input value={form.company_orgnr || ""} onChange={(e) => setForm((f) => ({ ...f, company_orgnr: e.target.value }))} className="mt-1" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Adress</Label>
+            <Input value={form.company_address || ""} onChange={(e) => setForm((f) => ({ ...f, company_address: e.target.value }))} className="mt-1" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">E-post</Label>
+              <Input value={form.company_email || ""} onChange={(e) => setForm((f) => ({ ...f, company_email: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Telefon</Label>
+              <Input value={form.company_phone || ""} onChange={(e) => setForm((f) => ({ ...f, company_phone: e.target.value }))} className="mt-1" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label className="text-xs">Bankgiro</Label>
+              <Input value={form.bankgiro || ""} onChange={(e) => setForm((f) => ({ ...f, bankgiro: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Plusgiro</Label>
+              <Input value={form.plusgiro || ""} onChange={(e) => setForm((f) => ({ ...f, plusgiro: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">IBAN</Label>
+              <Input value={form.iban || ""} onChange={(e) => setForm((f) => ({ ...f, iban: e.target.value }))} className="mt-1" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Moms (%)</Label>
+              <Input type="number" step="0.1" value={form.vat_rate} onChange={(e) => setForm((f) => ({ ...f, vat_rate: parseFloat(e.target.value) || 0 }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Betalningsvillkor (dagar)</Label>
+              <Input type="number" value={form.payment_terms_days} onChange={(e) => setForm((f) => ({ ...f, payment_terms_days: parseInt(e.target.value) || 30 }))} className="mt-1" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Logotyp (visas i PDF)</Label>
+            <div className="mt-1.5 flex items-center gap-3">
+              {form.company_logo && (
+                <img src={form.company_logo} alt="Logo" className="h-12 w-auto rounded-lg border border-slate-200 object-contain bg-white p-1" />
+              )}
+              <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 border border-slate-200 rounded-full px-3 py-2 hover:border-[#141414] transition-colors">
+                <Upload size={13} /> {form.company_logo ? "Byt logotyp" : "Ladda upp logotyp"}
+                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = async (ev) => {
+                    const logoData = ev.target.result;
+                    setForm((f) => ({ ...f, company_logo: logoData }));
+                    try {
+                      await api.put("/settings/invoice/logo", { company_logo: logoData });
+                      toast.success("Logotyp sparad!");
+                    } catch {
+                      toast.error("Kunde inte spara logotypen.");
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                }} />
+              </label>
+              {form.company_logo && (
+                <button type="button" onClick={async () => {
+                  setForm((f) => ({ ...f, company_logo: null }));
+                  try { await api.put("/settings/invoice/logo", { company_logo: null }); } catch {}
+                }} className="text-xs text-red-500 hover:underline">Ta bort</button>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-slate-400">Nästa fakturanummer: {form.next_invoice_number}</p>
+          <button type="submit" disabled={saving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {saving ? "Sparar..." : "Spara uppgifter"}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function InvoiceModal({ initial, bookings, settings, priceList, onClose, onSave }) {
+  const isEdit = Boolean(initial);
+  const [customerName, setCustomerName] = useState(initial?.customer_name || "");
+  const [customerEmail, setCustomerEmail] = useState(initial?.customer_email || "");
+  const [customerPhone, setCustomerPhone] = useState(initial?.customer_phone || "");
+  const [customerAddress, setCustomerAddress] = useState(initial?.customer_address || "");
+  const [customerPersonnummer, setCustomerPersonnummer] = useState(initial?.customer_personnummer || "");
+  const [customerType, setCustomerType] = useState(initial?.customer_type || "private");
+  const [rutEligible, setRutEligible] = useState(initial ? initial.rut_eligible : false);
+  const [bookingId, setBookingId] = useState(initial?.booking_id || "");
+  const firstService = priceList.find((p) => p.is_active)?.service || "Hemstädning";
+  const firstPrice = priceList.find((p) => p.is_active)?.price || 0;
+  const [items, setItems] = useState(() => inferItems(initial?.items, firstService, firstPrice));
+  const [note, setNote] = useState(initial?.note || "");
+  const [dueDate, setDueDate] = useState(initial?.due_date || defaultDueDate(settings?.payment_terms_days));
+  const [saving, setSaving] = useState(false);
+
+  const applyBooking = async (id) => {
+    setBookingId(id);
+    const b = bookings.find((x) => x.id === id);
+    if (!b) return;
+    setCustomerName(b.name);
+    setCustomerEmail(b.email || "");
+    setCustomerPhone(b.phone || "");
+
+    // Check sessionStorage from calculator first
+    const saved = sessionStorage.getItem("calc_invoice_items");
+    if (saved) {
+      try {
+        const calcItems = JSON.parse(saved);
+        const newItems = calcItems.map(ci => ({
+          service: ci.service, description: ci.service,
+          quantity: ci.hours || ci.qty || 1,
+          unit_price: ci.rate || 0, is_material: false,
+        }));
+        setItems(newItems);
+        toast.success("Priser hämtade från kalkylatorn!");
+        sessionStorage.removeItem("calc_invoice_items");
+        return;
+      } catch {}
+    }
+
+    // Auto-calculate from booking services + kvm
+    if (b.services?.length > 0) {
+      try {
+        const plRes = await api.get("/settings/pricelist");
+        const priceItems = (plRes.data.items || []).filter(p => p.is_active);
+        const SPEED = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35};
+        const ST = ["fönsterputs","ugnstvätt","kyl/frys","trappstädning"];
+        const qty = parseInt(b.kvm) || 0;
+        const autoItems = b.services.map(svc => {
+          const item = priceItems.find(p =>
+            p.service.toLowerCase().includes(svc.toLowerCase()) ||
+            svc.toLowerCase().includes(p.service.toLowerCase())
+          );
+          if (!item) return null;
+          const speedKey = Object.keys(SPEED).find(k => svc.toLowerCase().includes(k));
+          const speed = speedKey ? SPEED[speedKey] : null;
+          const st = ST.some(s => svc.toLowerCase().includes(s));
+          const isFast = item.unit === "fast";
+          let quantity = 1;
+          if (isFast) { quantity = 1; }
+          else if (st) { quantity = qty || 1; }
+          else if (speed && qty) { quantity = Math.ceil((qty / speed) * 2) / 2; }
+          else { quantity = qty || 1; }
+          const kvm = (speed && qty) ? qty : 0;
+          return { service: item.service, description: item.service, quantity, unit_price: item.price, is_material: false, kvm };
+        }).filter(Boolean);
+        if (autoItems.length > 0) {
+          setItems(autoItems);
+          toast.success("Priser beräknade automatiskt från bokningen!");
+        }
+      } catch {}
+    }
+  };
+
+  const updateItem = (i, field, value) => {
+    setItems((arr) => arr.map((it, idx) => (idx === i ? { ...it, [field]: value } : it)));
+  };
+
+  const isCustomService = (svc) => !priceList.find((p) => p.service === svc);
+
+  const updateService = (i, service) => {
+    const nonReminder = items.map((item, oIdx) => ({...item, originalIdx: oIdx})).filter(item => item.service !== "Påminnelseavgift");
+    const originalIdx = nonReminder[i]?.originalIdx;
+    if (originalIdx === undefined) return;
+    setItems((arr) => arr.map((it, idx) => {
+      if (idx !== i) return it;
+      const priceMatch = priceList.find((p) => p.service === service && p.is_active);
+      const newPrice = priceMatch ? priceMatch.price : it.unit_price;
+      if (service === "Annat" || isCustomService(service)) {
+        return { ...it, service, description: "", unit_price: newPrice };
+      }
+      return { ...it, service, description: service, unit_price: newPrice };
+    }));
+  };
+
+  const addItem = () => {
+    const first = priceList.find(p => p.is_active);
+    const svc = first ? first.service : "Hemstädning";
+    const price = first ? first.price : 0;
+    setItems((arr) => [...arr, { service: svc, description: svc, quantity: 1, unit_price: price, is_material: false }]);
+  };
+  const removeItem = (i) => {
+    // i is index in non-reminder items
+    const nonReminder = items.map((item, idx) => ({...item, originalIdx: idx})).filter(item => item.service !== "Påminnelseavgift");
+    const originalIdx = nonReminder[i]?.originalIdx;
+    if (originalIdx !== undefined) setItems(arr => arr.filter((_, idx) => idx !== originalIdx));
+  };
+
+  const laborTotal = items.filter((i) => !i.is_material).reduce((s, i) => s + (parseFloat(i.quantity) || 0) * (parseFloat(i.unit_price) || 0), 0);
+  const materialTotal = items.filter((i) => i.is_material).reduce((s, i) => s + (parseFloat(i.quantity) || 0) * (parseFloat(i.unit_price) || 0), 0);
+  const subtotal = laborTotal + materialTotal;
+  const vatAmount = subtotal * ((settings?.vat_rate ?? 25) / 100);
+  const totalAmount = subtotal + vatAmount;
+  const rutDeduction = rutEligible && customerType === "private" ? laborTotal * 0.5 : 0;
+  const customerPays = totalAmount - rutDeduction;
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!customerName.trim() || items.length === 0) return;
+    if (items.some((it) => !it.description.trim())) {
+      toast.error("Fyll i beskrivning för alla rader.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        booking_id: bookingId || null,
+        customer_name: customerName.trim(),
+        customer_email: customerEmail.trim() || null,
+        customer_phone: customerPhone.trim() || null,
+        customer_address: customerAddress.trim() || null,
+        customer_personnummer: customerPersonnummer.trim() || null,
+        customer_type: customerType,
+        rut_eligible: rutEligible,
+        items: items.map((i) => ({
+          description: i.description,
+          quantity: parseFloat(i.quantity) || 0,
+          unit_price: parseFloat(i.unit_price) || 0,
+          is_material: i.is_material,
+        })),
+        note: note.trim() || null,
+        due_date: dueDate || null,
+      };
+      await onSave(payload, initial?.id);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg bg-white rounded-3xl border border-slate-100 shadow-xl p-7 max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display font-bold text-xl text-slate-900">{isEdit ? `Redigera faktura #${initial.invoice_number}` : "Ny faktura"}</h2>
+          <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">
+            <X size={16} />
+          </button>
+        </div>
+
+        <form onSubmit={submit} className="space-y-4">
+          {!isEdit && (
+            <div>
+              <Label className="flex items-center gap-1.5 text-xs"><Link2 size={13} /> Koppla till bokning (valfritt)</Label>
+              <select value={bookingId} onChange={(e) => applyBooking(e.target.value)} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value="">Ingen bokning</option>
+                {bookings.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name} · {b.email}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <Label className="text-xs">Kundnamn</Label>
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Typ</Label>
+              <select value={customerType} onChange={(e) => { setCustomerType(e.target.value); if (e.target.value === "company") setRutEligible(false); }} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value="private">Privatperson</option>
+                <option value="company">Företag</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <Label className="text-xs">E-post</Label>
+              <Input value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Telefon</Label>
+              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="mt-1" />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">Adress</Label>
+            <Input value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="mt-1" />
+          </div>
+
+          <div>
+            <Label className="text-xs">Förfallodatum</Label>
+            <Input type="date" style={{WebkitAppearance:"none", appearance:"none"}} value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="mt-1" />
+          </div>
+
+          {customerType === "private" && (
+            <div className="rounded-xl bg-slate-50 p-3.5">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                <input type="checkbox" checked={rutEligible} onChange={(e) => setRutEligible(e.target.checked)} className="rounded" />
+                RUT-avdrag (50% av arbetskostnad)
+              </label>
+              {rutEligible && (
+                <div>
+                  <Label className="text-xs">Personnummer</Label>
+                  <Input value={customerPersonnummer} onChange={(e) => setCustomerPersonnummer(e.target.value)} className="mt-1" placeholder="ÅÅMMDD-XXXX" />
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs">Rader</Label>
+              <button type="button" onClick={addItem} className="text-xs font-semibold text-[#141414] inline-flex items-center gap-1"><Plus size={13} /> Lägg till rad</button>
+            </div>
+            <div className="space-y-2">
+              {/* Show Påminnelseavgift as read-only */}
+              {items.filter(it => it.service === "Påminnelseavgift").map((it, i) => (
+                <div key={`reminder-${i}`} className="rounded-xl bg-amber-50 border border-amber-200 p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">Påminnelseavgift (ingen moms)</p>
+                    <p className="text-xs text-amber-600">Tillagd automatiskt enligt inkassolagen</p>
+                  </div>
+                  <p className="text-sm font-bold text-amber-800">+{it.unit_price.toFixed(2)} kr</p>
+                </div>
+              ))}
+              {items.filter(it => it.service !== "Påminnelseavgift").map((it, i) => (
+                <div key={i} className="rounded-xl bg-slate-50 p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <Label className="text-[10px] text-slate-400 mb-1 block">Tjänster</Label>
+                    <select value={it.service} onChange={(e) => updateService(i, e.target.value)} className="w-full rounded-lg border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414] bg-white">
+                      {[...priceList.filter((p) => p.is_active).map((p) => p.service),
+                        ...(priceList.some(p => p.service === it.service) ? [] : [it.service]),
+                        "Annat"]
+                        .filter((s, idx, arr) => arr.indexOf(s) === idx)
+                        .map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    </div>
+                    {priceList.find((p) => p.service === it.service) && (
+                      <span className="text-xs text-slate-400 whitespace-nowrap">
+                        {priceList.find((p) => p.service === it.service)?.price} kr/{priceList.find((p) => p.service === it.service)?.unit}
+                      </span>
+                    )}
+                  </div>
+                  {it.service === "Annat" && (
+                    <Input value={it.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Beskrivning" className="text-sm" />
+                  )}
+                  <div className="grid grid-cols-4 gap-2 items-end">
+                    {(() => {
+                      const pl = priceList.find(p=>p.service===it.service);
+                      const SPEED_MAP = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35};
+                      const speedKey = pl ? Object.keys(SPEED_MAP).find(k=>pl.service.toLowerCase().includes(k)) : null;
+                      const speed = speedKey ? SPEED_MAP[speedKey] : 20;
+                      const isTimBased = pl?.unit === "tim" || pl?.unit === "kvm";
+                      if (isTimBased) return (<>
+                        <div>
+                          <Label className="text-[10px] text-slate-400">Yta (kvm)</Label>
+                          <Input type="number" step="1" value={it.kvm||""} onChange={e=>{const kvm=parseFloat(e.target.value)||0;const tim=Math.ceil((kvm/speed)*2)/2;updateItem(i,"kvm",kvm);updateItem(i,"quantity",tim);}} className="text-sm mt-0.5" placeholder="0"/>
+                        </div>
+                        <div className="flex items-end gap-1">
+                          <span className="text-slate-400 mb-2">→</span>
+                          <div className="flex-1">
+                            <Label className="text-[10px] text-slate-400">tim</Label>
+                            <Input type="number" step="0.5" value={it.quantity} onChange={e=>updateItem(i,"quantity",e.target.value)} className="text-sm mt-0.5"/>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-slate-400">À-Pris (kr)</Label>
+                          <Input type="number" step="0.01" value={it.unit_price} onChange={e=>updateItem(i,"unit_price",e.target.value)} className="text-sm mt-0.5"/>
+                        </div>
+                      </>);
+                      return (<>
+                        <div>
+                          <Label className="text-[10px] text-slate-400">{pl?.unit==="st"?"Antal":"Antal"}</Label>
+                          <Input type="number" step="0.01" value={it.quantity} onChange={e=>updateItem(i,"quantity",e.target.value)} className="text-sm mt-0.5"/>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-slate-400">À-pris (kr)</Label>
+                          <Input type="number" step="0.01" value={it.unit_price} onChange={e=>updateItem(i,"unit_price",e.target.value)} className="text-sm mt-0.5"/>
+                        </div>
+                        <div/>
+                      </>);
+                    })()}
+                    {items.length > 1 && (
+                      <button type="button" onClick={() => removeItem(i)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 justify-self-end self-center">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">Anteckning (valfritt)</Label>
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full mt-1.5 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
+          </div>
+
+          <div className="rounded-xl bg-slate-50 p-4 space-y-1.5 text-sm">
+            {(() => {
+              // Separate reminder fee (no moms) from regular items
+              const reminderItem = items.find(i => i.service === "Påminnelseavgift");
+              const reminderFee = reminderItem ? (parseFloat(reminderItem.quantity)||1) * (parseFloat(reminderItem.unit_price)||0) : 0;
+              const workItems = items.filter(i => i.service !== "Påminnelseavgift");
+
+              // Step 1: Calculate original invoice
+              const laborItems = workItems.filter(i => !i.is_material);
+              const matItems = workItems.filter(i => i.is_material);
+              const laborSum = laborItems.reduce((s,i) => s + (parseFloat(i.quantity)||0)*(parseFloat(i.unit_price)||0), 0);
+              const matSum = matItems.reduce((s,i) => s + (parseFloat(i.quantity)||0)*(parseFloat(i.unit_price)||0), 0);
+              const delsumma = laborSum + matSum;
+              const moms = delsumma * ((settings?.vat_rate ?? 25) / 100);
+              const totaltInklMoms = delsumma + moms;
+              const rutAvdrag = rutEligible && customerType === "private" ? laborSum * 0.5 : 0;
+              const afterRut = totaltInklMoms - rutAvdrag;
+
+              // Step 2: Add Påminnelseavgift AFTER (no moms on it)
+              const attBetala = afterRut + reminderFee;
+
+              return (<>
+                <div className="flex justify-between text-slate-600">
+                  <span>Delsumma (exkl. moms)</span><span>{delsumma.toFixed(2)} kr</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Moms ({(settings?.vat_rate ?? 25).toFixed(0)}%)</span><span>{moms.toFixed(2)} kr</span>
+                </div>
+                <div className="flex justify-between font-semibold text-slate-900">
+                  <span>Totalt inkl. moms</span><span>{totaltInklMoms.toFixed(2)} kr</span>
+                </div>
+                {rutAvdrag > 0 && (
+                  <div className="flex justify-between text-green-700">
+                    <span>RUT-avdrag (50%)</span><span>-{rutAvdrag.toFixed(2)} kr</span>
+                  </div>
+                )}
+                {reminderFee > 0 && (
+                  <div className="flex justify-between text-amber-700 border-t border-slate-200 pt-1.5">
+                    <span>Påminnelseavgift (ingen moms)</span><span>+{reminderFee.toFixed(2)} kr</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-slate-900 pt-1.5 border-t border-slate-200 text-base">
+                  <span>ATT BETALA</span><span className="text-green-700">{attBetala.toFixed(2)} kr</span>
+                </div>
+              </>);
+            })()}
+          </div>
+
+          <button type="submit" disabled={saving || !customerName.trim()} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {saving ? "Sparar..." : isEdit ? "Spara ändringar" : "Skapa faktura"}
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+export default function InvoicePanel() {
+  const [invoices, setInvoices] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [priceList, setPriceList] = useState([]);
+  const [editingInvoice, setEditingInvoice] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [invRes, bookRes, setRes, priceRes] = await Promise.all([
+        api.get("/invoices"),
+        api.get("/bookings"),
+        api.get("/settings/invoice"),
+        api.get("/settings/pricelist"),
+      ]);
+      setInvoices(invRes.data);
+      setBookings(bookRes.data);
+      setSettings(setRes.data);
+      setPriceList(priceRes.data.items || []);
+    } catch {
+      toast.error("Kunde inte hämta fakturor.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const saveSettings = async (form) => {
+    try {
+      const res = await api.put("/settings/invoice", form);
+      setSettings(res.data);
+      toast.success("Uppgifter sparade.");
+    } catch {
+      toast.error("Kunde inte spara uppgifter.");
+    }
+  };
+
+  const openCreate = () => { setEditingInvoice(null); setModalOpen(true); };
+  const openEdit = (inv) => { setEditingInvoice(inv); setModalOpen(true); };
+  const closeModal = () => { setModalOpen(false); setEditingInvoice(null); };
+
+  const saveInvoice = async (payload, id) => {
+    try {
+      if (id) {
+        const res = await api.put(`/invoices/${id}`, payload);
+        setInvoices((inv) => inv.map((x) => (x.id === id ? res.data : x)));
+        toast.success("Faktura uppdaterad.");
+      } else {
+        const res = await api.post("/invoices", payload);
+        setInvoices((inv) => [res.data, ...inv]);
+        toast.success("Faktura skapad.");
+      }
+      closeModal();
+    } catch {
+      toast.error("Kunde inte spara fakturan.");
+    }
+  };
+
+  const setStatus = async (id, status) => {
+    try {
+      await api.patch(`/invoices/${id}/status`, { status });
+      setInvoices((inv) => inv.map((x) => (x.id === id ? { ...x, status, paid_at: status === "paid" ? new Date().toISOString() : x.paid_at } : x)));
+      toast.success("Status uppdaterad.");
+    } catch {
+      toast.error("Kunde inte uppdatera status.");
+    }
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm("Ta bort denna faktura?")) return;
+    try {
+      await api.delete(`/invoices/${id}`);
+      setInvoices((inv) => inv.filter((x) => x.id !== id));
+      toast.success("Faktura borttagen.");
+    } catch {
+      toast.error("Kunde inte ta bort fakturan.");
+    }
+  };
+
+  const sendInvoice = async (inv) => {
+    if (!inv.customer_email) {
+      toast.error("Kunden har ingen e-postadress.");
+      return;
+    }
+    if (!window.confirm(`Skicka faktura #${inv.invoice_number} till ${inv.customer_email}?`)) return;
+    try {
+      await api.post(`/invoices/${inv.id}/send`);
+      toast.success(`Faktura skickad till ${inv.customer_email}!`);
+      load();
+    } catch(err) {
+      toast.error(err.response?.data?.detail || "Kunde inte skicka faktura.");
+    }
+  };
+
+  const sendReminder = async (inv) => {
+    if (!inv.customer_email) {
+      toast.error("Kunden har ingen e-postadress.");
+      return;
+    }
+    const count = (inv.reminder_count || 0) + 1;
+    const fee = count >= 2 ? " (inkl. 60 kr påminnelseavgift)" : "";
+    if (!window.confirm(`Skicka påminnelse #${count} till ${inv.customer_email}?${fee}`)) return;
+    try {
+      const res = await api.post(`/invoices/${inv.id}/remind`);
+      toast.success(res.data.message || "Påminnelse skickad!");
+      await load();
+    } catch(err) {
+      toast.error(err.response?.data?.detail || "Kunde inte skicka påminnelse.");
+    }
+  };
+
+  const viewPdf = (inv) => {
+    const token = localStorage.getItem("pn_token") || "";
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
+    window.open(`${backendUrl}/api/invoices/${inv.id}/pdf?token=${token}`, "_blank");
+  };
+
+  const totalOutstanding = invoices.filter((i) => i.status !== "paid").reduce((s, i) => s + i.customer_pays, 0);
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-display font-bold text-xl text-slate-900">Fakturor</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Obetalt: {totalOutstanding.toFixed(2)} kr</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/invoices/export-xlsx?token=${token}`;
+            a.download = "fakturor.xlsx";
+            a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
+          </button>
+          <button onClick={() => {
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            window.open(`${base}/api/invoices/export-pdf?token=${token}`, "_blank");
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> PDF
+          </button>
+          <button onClick={openCreate} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] rounded-full px-4 py-2 hover:bg-black transition-colors">
+          <Plus size={15} /> Ny faktura
+        </button>
+        </div>
+      </div>
+
+      {settings && <InvoiceSettingsPanel settings={settings} onSave={saveSettings} />}
+
+      {loading ? (
+        <p className="text-slate-500">Laddar...</p>
+      ) : invoices.length === 0 ? (
+        <div className="rounded-2xl bg-white border border-slate-100 p-12 text-center text-slate-500 flex flex-col items-center gap-2">
+          <FileText size={28} className="text-slate-300" />
+          Inga fakturor ännu.
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {invoices.map((inv) => (
+            <motion.div key={inv.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-white border border-slate-100 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <h3 className="font-semibold text-slate-900">#{inv.invoice_number} · {inv.customer_name}</h3>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS[inv.status]?.cls}`}>{STATUS[inv.status]?.label}</span>
+                </div>
+                <p className="text-sm text-slate-600">
+                  Förfaller {inv.due_date} · <strong>{inv.customer_pays.toFixed(2)} kr</strong>
+                  {inv.rut_deduction > 0 && <span className="text-green-700"> (varav RUT -{inv.rut_deduction.toFixed(2)} kr)</span>}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <select value={inv.status} onChange={(e) => setStatus(inv.id, e.target.value)} className="rounded-full border border-slate-200 text-sm px-3.5 py-2 outline-none focus:border-[#141414]">
+                  <option value="draft">Utkast</option>
+                  <option value="sent">Skickad</option>
+                  <option value="paid">Betald</option>
+                  <option value="overdue">Förfallen</option>
+                </select>
+                <button onClick={() => openEdit(inv)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#141414] transition-colors" title="Redigera">
+                  <Pencil size={16} />
+                </button>
+                <button onClick={() => sendInvoice(inv)} title="Skicka till kund"
+                  className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+                {(inv.status === "sent" || inv.status === "overdue") && (
+                  <button onClick={() => sendReminder(inv)} title={`Skicka påminnelse ${(inv.reminder_count||0)+1}`}
+                    className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    {inv.reminder_count > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{inv.reminder_count}</span>}
+                  </button>
+                )}
+                <button onClick={() => viewPdf(inv)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#141414] transition-colors" title="Visa faktura">
+                  <Eye size={16} />
+                </button>
+
+                <button onClick={() => remove(inv.id)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {modalOpen && <InvoiceModal initial={editingInvoice} bookings={bookings} settings={settings} priceList={priceList} onClose={closeModal} onSave={saveInvoice} />}
+      </AnimatePresence>
+
+      <p className="text-xs text-slate-400 mt-4">
+        RUT-avdraget beräknas som 50% av arbetskostnaden för privatpersoner. Kontrollera alltid mot Skatteverkets aktuella regler och din redovisningskonsult.
+      </p>
+    </>
+  );
+}
+
+```
+
+---
+
+## CostsPanel.jsx
+```jsx
+import React, { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, Package, X, FileText, FileSpreadsheet } from "lucide-react";
+
+const CATEGORIES = [
+  { value: "material", label: "Städmaterial" },
+  { value: "equipment", label: "Utrustning" },
+  { value: "transport", label: "Transport" },
+  { value: "other", label: "Övrigt" },
+];
+
+const CAT_COLORS = {
+  material: "bg-blue-50 text-blue-700",
+  equipment: "bg-purple-50 text-purple-700",
+  transport: "bg-amber-50 text-amber-700",
+  other: "bg-slate-100 text-slate-600",
+};
+
+function kr(n) { return Math.round(n).toLocaleString("sv-SE") + " kr"; }
+
+function CostModal({ onClose, onSave, initial }) {
+  const initAntal = initial?.antal || 1;
+  const initUnitPrice = initial?.unit_price || (initial?.amount ? initial.amount / initAntal : "");
+  const [form, setForm] = useState(initial ? {
+    ...initial,
+    antal: initAntal,
+    unit_price: initUnitPrice,
+    amount: initial.amount || "",
+  } : { name: "", category: "material", amount: "", antal: 1, unit_price: "", moms_rate: 25, date: new Date().toISOString().split("T")[0], notes: "" });
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.amount || !form.date) return;
+    setSaving(true);
+    try { await onSave({ ...form, amount: parseFloat(form.amount), antal: parseInt(form.antal)||1, unit_price: parseFloat(form.unit_price)||0 }); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4" onClick={onClose}>
+      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-xl p-6 max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display font-bold text-xl">{initial ? "Redigera kostnad" : "Ny kostnad"}</h2>
+          <button onClick={onClose} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100"><X size={16}/></button>
+        </div>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="text-xs font-medium text-slate-700">Beskrivning *</label>
+            <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="T.ex. Rengöringsmedel Pur-Eco"/>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Datum *</label>
+            <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-slate-700">Belopp inkl. moms (kr) *</label>
+              <input type="number" min="0" step="0.01" value={form.unit_price} onChange={e=>{const up=parseFloat(e.target.value)||0;const ant=parseInt(form.antal)||1;setForm(f=>({...f,unit_price:e.target.value,amount:(up*ant).toFixed(2)}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="0.00"/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Antal</label>
+              <input type="number" min="1" step="1" value={form.antal} onChange={e=>{const ant=parseInt(e.target.value)||1;const up=parseFloat(form.unit_price)||0;setForm(f=>({...f,antal:e.target.value,amount:up>0?(up*ant).toFixed(2):f.amount}));}} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" placeholder="1"/>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-700">Total (kr)</label>
+              <div className="w-full mt-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900">{form.amount ? `${parseFloat(form.amount).toFixed(2)} kr` : "0.00 kr"}</div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Kategori</label>
+              <select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                {CATEGORIES.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-700">Moms %</label>
+              <select value={form.moms_rate} onChange={e=>setForm(f=>({...f,moms_rate:+e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value={25}>25% (standard)</option>
+                <option value={12}>12% (livsmedel)</option>
+                <option value={6}>6% (böcker m.m.)</option>
+                <option value={0}>0% (ingen moms)</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-700">Anteckning</label>
+            <textarea value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} rows={2} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" placeholder="Ev. kommentar..."/>
+          </div>
+          <button type="submit" disabled={saving||!form.name||!form.amount} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+            {saving ? "Sparar..." : "Spara"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default function CostsPanel() {
+  const [overview, setOverview] = useState(null);
+  const [costs, setCosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (start) params.start = start;
+      if (end) params.end = end;
+      const res = await api.get("/costs/overview", { params });
+      setOverview(res.data);
+      setCosts(res.data.costs_list || []);
+    } catch { toast.error("Kunde inte hämta data."); }
+    finally { setLoading(false); }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
+
+  const saveCost = async (form) => {
+    try {
+      if (editing) {
+        const res = await api.patch(`/costs/${editing._id}`, form);
+        setCosts(c => c.map(x => x._id === editing._id ? res.data : x));
+        toast.success("Kostnad uppdaterad.");
+      } else {
+        const res = await api.post("/costs", form);
+        setCosts(c => [res.data, ...c]);
+        toast.success("Kostnad tillagd.");
+      }
+      setModal(false); setEditing(null);
+      load();
+    } catch { toast.error("Kunde inte spara kostnaden."); }
+  };
+
+  const deleteCost = async (id) => {
+    if (!window.confirm("Ta bort denna kostnad?")) return;
+    try {
+      await api.delete(`/costs/${id}`);
+      setCosts(c => c.filter(x => x._id !== id));
+      toast.success("Kostnad borttagen.");
+      load();
+    } catch { toast.error("Kunde inte ta bort kostnaden."); }
+  };
+
+  return (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-display font-bold text-xl text-slate-900">Kostnader & Lönsamhet</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Materialkostnader och vinstanalys</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const month = new Date().toISOString().substring(0,7);
+            window.open(`${base}/api/costs/report-pdf?month=${month}&token=${token}`, "_blank");
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> Kostnadsrapport
+          </button>
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/costs/export-xlsx?token=${token}`;
+            a.download = "kostnader.xlsx";
+            a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
+          </button>
+          <button onClick={()=>{setEditing(null);setModal(true);}} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] hover:bg-black rounded-full px-4 py-2 transition-colors">
+            <Plus size={14}/> Ny kostnad
+          </button>
+        </div>
+      </div>
+
+      {/* Date filter */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        <input type="date" value={start} onChange={e=>setStart(e.target.value)} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414]"/>
+        <input type="date" value={end} onChange={e=>setEnd(e.target.value)} className="rounded-xl border border-slate-200 text-sm px-3 py-2 outline-none focus:border-[#141414]"/>
+        <button onClick={load} className="rounded-full bg-[#141414] text-white text-sm font-semibold px-4 py-2">Filtrera</button>
+        <button onClick={()=>{setStart("");setEnd("");setTimeout(load,100);}} className="rounded-full border border-slate-200 text-sm font-semibold px-4 py-2 text-slate-600 hover:border-[#141414]">Rensa</button>
+      </div>
+
+      {/* KPI Cards */}
+      {overview && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="rounded-2xl bg-white border border-slate-100 p-4">
+            <div className="flex items-center gap-2 mb-1"><TrendingUp size={16} className="text-green-500"/><span className="text-xs text-slate-500">Intäkter</span></div>
+            <p className="text-2xl font-bold text-slate-900">{kr(overview.revenue)}</p>
+          </div>
+          <div className="rounded-2xl bg-white border border-slate-100 p-4">
+            <div className="flex items-center gap-2 mb-1"><Package size={16} className="text-blue-500"/><span className="text-xs text-slate-500">Materialkost. inkl. moms</span></div>
+            <p className="text-2xl font-bold text-slate-900">{kr(overview.material_costs)}</p>
+            <p className="text-xs text-green-600 mt-0.5">Ingående moms: {kr(overview.ingaende_moms || 0)}</p>
+          </div>
+          <div className="rounded-2xl bg-white border border-slate-100 p-4">
+            <div className="flex items-center gap-2 mb-1"><TrendingDown size={16} className="text-amber-500"/><span className="text-xs text-slate-500">Personalkost.</span></div>
+            <p className="text-2xl font-bold text-slate-900">{kr(overview.employee_costs)}</p>
+          </div>
+          <div className={`rounded-2xl border p-4 ${overview.net_profit >= 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"}`}>
+            <div className="flex items-center gap-2 mb-1"><DollarSign size={16} className={overview.net_profit >= 0 ? "text-green-600" : "text-red-600"}/><span className="text-xs text-slate-500">Nettovinst</span></div>
+            <p className={`text-2xl font-bold ${overview.net_profit >= 0 ? "text-green-700" : "text-red-700"}`}>{kr(overview.net_profit)}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Marginal: {overview.margin}%</p>
+          </div>
+        </div>
+      )}
+
+      {/* Costs list */}
+      <div className="rounded-2xl bg-white border border-slate-100 overflow-hidden">
+        <div className="p-4 border-b border-slate-50 flex items-center justify-between">
+          <p className="font-semibold text-slate-900 text-sm">Kostnadsposter</p>
+          <p className="text-xs text-slate-400">{costs.length} poster</p>
+        </div>
+        {loading ? <p className="p-6 text-slate-400 text-sm">Laddar...</p> : costs.length === 0 ? (
+          <p className="p-6 text-slate-400 text-sm text-center">Inga kostnader registrerade ännu.</p>
+        ) : (
+          costs.map((c, i) => (
+            <div key={c._id} className="flex items-center justify-between gap-3 p-4 border-b border-slate-50 last:border-b-0">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="font-semibold text-slate-900 text-sm truncate">{c.name}</p>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${CAT_COLORS[c.category]||"bg-slate-100 text-slate-600"}`}>
+                    {CATEGORIES.find(x=>x.value===c.category)?.label||c.category}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">{c.date}{c.notes && ` · ${c.notes}`}</p>
+                {c.moms_rate > 0 && (
+                  <p className="text-xs text-blue-600">
+                    Moms ({c.moms_rate}%): {kr(c.amount - c.amount / (1 + c.moms_rate/100))} · Exkl. moms: {kr(c.amount / (1 + c.moms_rate/100))}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <p className="font-bold text-slate-900">{kr(c.amount)}</p>
+                <button onClick={()=>{setEditing(c);setModal(true);}} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button onClick={()=>deleteCost(c._id)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <Trash2 size={14}/>
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {modal && <CostModal onClose={()=>{setModal(false);setEditing(null);}} onSave={saveCost} initial={editing}/>}
+    </>
+  );
+}
+
+```
+
+---
 

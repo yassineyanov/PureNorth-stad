@@ -13,9 +13,3 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export const SERVICES = [
-  { key: "Hemstädning", desc: "Regelbunden eller engångsstädning av ditt hem." },
-  { key: "Flyttstädning", desc: "Noggrann städning vid in- och utflyttning." },
-  { key: "Kontorsstädning", desc: "Professionell städning av arbetsplatser." },
-  { key: "Storstädning", desc: "Djuprengöring av hela bostaden." },
-];

@@ -49,6 +49,7 @@ export default function DashboardPanel({ onNavigate, onRefresh }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [resetting, setResetting] = useState(false);
 
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -66,6 +67,21 @@ export default function DashboardPanel({ onNavigate, onRefresh }) {
     const interval = setInterval(() => load(true), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const resetEconomy = async () => {
+    if (!window.confirm("⚠️ Är du säker? Detta raderar ALLA fakturor, utlägg och kostnader permanent!")) return;
+    if (!window.confirm("Sista chansen - bekräfta att du vill nollställa ekonomin?")) return;
+    setResetting(true);
+    try {
+      await api.delete("/reset/economy");
+      toast.success("Ekonomi återställd till noll!");
+      load();
+    } catch {
+      toast.error("Kunde inte återställa ekonomin.");
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const todayStr = new Date().toLocaleDateString("sv-SE", { weekday:"long", day:"numeric", month:"long" });
 
@@ -92,6 +108,14 @@ export default function DashboardPanel({ onNavigate, onRefresh }) {
           {lastUpdated && <span className="text-xs text-slate-400">Uppdaterad {lastUpdated.toLocaleTimeString("sv-SE", {hour:"2-digit", minute:"2-digit"})}</span>}
           <button onClick={()=>{load();if(onRefresh)onRefresh();}} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
             <RefreshCw size={15}/>
+          </button>
+          <button
+            onClick={resetEconomy}
+            disabled={resetting}
+            title="Nollställ ekonomi (fakturor, utlägg, kostnader)"
+            className="h-9 px-3 rounded-full border border-red-200 flex items-center gap-1.5 text-red-400 hover:border-red-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors text-xs font-semibold">
+            {resetting ? <RefreshCw size={13} className="animate-spin"/> : <span>🗑️</span>}
+            {resetting ? "Återställer..." : "Nollställ ekonomi"}
           </button>
         </div>
       </div>
