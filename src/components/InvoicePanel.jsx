@@ -661,6 +661,30 @@ export default function InvoicePanel() {
     }
   };
 
+  const createKreditfaktura = async (inv) => {
+    if (!window.confirm(`Skapa kreditfaktura för faktura #${inv.invoice_number}?`)) return;
+    try {
+      const kreditItems = inv.items.map(i => ({...i, unit_price: -Math.abs(i.unit_price)}));
+      const res = await api.post("/invoices", {
+        booking_id: inv.booking_id || null,
+        customer_name: inv.customer_name,
+        customer_email: inv.customer_email,
+        customer_phone: inv.customer_phone,
+        customer_address: inv.customer_address,
+        customer_personnummer: inv.customer_personnummer,
+        customer_type: inv.customer_type || "private",
+        rut_eligible: false,
+        items: kreditItems,
+        note: `Kreditfaktura för faktura #${inv.invoice_number}`,
+        due_date: new Date().toISOString().split("T")[0],
+      });
+      setInvoices(prev => [res.data, ...prev]);
+      toast.success(`Kreditfaktura #${res.data.invoice_number} skapad!`);
+    } catch {
+      toast.error("Kunde inte skapa kreditfaktura.");
+    }
+  };
+
   const sendReminder = async (inv) => {
     if (!inv.customer_email) {
       toast.error("Kunden har ingen e-postadress.");
@@ -752,9 +776,14 @@ export default function InvoicePanel() {
                     <Pencil size={16} />
                   </button>
                 ) : (
-                  <button title="Faktura låst - kan ej redigeras" className="h-9 w-9 rounded-full flex items-center justify-center text-slate-200 cursor-not-allowed" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  </button>
+                  <>
+                    <button title="Faktura låst - kan ej redigeras" className="h-9 w-9 rounded-full flex items-center justify-center text-slate-200 cursor-not-allowed" disabled>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </button>
+                    <button onClick={() => createKreditfaktura(inv)} title="Skapa kreditfaktura" className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-orange-50 hover:text-orange-600 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/><path d="M12 3v18"/></svg>
+                    </button>
+                  </>
                 )}
                 <button onClick={() => sendInvoice(inv)} title="Skicka till kund"
                   className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
