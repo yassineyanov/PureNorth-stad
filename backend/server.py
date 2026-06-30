@@ -1458,6 +1458,7 @@ async def list_invoices(current=Depends(get_current_user)):
             result.append(Invoice(**{**d, "_id": str(d["_id"])}))
         except Exception as e:
             logger.error(f"Invoice skip #{d.get('invoice_number')}: {e}")
+            print(f"SKIP: {e}", flush=True)
     return result
 
 
