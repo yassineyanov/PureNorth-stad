@@ -425,11 +425,11 @@ class Invoice(BaseModel):
     status: str = "draft"
     labor_total: float = 0.0
     material_total: float = 0.0
-    subtotal: float = 0.0
-    vat_amount: float = 0.0
-    total_amount: float = 0.0
-    rut_deduction: float = 0.0
-    customer_pays: float = 0.0
+    subtotal: float
+    vat_amount: float
+    total_amount: float
+    rut_deduction: float
+    customer_pays: float
     created_at: str
     paid_at: Optional[str] = None
     reminder_count: Optional[int] = 0
@@ -1421,7 +1421,7 @@ async def set_invoice_logo(request: Request, current=Depends(get_current_user)):
 async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_user)):
     inv_settings = await get_invoice_settings_obj()
     items = [i.model_dump() for i in payload.items]
-    if payload.subtotal is None:
+    if not payload.subtotal:
         amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
     else:
         amounts = {}
@@ -1436,7 +1436,7 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["paid_at"] = None
     # Use frontend amounts if provided, otherwise recalculate
-    if payload.subtotal is None:
+    if not payload.subtotal:
         doc.update(amounts)
 
     result = await db.invoices.insert_one(doc)
@@ -1447,13 +1447,7 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
 @api_router.get("/invoices", response_model=List[Invoice], response_model_by_alias=False)
 async def list_invoices(current=Depends(get_current_user)):
     docs = await db.invoices.find().sort("invoice_number", -1).to_list(2000)
-    result = []
-    for d in docs:
-        try:
-            result.append(Invoice(**{**d, "_id": str(d["_id"])}))
-        except Exception as e:
-            logger.error(f"Invoice parse error {d.get('invoice_number')}: {e}")
-    return result
+    return [Invoice(**{**d, "_id": str(d["_id"])}) for d in docs]
 
 
 
@@ -1738,11 +1732,11 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     }).to_list(2000)
 
     # Core revenue calculations
-    forsaljning_excl_moms = sum(i.get("subtotal") or 0 for i in invoices)
-    utgaende_moms = sum(i.get("vat_amount") or 0 for i in invoices)
-    rut_avdrag = sum(i.get("rut_deduction") or 0 for i in invoices)
-    kund_betalar = sum(i.get("customer_pays") or 0 for i in invoices)
-    betalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") == "paid")
+    forsaljning_excl_moms = sum(i.get("subtotal", 0) for i in invoices)
+    utgaende_moms = sum(i.get("vat_amount", 0) for i in invoices)
+    rut_avdrag = sum(i.get("rut_deduction", 0) for i in invoices)
+    kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
+    betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
     obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled"])
 
     # Påminnelseavgifter (no moms)
@@ -6367,4 +6361,4 @@ async def shutdown_db_client():
     client.close()
 # auto-remind deploy Fri Jun 26 22:44:29 UTC 2026
 # force deploy 1782606093
-# redeploy Tue Jun 30 11:55:30 UTC 2026
+
