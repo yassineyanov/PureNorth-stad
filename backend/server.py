@@ -6322,16 +6322,6 @@ async def sync_invoice_from_booking(booking_id: str, payload: dict, current=Depe
     
     return {"updated": False, "message": "Nothing to update"}
 
-
-@api_router.delete("/reset/economy")
-async def reset_economy(current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") not in ("admin", "superadmin"):
-        raise HTTPException(status_code=403, detail="Ingen behörighet")
-    await db.invoices.delete_many({})
-    await db.expenses.delete_many({})
-    await db.costs.delete_many({})
-    return {"ok": True, "message": "Ekonomi återställd"}
-
 app.include_router(api_router)
 
 @app.get("/api/health")
