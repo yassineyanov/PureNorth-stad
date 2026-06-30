@@ -481,8 +481,7 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                 const speed = speedKey ? SPEED[speedKey] : 30;
                 const kvm = parseFloat(editBookingForm.kvm)||0;
                 const tim = kvm ? Math.ceil((kvm/speed)*2)/2 : 0;
-                const plItem = priceList?.find(p=>p.service?.toLowerCase()===svc);
-                const apris = plItem?.price || 478;
+                const apris = 478;
                 return (
                   <div className="rounded-xl border border-slate-200 p-3 space-y-3">
                     <div>
