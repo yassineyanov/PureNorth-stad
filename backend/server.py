@@ -1743,12 +1743,12 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     }).to_list(2000)
 
     # Core revenue calculations
-    forsaljning_excl_moms = sum(i.get("subtotal", 0) for i in invoices)
-    utgaende_moms = sum(i.get("vat_amount", 0) for i in invoices)
-    rut_avdrag = sum(i.get("rut_deduction", 0) for i in invoices)
-    kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
-    betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled"])
+    forsaljning_excl_moms = sum(i.get("subtotal") or 0 for i in invoices)
+    utgaende_moms = sum(i.get("vat_amount") or 0 for i in invoices)
+    rut_avdrag = sum(i.get("rut_deduction") or 0 for i in invoices)
+    kund_betalar = sum(i.get("customer_pays") or 0 for i in invoices)
+    betalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") == "paid")
+    obetalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") not in ["paid", "cancelled"])
 
     # Påminnelseavgifter (no moms)
     paminnelse_avgifter = sum(
