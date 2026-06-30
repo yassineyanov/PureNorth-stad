@@ -131,17 +131,10 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-const SPEED_MAP = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35,"trappstädning":25,"fönsterputs":10};
-
 function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: setParentSelected }) {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBookingLocal] = React.useState(initialSelected || null);
   React.useEffect(() => { if(initialSelected) setSelectedBookingLocal(initialSelected); }, [initialSelected]);
-  React.useEffect(() => {
-    if (!selectedBooking || loading) return;
-    const el = document.getElementById(`booking-${selectedBooking}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [selectedBooking, loading]);
   const setSelectedBooking = (id) => { setSelectedBookingLocal(id); if(setParentSelected) setParentSelected(id); };
   const [bookingsLastUpdated, setBookingsLastUpdated] = React.useState(null);
   const [loading, setLoading] = useState(true);
@@ -171,7 +164,7 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
       if (!silent) setLoading(false);
     }
   };
-  useEffect(() => { load(); const interval = setInterval(() => load(true), 30000); return () => clearInterval(interval); }, []);
+  useEffect(() => { load(); const interval = setInterval(() => load(true), 1000); return () => clearInterval(interval); }, []);
 
   const setStatus = async (id, status) => {
     try {
@@ -486,7 +479,7 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
 
               {/* Yta/tim calculator */}
               {(() => {
-                const SPEED = SPEED_MAP;
+                const SPEED = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35,"trappstädning":25,"fönsterputs":10};
                 const svc = (editBookingForm.services||[])[0]?.toLowerCase()||"";
                 const speedKey = Object.keys(SPEED).find(k=>svc.includes(k));
                 const speed = speedKey ? SPEED[speedKey] : 30;
@@ -556,7 +549,7 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
               </div>
               {/* Price summary */}
               {(() => {
-                const SPEED = SPEED_MAP;
+                const SPEED = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35,"trappstädning":25};
                 const services = editBookingForm.services || [];
                 const kvm = parseFloat(editBookingForm.kvm) || 0;
                 if (!services.length || !kvm) return null;
@@ -869,7 +862,7 @@ function Dashboard() {
 
   React.useEffect(() => {
     loadNotifs();
-    const interval = setInterval(loadNotifs, 30000);
+    const interval = setInterval(loadNotifs, 1000);
     return () => clearInterval(interval);
   }, [loadNotifs]);
 
@@ -1066,7 +1059,7 @@ function Dashboard() {
                     <div className="max-h-72 overflow-y-auto">
                       {notifs.map(n => (
                         <div key={n.id} className="flex items-center px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 transition-colors">
-                          <button onClick={()=>{ setReadIds(prev=>[...prev,n.id]); setTab("bookings"); setNotifOpen(false); setSelectedBooking(n.id); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
+                          <button onClick={()=>{ setTab("bookings"); setNotifOpen(false); setSelectedBooking(n.id); setTimeout(()=>{const el=document.getElementById(`booking-${n.id}`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},400); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
                             <div className="relative shrink-0">
                               <span className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center"><CalendarDays size={14} className="text-blue-600"/></span>
                               {!readIds.includes(n.id) && <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-blue-500"/>}
@@ -1211,7 +1204,63 @@ function Dashboard() {
         ) : (
           tab === "dashboard" ? <DashboardPanel onNavigate={setTab} /> : tab === "bookings" ? <BookingsPanel selectedBooking={selectedBooking} setSelectedBooking={setSelectedBooking}/> : tab === "reviews" ? <ReviewsPanel /> : tab === "schema" ? <SchedulePanel /> : tab === "absences" ? <AbsencePanel /> : tab === "expenses" ? <ExpensePanel /> : tab === "payroll" ? <PayrollPanel /> : tab === "invoices" ? <InvoicePanel /> : tab === "pricelist" ? <PriceListPanel /> : tab === "economy" ? <EconomyPanel /> : tab === "customers" ? <CustomerPanel /> : tab === "calendar" ? <CalendarPanel /> : tab === "stats" ? <StatsPanel /> : tab === "users" ? <UsersPanel /> : tab === "costs" ? <CostsPanel /> : tab === "settings" ? <SettingsPanel /> : <DashboardPanel onNavigate={setTab} />
         )}
-
+      {/* ── Settings Modal ─────────────────────────────────────────────── */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-7">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Settings size={20} className="text-slate-700"/>
+                <h2 className="font-display font-bold text-xl text-slate-900">Inställningar</h2>
+              </div>
+              <button onClick={()=>setSettingsOpen(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">
+                <X size={16}/>
+              </button>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Företagsuppgifter</h3>
+              <div className="space-y-3">
+                {[
+                  {label:"Företagsnamn", key:"company_name", placeholder:"PureNorth Städ"},
+                  {label:"Organisationsnummer", key:"company_orgnr", placeholder:"556123-4567"},
+                  {label:"Adress", key:"company_address", placeholder:"Storgatan 1, 903 25 Umeå"},
+                  {label:"Telefon", key:"company_phone", placeholder:"070-000 00 00"},
+                  {label:"E-post", key:"company_email", placeholder:"info@purenorth.se"},
+                  {label:"Webbplats", key:"company_website", placeholder:"www.purenorth.se"},
+                ].map(({label, key, placeholder}) => (
+                  <div key={key}>
+                    <label className="text-xs font-medium text-slate-600">{label}</label>
+                    <input value={settingsData[key]} onChange={e=>setSettingsData(d=>({...d,[key]:e.target.value}))} placeholder={placeholder} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Fakturainställningar</h3>
+              <div>
+                <label className="text-xs font-medium text-slate-600">Betalningsvillkor (dagar)</label>
+                <input type="number" value={settingsData.payment_terms_days} onChange={e=>setSettingsData(d=>({...d,payment_terms_days:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+              </div>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">OB-tillägg (kr/tim)</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB1 (kväll)</label>
+                  <input type="number" value={settingsData.ob1_extra} onChange={e=>setSettingsData(d=>({...d,ob1_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600">OB2 (natt/helg)</label>
+                  <input type="number" value={settingsData.ob2_extra} onChange={e=>setSettingsData(d=>({...d,ob2_extra:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]"/>
+                </div>
+              </div>
+            </div>
+            <button onClick={saveSettings} disabled={settingsSaving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
+              {settingsSaving ? "Sparar..." : "Spara inställningar"}
+            </button>
+          </div>
+        </div>
+      )}
       </main>
     </div>
   );
