@@ -1450,11 +1450,10 @@ async def list_invoices(current=Depends(get_current_user)):
     result = []
     for d in docs:
         try:
-            d.setdefault("subtotal", 0.0)
-            d.setdefault("vat_amount", 0.0)
-            d.setdefault("total_amount", 0.0)
-            d.setdefault("rut_deduction", 0.0)
-            d.setdefault("customer_pays", 0.0)
+            for field in ["subtotal","vat_amount","total_amount","rut_deduction","customer_pays","labor_total","material_total"]:
+                if d.get(field) is None: d[field] = 0.0
+            if not d.get("due_date"): d["due_date"] = ""
+            if not d.get("created_at"): d["created_at"] = ""
             result.append(Invoice(**{**d, "_id": str(d["_id"])}))
         except Exception as e:
             logger.error(f"Invoice skip #{d.get('invoice_number')}: {e}")
