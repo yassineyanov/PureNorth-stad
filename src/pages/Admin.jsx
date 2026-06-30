@@ -487,6 +487,43 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                 <label className="text-xs font-medium text-slate-700">Anteckning</label>
                 <textarea value={editBookingForm.other_description} onChange={e=>setEditBookingForm(f=>({...f,other_description:e.target.value}))} rows={2} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
               </div>
+              {/* RUT section */}
+              <div className="rounded-xl border border-slate-200 p-3 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={editBookingForm.rut_eligible||false} onChange={e=>setEditBookingForm(f=>({...f,rut_eligible:e.target.checked}))} className="rounded"/>
+                  <span className="text-sm font-medium text-slate-700">RUT-avdrag (50% av arbetskostnad)</span>
+                </label>
+                {editBookingForm.rut_eligible && (
+                  <div>
+                    <label className="text-xs font-medium text-slate-700">Personnummer</label>
+                    <input value={editBookingForm.personnummer||""} onChange={e=>setEditBookingForm(f=>({...f,personnummer:e.target.value}))} placeholder="ÅÅMMDD-XXXX" className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
+                  </div>
+                )}
+              </div>
+              {/* Price summary */}
+              {(() => {
+                const SPEED = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35,"trappstädning":25};
+                const services = editBookingForm.services || [];
+                const kvm = parseFloat(editBookingForm.kvm) || 0;
+                if (!services.length || !kvm) return null;
+                const svc = services[0]?.toLowerCase() || "";
+                const speedKey = Object.keys(SPEED).find(k => svc.includes(k));
+                const speed = speedKey ? SPEED[speedKey] : 30;
+                const tim = Math.ceil((kvm / speed) * 2) / 2;
+                const price = tim * 478;
+                const moms = price * 0.25;
+                const rut = editBookingForm.rut_eligible ? price * 0.5 : 0;
+                const attBetala = price + moms - rut;
+                return (
+                  <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm space-y-1">
+                    <div className="flex justify-between text-slate-500"><span>Delsumma (exkl. moms)</span><span>{price.toFixed(2)} kr</span></div>
+                    <div className="flex justify-between text-slate-500"><span>Moms (25%)</span><span>{moms.toFixed(2)} kr</span></div>
+                    <div className="flex justify-between font-semibold text-slate-800"><span>Totalt inkl. moms</span><span>{(price+moms).toFixed(2)} kr</span></div>
+                    {rut > 0 && <div className="flex justify-between text-green-600"><span>RUT-avdrag (50%)</span><span>-{rut.toFixed(2)} kr</span></div>}
+                    <div className="flex justify-between font-bold text-slate-900 pt-1 border-t border-slate-200"><span>ATT BETALA</span><span className="text-green-700">{attBetala.toFixed(2)} kr</span></div>
+                  </div>
+                );
+              })()}
               <button type="submit" disabled={editBookingSaving} className="w-full rounded-full bg-[#141414] hover:bg-black disabled:opacity-50 text-white py-2.5 font-semibold transition-colors">
                 {editBookingSaving ? "Sparar..." : "Spara ändringar"}
               </button>
