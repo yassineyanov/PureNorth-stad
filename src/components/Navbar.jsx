@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useWebsite } from "@/context/WebsiteContext";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/Logo";

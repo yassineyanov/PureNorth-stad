@@ -6,13 +6,14 @@ import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-function UserModal({ initial, onClose, onSave }) {
+function UserModal({ initial, onClose, onSave, employees }) {
   const isEdit = Boolean(initial);
   const [form, setForm] = useState({
     name: initial?.name || "",
     email: initial?.email || "",
     password: "",
     role: initial?.role || "staff",
+    employee_id: initial?.employee_id || "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -59,6 +60,17 @@ function UserModal({ initial, onClose, onSave }) {
               <option value="staff">Personal (schema & frånvaro)</option>
             </select>
           </div>
+          {form.role === "staff" && (
+            <div>
+              <Label>Koppla till anställd (valfritt)</Label>
+              <select value={form.employee_id} onChange={e=>setForm(f=>({...f,employee_id:e.target.value}))}
+                className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]">
+                <option value="">Ingen koppling</option>
+                {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+              </select>
+              <p className="text-xs text-slate-400 mt-1">Koppla kontot till en anställd i Schema</p>
+            </div>
+          )}
           <div className={`rounded-xl p-3 text-xs ${form.role==="admin" ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"}`}>
             {form.role==="admin"
               ? "⚠️ Admin har full åtkomst till allt inkl. ekonomi, löner och användarhantering."
@@ -78,6 +90,7 @@ function UserModal({ initial, onClose, onSave }) {
 
 export default function UsersPanel() {
   const [users, setUsers] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -85,8 +98,12 @@ export default function UsersPanel() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/users");
-      setUsers(res.data);
+      const [usersRes, empRes] = await Promise.all([
+        api.get("/users"),
+        api.get("/employees"),
+      ]);
+      setUsers(usersRes.data);
+      setEmployees(empRes.data);
     } catch { toast.error("Kunde inte hämta användare."); }
     finally { setLoading(false); }
   };
@@ -184,6 +201,11 @@ export default function UsersPanel() {
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${u.role==="admin"?"bg-red-50 text-red-700":u.role==="sales"?"bg-purple-50 text-purple-700":"bg-blue-50 text-blue-700"}`}>
                   {u.role==="admin" ? "Admin" : u.role==="sales" ? "Säljare" : "Personal"}
                 </span>
+                {u.employee_id && employees.find(e=>e.id===u.employee_id) && (
+                  <span className="text-xs text-slate-400">
+                    → {employees.find(e=>e.id===u.employee_id)?.name}
+                  </span>
+                )}
                 <button onClick={()=>{setEditingUser(u);setModalOpen(true);}}
                   className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
                   <Pencil size={14}/>
@@ -199,7 +221,7 @@ export default function UsersPanel() {
       )}
 
       <AnimatePresence>
-        {modalOpen && <UserModal initial={editingUser} onClose={()=>{setModalOpen(false);setEditingUser(null);}} onSave={saveUser}/>}
+        {modalOpen && <UserModal initial={editingUser} onClose={()=>{setModalOpen(false);setEditingUser(null);}} onSave={saveUser} employees={employees}/>}
       </AnimatePresence>
     </>
   );

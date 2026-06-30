@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Trash2, Users, Phone, Mail, MapPin, FileText, Calendar, ChevronRight, Download, Building2, User } from "lucide-react";
+import { Plus, X, Trash2, Users, Phone, Mail, MapPin, FileText, Calendar, ChevronRight, Download, Building2, User, FileSpreadsheet } from "lucide-react";
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -275,6 +275,23 @@ export default function CustomerPanel() {
         <div className="flex gap-2 flex-wrap">
           <button onClick={importFromBookings} disabled={importing} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-full px-4 py-2 hover:border-[#141414] transition-colors disabled:opacity-50">
             {importing ? "Importerar..." : "↓ Importera från bokningar"}
+          </button>
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/customers/export-xlsx?token=${token}`;
+            a.download = "kunder.xlsx";
+            a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
+          </button>
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            window.open(`${base}/api/customers/export-pdf?token=${token}`, "_blank");
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> PDF
           </button>
           <button onClick={()=>{setEditingCustomer(null);setModalOpen(true);}} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#141414] hover:bg-black rounded-full px-4 py-2 transition-colors">
             <Plus size={14}/> Ny kund

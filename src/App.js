@@ -1,4 +1,5 @@
 import "@/App.css";
+import { WebsiteProvider } from "@/context/WebsiteContext";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
@@ -15,6 +16,7 @@ function App() {
   return (
     <div className="App">
       <AuthProvider>
+        <WebsiteProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -26,14 +28,13 @@ function App() {
             <Route path="/malsattning" element={<Malsattning />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/:tab" element={<Admin />} />
-            <Route path="/admin" element={<Admin />} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-center" richColors />
+        </WebsiteProvider>
       </AuthProvider>
     </div>
   );
 }
 
 export default App;
-/* rebuild 1782576831 */

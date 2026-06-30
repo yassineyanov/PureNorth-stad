@@ -9,14 +9,6 @@ import { BookingForm } from "@/components/BookingForm";
 import { Contact, Footer } from "@/components/Contact";
 
 export default function Home() {
-  const [ws, setWs] = React.useState({});
-  React.useEffect(() => {
-    const base = process.env.REACT_APP_BACKEND_URL || "";
-    fetch(`${base}/api/settings/website`)
-      .then(r => r.json())
-      .then(d => setWs(d))
-      .catch(() => {});
-  }, []);
   const [seo, setSeo] = useState({
     seo_title: "PureNorth Städ – Professionell städning i Umeå",
     seo_description: "Vi erbjuder professionell hemstädning, flyttstädning och kontorsstädning i Umeå. SRY-utbildad personal och miljövänliga produkter.",
@@ -61,9 +53,9 @@ export default function Home() {
         <WhyUs />
         <Testimonials />
         <BookingForm />
-        <Contact ws={ws} />
+        <Contact />
       </main>
-      <Footer ws={ws} />
+      <Footer />
     </div>
   );
 }

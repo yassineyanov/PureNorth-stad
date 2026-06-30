@@ -25,6 +25,7 @@ export default function CalendarPanel() {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [bookings, setBookings] = useState([]);
+  const [absences, setAbsences] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,10 +37,11 @@ export default function CalendarPanel() {
   const load = async () => {
     setLoading(true);
     try {
-      const [bRes, sRes, eRes] = await Promise.all([
+      const [bRes, sRes, eRes, aRes] = await Promise.all([
         api.get("/bookings"),
         api.get("/shifts", { params: { start: monthStart, end: monthEnd } }),
         api.get("/employees"),
+        api.get("/absences"),
       ]);
       const allBookings = bRes.data;
       const monthBookings = allBookings.filter(b => {
@@ -49,6 +51,7 @@ export default function CalendarPanel() {
       setBookings(monthBookings);
       setShifts(sRes.data);
       setEmployees(eRes.data);
+      setAbsences(aRes.data || []);
     } catch { toast.error("Kunde inte hämta kalender."); }
     finally { setLoading(false); }
   };
@@ -66,6 +69,7 @@ export default function CalendarPanel() {
   const todayStr = fmt(today.getFullYear(), today.getMonth()+1, today.getDate());
 
   const bookingsForDay = (dateStr) => bookings.filter(b => b.preferred_date === dateStr);
+  const absencesForDay = (dateStr) => absences.filter(a => a.start_date <= dateStr && a.end_date >= dateStr);
   const shiftsForDay = (dateStr) => shifts.filter(s => s.date === dateStr);
 
   const selectedDateStr = selected ? fmt(year, month, selected) : null;
@@ -136,11 +140,15 @@ export default function CalendarPanel() {
                       </div>
                       {/* Shift dots */}
                       {dayShifts.slice(0,2).map(s => {
+                        const isAbsent = absencesForDay(dateStr).some(a => a.employee_id === s.employee_id);
                         const emp = empMap[s.employee_id];
                         return (
-                          <div key={s.id} className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate font-medium text-white`}
+                          <div key={s.id} className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 font-medium text-white flex items-center gap-1`}
                             style={{backgroundColor: emp?.color || "#141414"}}>
-                            {s.start_time} {emp?.name?.split(" ")[0] || ""}
+                            <span className="truncate">{s.start_time} {emp?.name?.split(" ")[0] || ""}</span>
+                            {isAbsent && (
+                              <span className="shrink-0 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center font-black" style={{fontSize:"12px"}}>+</span>
+                            )}
                           </div>
                         );
                       })}
@@ -156,6 +164,7 @@ export default function CalendarPanel() {
                       {dayBookings.length > 1 && (
                         <div className={`text-[10px] font-semibold ${isSelected ? "text-slate-300" : "text-slate-400"}`}>+{dayBookings.length-1} bok.</div>
                       )}
+
                     </div>
                   );
                 })}
@@ -203,6 +212,23 @@ export default function CalendarPanel() {
                 </div>
               )}
 
+              {absencesForDay(selectedDateStr).length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-2">Frånvaro ({absencesForDay(selectedDateStr).length})</p>
+                  <div className="space-y-2">
+                    {absencesForDay(selectedDateStr).map((a, i) => {
+                      const emp = employees.find(e => e.id === a.employee_id);
+                      return (
+                        <div key={i} className="rounded-xl p-3 bg-red-50 border border-red-100">
+                          <p className="text-sm font-semibold text-slate-900">{emp?.name || "Okänd"}</p>
+                          <p className="text-xs text-red-600">{a.type} · {a.start_date} → {a.end_date}</p>
+                          {a.note && <p className="text-xs text-slate-400 mt-1">{a.note}</p>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {selectedBookings.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Bokningar ({selectedBookings.length})</p>

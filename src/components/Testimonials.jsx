@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useWebsite } from "@/context/WebsiteContext";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Quote, Star, PenLine, ChevronDown, ChevronUp } from "lucide-react";
@@ -139,13 +140,17 @@ export const Testimonials = () => {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
+  const raw = useWebsite();
+  const wsSettings = { testimonials_label: "Omdömen", testimonials_title: "Vad våra kunder säger", featured_reviews: [], ...raw };
+
   useEffect(() => {
     api.get("/reviews/approved").then((res) => setApproved(res.data)).catch(() => {});
   }, []);
 
+  const featuredToUse = wsSettings.featured_reviews?.length > 0 ? wsSettings.featured_reviews : featured;
   const all = [
     ...approved.map((r) => ({ name: r.name, role: null, rating: r.rating, text: r.text })),
-    ...featured,
+    ...featuredToUse,
   ];
   const visible = expanded ? all : all.slice(0, INITIAL);
 
@@ -154,10 +159,10 @@ export const Testimonials = () => {
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
         <div className="max-w-2xl mb-14">
           <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
-            Omdömen
+            {wsSettings.testimonials_label || "Omdömen"}
           </p>
           <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-[#141414]">
-            Vad våra kunder säger
+            {wsSettings.testimonials_title || "Vad våra kunder säger"}
           </h2>
         </div>
 

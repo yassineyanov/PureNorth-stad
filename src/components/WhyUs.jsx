@@ -1,28 +1,43 @@
 import React from "react";
+import { useWebsite } from "@/context/WebsiteContext";
 import { motion } from "framer-motion";
 import { Award, Leaf, Percent, Check } from "lucide-react";
 
+const DEFAULT = {
+  whyus_label: "Varför välja oss?",
+  whyus_title: "Kvalitet du känner och naturen tackar för",
+  sry_title: "SRY-kvalifikation",
+  sry_text: "Med kvalifikation från Servicebranschens Yrkesnämnd (SRY) levererar PureNorth Städ hög standard och bra kvalité på alla våra städtjänster. Vår personal är SRY-utbildad.",
+  sry_tags: "SRY-utbildad personal,Hög standard,Trygg & försäkrad",
+  eco_title: "Svanenmärkt & miljöcertifierat",
+  eco_text: "Vi skyddar både din hälsa och vår natur genom att använda Svanenmärkta, miljöcertifierade Pur-Eco produkter, en ledande ekologisk produktserie som ger effektiv och skonsam städning utan att kompromissa med resultatet.",
+  rut_title: "50% RUT-avdrag",
+  rut_text: "Som privatperson drar vi automatiskt av halva arbetskostnaden direkt på fakturan, du betalar bara resten.",
+};
+
 export const WhyUs = () => {
+  const raw = useWebsite();
+  const ws = { ...DEFAULT, ...raw };
+
+  const tags = (ws.sry_tags || "").split(",").map(t => t.trim()).filter(Boolean);
+
   return (
     <section id="varfor-oss" className="py-24 sm:py-32 bg-[#FAFAFA]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
         <div className="max-w-2xl mb-16">
           <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
-            Varför välja oss?
+            {ws.whyus_label}
           </p>
           <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-[#141414]">
-            Kvalitet du känner och naturen tackar för
+            {ws.whyus_title}
           </h2>
         </div>
 
-        {/* Bento grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Big card - SRY (luxury black) */}
+          {/* Big SRY card */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.5 }}
             data-testid="why-card-sry"
             className="lg:col-span-2 lg:row-span-2 rounded-3xl bg-[#141414] text-white p-9 sm:p-11 flex flex-col justify-between overflow-hidden relative"
           >
@@ -30,19 +45,12 @@ export const WhyUs = () => {
               <div className="h-12 w-12 rounded-2xl bg-[#166534] text-white flex items-center justify-center mb-6">
                 <Award size={24} />
               </div>
-              <h3 className="font-display font-bold text-3xl mb-4">SRY-kvalifikation</h3>
-              <p className="text-white/75 text-lg leading-relaxed max-w-lg">
-                Med kvalifikation från Servicebranschens Yrkesnämnd (SRY) levererar
-                PureNorth Städ hög standard och bra kvalité på alla våra städtjänster.
-                Vår personal är SRY-utbildad.
-              </p>
+              <h3 className="font-display font-bold text-3xl mb-4">{ws.sry_title}</h3>
+              <p className="text-white/75 text-lg leading-relaxed max-w-lg">{ws.sry_text}</p>
             </div>
             <div className="relative z-10 mt-8 flex flex-wrap gap-3">
-              {["SRY-utbildad personal", "Hög standard", "Trygg & försäkrad"].map((t) => (
-                <span
-                  key={t}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white"
-                >
+              {tags.map(t => (
+                <span key={t} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white">
                   <Check size={14} className="text-[#4ade80]" /> {t}
                 </span>
               ))}
@@ -52,46 +60,30 @@ export const WhyUs = () => {
 
           {/* Eco card */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }}
             data-testid="why-card-eco"
             className="rounded-3xl bg-white border border-slate-200 p-8"
           >
             <div className="h-12 w-12 rounded-2xl bg-[#166534]/10 text-[#166534] flex items-center justify-center mb-5">
               <Leaf size={22} />
             </div>
-            <h3 className="font-display font-semibold text-2xl text-[#141414] mb-3">
-              Svanenmärkt & miljöcertifierat
-            </h3>
-            <p className="text-[15px] text-slate-600 leading-relaxed">
-              Vi skyddar både din hälsa och vår natur genom att använda Svanenmärkta,
-              miljöcertifierade <strong>Pur-Eco</strong> produkter, en ledande ekologisk
-              produktserie som ger effektiv och skonsam städning utan att kompromissa med
-              resultatet.
-            </p>
+            <h3 className="font-display font-semibold text-2xl text-[#141414] mb-3">{ws.eco_title}</h3>
+            <p className="text-[15px] text-slate-600 leading-relaxed">{ws.eco_text}</p>
           </motion.div>
 
           {/* RUT card */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.2 }}
             data-testid="why-card-rut"
             className="rounded-3xl bg-white border border-slate-200 p-8"
           >
             <div className="h-12 w-12 rounded-2xl bg-[#166534]/10 text-[#166534] flex items-center justify-center mb-5">
               <Percent size={22} />
             </div>
-            <h3 className="font-display font-semibold text-2xl text-[#141414] mb-3">
-              50% RUT-avdrag
-            </h3>
-            <p className="text-[15px] text-slate-600 leading-relaxed">
-              Som privatperson drar vi automatiskt av halva arbetskostnaden direkt på
-              fakturan, du betalar bara resten.
-            </p>
+            <h3 className="font-display font-semibold text-2xl text-[#141414] mb-3">{ws.rut_title}</h3>
+            <p className="text-[15px] text-slate-600 leading-relaxed">{ws.rut_text}</p>
           </motion.div>
         </div>
       </div>

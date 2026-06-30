@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useWebsite } from "@/context/WebsiteContext";
 import { Link } from "react-router-dom";
 import { Phone, MapPin, Clock } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -17,15 +18,8 @@ const DEFAULT = {
 };
 
 export const Contact = () => {
-  const [ws, setWs] = useState(DEFAULT);
-
-  useEffect(() => {
-    const base = process.env.REACT_APP_BACKEND_URL || "";
-    fetch(`${base}/api/settings/website`)
-      .then(r => r.json())
-      .then(d => setWs({ ...DEFAULT, ...d }))
-      .catch(() => {});
-  }, []);
+  const raw = useWebsite();
+  const ws = { ...DEFAULT, ...raw };
 
   return (
     <section id="kontakt" className="py-24 sm:py-28 bg-white">
@@ -90,14 +84,7 @@ export const Contact = () => {
 };
 
 export const Footer = () => {
-  const [ws, setWs] = useState({ company_name: "PureNorth Städ" });
-  useEffect(() => {
-    const base = process.env.REACT_APP_BACKEND_URL || "";
-    fetch(`${base}/api/settings/website`)
-      .then(r => r.json())
-      .then(d => setWs(d))
-      .catch(() => {});
-  }, []);
+  const ws = useWebsite();
 
   return (
     <footer className="bg-white border-t border-slate-100 py-12">
