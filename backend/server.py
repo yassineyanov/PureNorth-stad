@@ -1444,20 +1444,15 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     return Invoice(**doc)
 
 
-@api_router.get("/invoices", response_model=List[Invoice], response_model_by_alias=False)
+@api_router.get("/invoices")
 async def list_invoices(current=Depends(get_current_user)):
     docs = await db.invoices.find().sort("invoice_number", -1).to_list(2000)
     result = []
     for d in docs:
-        try:
-            for field in ["subtotal","vat_amount","total_amount","rut_deduction","customer_pays","labor_total","material_total"]:
-                if d.get(field) is None: d[field] = 0.0
-            if not d.get("due_date"): d["due_date"] = ""
-            if not d.get("created_at"): d["created_at"] = ""
-            result.append(Invoice(**{**d, "_id": str(d["_id"])}))
-        except Exception as e:
-            logger.error(f"Invoice skip #{d.get('invoice_number')}: {e}")
-            print(f"SKIP: {e}", flush=True)
+        d["id"] = str(d.pop("_id"))
+        for field in ["subtotal","vat_amount","total_amount","rut_deduction","customer_pays","labor_total","material_total"]:
+            if d.get(field) is None: d[field] = 0.0
+        result.append(d)
     return result
 
 
