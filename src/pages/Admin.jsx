@@ -465,6 +465,12 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                 <label className="text-xs font-medium text-slate-700">Datum</label>
                 <input type="date" value={editBookingForm.preferred_date} onChange={e=>setEditBookingForm(f=>({...f,preferred_date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414]" />
               </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-700">Anteckning</label>
+                <textarea value={editBookingForm.other_description} onChange={e=>setEditBookingForm(f=>({...f,other_description:e.target.value}))} rows={2} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
+              </div>
+
               {/* Yta/tim calculator */}
               {(() => {
                 const SPEED = {"hemstädning":30,"storstädning":20,"flyttstädning":15,"byggstädning":18,"kontorsstädning":35,"trappstädning":25,"fönsterputs":10};
@@ -503,10 +509,6 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                   </div>
                 );
               })()}
-              <div>
-                <label className="text-xs font-medium text-slate-700">Anteckning</label>
-                <textarea value={editBookingForm.other_description} onChange={e=>setEditBookingForm(f=>({...f,other_description:e.target.value}))} rows={2} className="w-full mt-1 rounded-xl border border-slate-200 text-sm px-3.5 py-2.5 outline-none focus:border-[#141414] resize-none" />
-              </div>
               {/* Typ + RUT section */}
               <div className="rounded-xl border border-slate-200 p-3 space-y-2">
                 <div>
