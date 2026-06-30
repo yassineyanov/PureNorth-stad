@@ -485,7 +485,12 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
                     <div>
                       <label className="text-xs font-medium text-slate-500">Tjänster</label>
                       <div className="flex items-center gap-2 mt-1">
-                        <select value={(editBookingForm.services||[])[0]||""} onChange={e=>setEditBookingForm(f=>({...f,services:[e.target.value]}))} className="flex-1 rounded-xl border border-slate-200 text-sm px-3 py-2.5 outline-none focus:border-[#141414]">
+                        <select value={(editBookingForm.services||[])[0]||""} onChange={e=>{
+                          const svc = e.target.value;
+                          const RUT_SVCS = ["hemstädning","storstädning","flyttstädning","fönsterputs","trappstädning","byggstädning"];
+                          const isRut = RUT_SVCS.some(r=>svc.toLowerCase().includes(r));
+                          setEditBookingForm(f=>({...f,services:[svc],rut_eligible:isRut&&(f.customer_type||"private")==="private"}));
+                        }} className="flex-1 rounded-xl border border-slate-200 text-sm px-3 py-2.5 outline-none focus:border-[#141414]">
                           {SERVICE_OPTIONS.map(s=><option key={s} value={s}>{s}</option>)}
                         </select>
                         <span className="text-xs text-slate-400 whitespace-nowrap">{apris} kr/tim</span>
