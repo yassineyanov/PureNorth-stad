@@ -25,18 +25,18 @@ export const Contact = () => {
     <section id="kontakt" className="py-24 sm:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 items-center">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{color: ws.contact_title_color || "#141414"}}>
+          {ws.show_contact_title !== false && <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{color: ws.contact_title_color || "#141414"}}>
             {ws.contact_title || "Kontakt"}
-          </p>
-          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight" style={{color: ws.contact_subtitle_color || "#141414"}}>
+          </p>}
+          {ws.show_contact_subtitle !== false && <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight" style={{color: ws.contact_subtitle_color || "#141414"}}>
             {ws.contact_subtitle || "Vi finns i Umeå"}
-          </h2>
-          <p className="mt-5 text-lg max-w-lg" style={{color: ws.contact_description_color || "#475569"}}>
+          </h2>}
+          {ws.show_contact_description !== false && <p className="mt-5 text-lg max-w-lg" style={{color: ws.contact_description_color || "#475569"}}>
             {(ws.contact_description && ws.contact_description.length > 0) ? ws.contact_description : "Har du frågor eller vill boka en städning? Hör av dig så hjälper vi dig."}
           </p>
 
           <div className="mt-9 space-y-4">
-            <a href={`tel:${ws.phone?.replace(/[^0-9+]/g,"")}`} data-testid="contact-phone" className="flex items-center gap-4 group">
+            {ws.show_contact_phone !== false && <a href={`tel:${ws.phone?.replace(/[^0-9+]/g,"")}`} data-testid="contact-phone" className="flex items-center gap-4 group">
               <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition-colors">
                 <Phone size={20} />
               </span>
@@ -44,7 +44,7 @@ export const Contact = () => {
                 <span className="block text-xs text-slate-500">Telefon</span>
                 <span className="block font-semibold text-slate-900">{ws.phone}</span>
               </div>
-            </a>
+            </a>}
             {ws.email && (
             <a href={`mailto:${ws.email}`} className="flex items-center gap-4 group">
               <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition-colors">
@@ -77,7 +77,7 @@ export const Contact = () => {
           </div>
         </div>
 
-        <div className="rounded-3xl p-10 sm:p-12 relative overflow-hidden" style={{backgroundColor: ws.contact_box_bg || "#141414", color: "white"}}>
+        {ws.show_contact_box !== false && <div className="rounded-3xl p-10 sm:p-12 relative overflow-hidden" style={{backgroundColor: ws.contact_box_bg || "#141414", color: "white"}}>
           <Logo className="h-14 w-14 mb-6 !bg-white" />
           <h3 className="font-display font-bold text-3xl mb-3" style={{color: ws.contact_box_title_color || "#ffffff"}}>{ws.contact_box_title || "Redo att boka?"}</h3>
           <p className="leading-relaxed max-w-md" style={{color: ws.contact_box_text_color || "rgba(255,255,255,0.75)"}}>
@@ -88,7 +88,7 @@ export const Contact = () => {
             {ws.contact_box_btn || "Boka tid"}
           </a>
           <div className="absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-white/[0.04]" />
-        </div>
+        </div>}
       </div>
     </section>
   );
