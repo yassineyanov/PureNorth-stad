@@ -33,11 +33,11 @@ export const Hero = () => {
               {ws.cta_text || "Boka tid online"}
             </a>
             <a
-              href="tel:0706240403"
+              href={`tel:${(ws.phone || "070-624 04 03").replace(/[^0-9]/g, "")}`}
               data-testid="hero-call-btn"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 hover:border-[#141414] hover:bg-[#141414] hover:text-white text-slate-800 px-8 py-4 text-base font-semibold transition-colors"
             >
-              <Phone size={18} /> 070-624 04 03
+              <Phone size={18} /> {ws.phone || "070-624 04 03"}
             </a>
           </div>
 
