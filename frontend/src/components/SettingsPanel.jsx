@@ -211,9 +211,7 @@ export default function SettingsPanel() {
             </select>
             <div className="flex items-center gap-3 mt-2">
               <span className="text-xs text-slate-500">Ikon färg</span>
-              <input type="color" value={data.hero_badge_icon_color || "#166534"}
-                onChange={e => set("hero_badge_icon_color", e.target.value)}
-                className="h-6 w-6 rounded-full cursor-pointer border-0 p-0"/>
+              <CircleColor value={data.hero_badge_icon_color || "#166534"} onChange={e => set("hero_badge_icon_color", e.target.value)}/>
               {data.hero_badge_icon_color && <button onClick={()=>set("hero_badge_icon_color","")} className="text-xs text-red-400">↺</button>}
             </div>
             <label className={lbl + " mt-2"}>Badge-logotyp (valfritt - ersätter ikon)</label>
@@ -286,9 +284,7 @@ export default function SettingsPanel() {
               </select>
               <div className="flex items-center gap-3 mt-2">
                 <span className="text-xs text-slate-500">Ikon färg</span>
-                <input type="color" value={data.hero_badge1_icon_color || "#166534"}
-                  onChange={e => set("hero_badge1_icon_color", e.target.value)}
-                  className="h-6 w-6 rounded-full cursor-pointer border-0 p-0"/>
+                <CircleColor value={data.hero_badge1_icon_color || "#166534"} onChange={e => set("hero_badge1_icon_color", e.target.value)}/>
                 {data.hero_badge1_icon_color && <button onClick={()=>set("hero_badge1_icon_color","")} className="text-xs text-red-400">↺</button>}
               </div>
               <label className={lbl + " mt-2"}>Badge 1 logotyp (ersätter ikon)</label>
@@ -322,9 +318,7 @@ export default function SettingsPanel() {
               </select>
               <div className="flex items-center gap-3 mt-2">
                 <span className="text-xs text-slate-500">Ikon färg</span>
-                <input type="color" value={data.hero_badge2_icon_color || "#166534"}
-                  onChange={e => set("hero_badge2_icon_color", e.target.value)}
-                  className="h-6 w-6 rounded-full cursor-pointer border-0 p-0"/>
+                <CircleColor value={data.hero_badge2_icon_color || "#166534"} onChange={e => set("hero_badge2_icon_color", e.target.value)}/>
                 {data.hero_badge2_icon_color && <button onClick={()=>set("hero_badge2_icon_color","")} className="text-xs text-red-400">↺</button>}
               </div>
               <label className={lbl + " mt-2"}>Badge 2 logotyp (ersätter ikon)</label>
@@ -678,9 +672,7 @@ export default function SettingsPanel() {
             <div>
               <label className={lbl}>Primärfärg (grön)</label>
               <div className="flex items-center gap-3 mt-1">
-                <input type="color" value={data.primary_color||"#166534"}
-                  onChange={e=>set("primary_color",e.target.value)}
-                  className="h-12 w-12 rounded-xl border border-slate-200 cursor-pointer p-1"/>
+                <CircleColor value={data.primary_color||"#166534"} onChange={e=>set("primary_color",e.target.value)}/>
                 <input value={data.primary_color||"#166534"}
                   onChange={e=>set("primary_color",e.target.value)}
                   placeholder="#166534" className={inp}/>
@@ -696,9 +688,7 @@ export default function SettingsPanel() {
             <div>
               <label className={lbl}>Sekundärfärg (svart)</label>
               <div className="flex items-center gap-3 mt-1">
-                <input type="color" value={data.secondary_color||"#141414"}
-                  onChange={e=>set("secondary_color",e.target.value)}
-                  className="h-12 w-12 rounded-xl border border-slate-200 cursor-pointer p-1"/>
+                <CircleColor value={data.secondary_color||"#141414"} onChange={e=>set("secondary_color",e.target.value)}/>
                 <input value={data.secondary_color||"#141414"}
                   onChange={e=>set("secondary_color",e.target.value)}
                   placeholder="#141414" className={inp}/>
