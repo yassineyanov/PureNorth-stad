@@ -77,7 +77,7 @@ export const Contact = () => {
           </div>
         </div>
 
-        <div className="rounded-3xl bg-[#141414] text-white p-10 sm:p-12 relative overflow-hidden">
+        <div className="rounded-3xl p-10 sm:p-12 relative overflow-hidden" style={{backgroundColor: ws.contact_box_bg || "#141414", color: "white"}}>
           <Logo className="h-14 w-14 mb-6 !bg-white" />
           <h3 className="font-display font-bold text-3xl mb-3">{ws.contact_box_title || "Redo att boka?"}</h3>
           <p className="text-white/75 leading-relaxed max-w-md">
