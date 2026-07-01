@@ -26,10 +26,10 @@ export const Hero = () => {
               ws.hero_badge_icon === "CheckCircle" ? <CheckCircle size={15}/> :
               <Leaf size={15}/>
             } {ws.hero_badge || "Svanenmärkt & miljöcertifierat"}
-          </span>}
+          </span>)}}
           {ws.show_hero_title !== false && <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4rem] leading-[1.05] tracking-tight text-[#141414]">
             {ws.hero_title || "Renhet med norrländsk precision i Umeå."}
-          </h1>}
+          </h1>)}}
           {ws.show_hero_subtitle !== false && <p className="mt-6 text-lg text-slate-600 leading-relaxed max-w-xl">
             {ws.hero_subtitle || "Vi definierar premiumstädning genom certifierad expertis och hållbara metoder. Från fönsterputs till flyttstädning, vi tar hand om detaljerna."}
           </p>
