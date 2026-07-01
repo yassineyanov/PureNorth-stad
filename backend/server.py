@@ -5726,6 +5726,8 @@ class WebsiteSettings(BaseModel):
     about_point2: Optional[str] = ""
     about_point3: Optional[str] = ""
     about_image: Optional[str] = ""
+    hero_badge_icon: Optional[str] = "Leaf"
+    hero_badge_image: Optional[str] = ""
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
