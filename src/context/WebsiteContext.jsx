@@ -18,6 +18,16 @@ const DEFAULTS = {
   contact_box_title: "Redo att boka?",
   contact_box_text: "Vi erbjuder professionell städning anpassad efter dina behov. Kontakta oss idag!",
   contact_box_btn: "Boka tid",
+  about_title: "Städning med hjärta & precision",
+  about_stat1_number: "100+",
+  about_stat1_label: "Nöjda kunder",
+  about_stat2_number: "5",
+  about_stat2_label: "Betyg",
+  about_stat3_number: "3 år",
+  about_stat3_label: "Erfarenhet",
+  about_point1: "SRY-certifierad personal",
+  about_point2: "Svanenmärkta Pur-Eco produkter",
+  about_point3: "50% RUT-avdrag på arbetskostnaden",
 };
 
 export const WebsiteProvider = ({ children }) => {
