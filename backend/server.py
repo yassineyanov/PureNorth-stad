@@ -5786,6 +5786,11 @@ class WebsiteSettings(BaseModel):
     about_point3_color: Optional[str] = ""
     about_point3_icon_color: Optional[str] = ""
     about_section_bg: Optional[str] = ""
+    about_label: Optional[str] = ""
+    about_label_color: Optional[str] = ""
+    about_btn_text: Optional[str] = ""
+    about_btn_color: Optional[str] = ""
+    about_btn_bg: Optional[str] = ""
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
