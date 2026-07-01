@@ -30,11 +30,11 @@ const DEFAULTS = {
   about_point1: "SRY-certifierad personal",
   about_point2: "Svanenmärkta Pur-Eco produkter",
   about_point3: "50% RUT-avdrag på arbetskostnaden",
-  hero_badge_icon: "Leaf",
+  hero_badge_icon: "Zap",
   hero_badge_image: "",
-  badge1_icon: "ShieldCheck",
+  badge1_icon: "Zap",
   badge1_image: "",
-  badge2_icon: "Leaf",
+  badge2_icon: "Zap",
   badge2_image: "",
 };
 
