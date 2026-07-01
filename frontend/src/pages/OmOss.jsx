@@ -16,7 +16,7 @@ export default function OmOss() {
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <span className="text-sm font-semibold uppercase tracking-widest text-[#166534]">Om oss</span>
             <h1 className="font-display font-bold text-5xl sm:text-6xl tracking-tight text-[#141414] mt-3 mb-6">
-              Städning med hjärta & precision
+              {ws.about_title || "Städning med hjärta & precision"}
             </h1>
           </motion.div>
 
@@ -54,19 +54,19 @@ export default function OmOss() {
                   <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
                     <ShieldCheck size={16} className="text-[#166534]"/>
                   </span>
-                  <span className="text-slate-700 font-medium">SRY-certifierad personal</span>
+                  <span className="text-slate-700 font-medium">{ws.about_point1 || "SRY-certifierad personal"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
                     <Leaf size={16} className="text-[#166534]"/>
                   </span>
-                  <span className="text-slate-700 font-medium">Svanenmärkta Pur-Eco produkter</span>
+                  <span className="text-slate-700 font-medium">{ws.about_point2 || "Svanenmärkta Pur-Eco produkter"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
                     <Star size={16} className="text-[#166534]"/>
                   </span>
-                  <span className="text-slate-700 font-medium">50% RUT-avdrag på arbetskostnaden</span>
+                  <span className="text-slate-700 font-medium">{ws.about_point3 || "50% RUT-avdrag på arbetskostnaden"}</span>
                 </div>
               </div>
               <a href="/#boka" className="mt-10 inline-flex items-center justify-center rounded-full bg-[#141414] hover:bg-black text-white px-8 py-4 text-base font-semibold transition-colors">
