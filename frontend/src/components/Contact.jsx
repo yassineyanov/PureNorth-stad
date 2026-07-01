@@ -36,7 +36,7 @@ export const Contact = () => {
           </p>}
 
           <div className="mt-9 space-y-4">
-            {ws.show_contact_phone !== false && <a href={`tel:${ws.phone?.replace(/[^0-9+]/g,"")}`} data-testid="contact-phone" className="flex items-center gap-4 group">
+            {ws.show_phone !== false && <a href={`tel:${ws.phone?.replace(/[^0-9+]/g,"")}`} data-testid="contact-phone" className="flex items-center gap-4 group">
               <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition-colors">
                 <Phone size={20} />
               </span>
@@ -45,7 +45,7 @@ export const Contact = () => {
                 <span className="block font-semibold text-slate-900">{ws.phone}</span>
               </div>
             </a>}
-            {ws.email && (
+            {ws.show_email !== false && ws.email && (
             <a href={`mailto:${ws.email}`} className="flex items-center gap-4 group">
               <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition-colors">
                 <Mail size={20} />
