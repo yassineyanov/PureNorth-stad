@@ -11,7 +11,6 @@ import { Contact, Footer } from "@/components/Contact";
 
 export default function Home() {
   const ready = useWebsiteReady();
-  if (!ready) return <div className="min-h-screen bg-white"><div className="h-1 bg-[#166534] animate-pulse w-1/3"/></div>;
   const [ws, setWs] = React.useState({});
   React.useEffect(() => {
     const base = process.env.REACT_APP_BACKEND_URL || "";
@@ -54,6 +53,7 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  if (!ready) return <div className="min-h-screen bg-white"><div className="h-1 bg-[#166534] animate-pulse w-1/3"/></div>;
   return (
     <div className="bg-white">
       <Navbar />
