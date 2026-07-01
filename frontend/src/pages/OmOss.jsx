@@ -24,7 +24,7 @@ export default function OmOss() {
             {/* Image */}
             <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="relative">
               <img
-                src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+                src="https://images.unsplash.com/photo-1558618047-f4e60cfa4a5c?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
                 alt="PureNorth Städ"
                 className="rounded-3xl w-full h-[500px] object-cover shadow-xl"
               />
