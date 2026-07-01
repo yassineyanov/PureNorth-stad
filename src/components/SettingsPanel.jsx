@@ -74,10 +74,38 @@ export default function SettingsPanel() {
           <h2 className="font-display font-bold text-2xl text-slate-900">Webbplatsinställningar</h2>
           <p className="text-sm text-slate-500 mt-1">Redigera text och bilder på din webbplats</p>
         </div>
-        <button onClick={save} disabled={saving}
-          className="inline-flex items-center gap-2 bg-[#141414] hover:bg-black text-white font-semibold px-5 py-2.5 rounded-full transition-colors disabled:opacity-50">
-          <Save size={16}/> {saving ? "Sparar..." : "Spara"}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={async () => {
+            if (!window.confirm("Återställ alla inställningar till standard?")) return;
+            const defaults = {
+              hero_badge: "Svanenmärkt & miljöcertifierat",
+              hero_title: "Renhet med norrländsk precision i Umeå.",
+              hero_subtitle: "Vi definierar premiumstädning genom certifierad expertis och hållbara metoder.",
+              cta_text: "Boka tid online",
+              badge1: "SRY-kvalifikation",
+              badge2: "Pur-Eco produkter",
+              phone: "070-624 04 03",
+              company_name: "PureNorth Städ",
+              opening_hours: "Mån–Fre: 08:00–18:00",
+              contact_title: "Kontakt",
+              contact_subtitle: "Vi finns i Umeå",
+              contact_description: "Har du frågor eller vill boka en städning? Hör av dig så hjälper vi dig.",
+              contact_box_title: "Redo att boka?",
+              contact_box_text: "Vi erbjuder professionell städning anpassad efter dina behov. Kontakta oss idag!",
+              contact_box_btn: "Boka tid",
+            };
+            try {
+              await api.patch("/settings/website", defaults);
+              window.location.reload();
+            } catch { alert("Fel vid återställning."); }
+          }} className="inline-flex items-center gap-2 border border-slate-300 text-slate-600 font-semibold px-5 py-2.5 rounded-full hover:bg-slate-100 transition-colors">
+            Återställ
+          </button>
+          <button onClick={save} disabled={saving}
+            className="inline-flex items-center gap-2 bg-[#141414] hover:bg-black text-white font-semibold px-5 py-2.5 rounded-full transition-colors disabled:opacity-50">
+            <Save size={16}/> {saving ? "Sparar..." : "Spara"}
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-6">
