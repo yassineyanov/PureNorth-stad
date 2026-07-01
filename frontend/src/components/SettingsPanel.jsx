@@ -221,6 +221,7 @@ export default function SettingsPanel() {
               <button onClick={() => badge1ImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2 text-xs hover:border-slate-400 transition-colors mt-1">
                 <Upload size={12}/> {data.badge1_image ? "Byt" : "Ladda upp"}
               </button>
+              <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 32×32px · PNG med transparent bakgrund</p>
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
@@ -248,6 +249,7 @@ export default function SettingsPanel() {
               <button onClick={() => badge2ImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2 text-xs hover:border-slate-400 transition-colors mt-1">
                 <Upload size={12}/> {data.badge2_image ? "Byt" : "Ladda upp"}
               </button>
+              <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 32×32px · PNG med transparent bakgrund</p>
             </div>
           </div>
         </>}
