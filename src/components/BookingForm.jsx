@@ -116,7 +116,7 @@ export const BookingForm = () => {
             med oss direkt? Slå en signal.
           </p>
           <a
-            href="tel:0706240403"
+            href={`tel:${(ws.phone || "070-624 04 03").replace(/[^0-9]/g, "")}`}
             data-testid="booking-call-btn"
             className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.06] px-6 py-4 hover:border-white/40 transition-colors"
           >
@@ -125,7 +125,7 @@ export const BookingForm = () => {
             </span>
             <span>
               <span className="block text-xs text-white/50">Ring oss</span>
-              <span className="block font-semibold text-white">070-624 04 03</span>
+              <span className="block font-semibold text-white">{ws.phone || "070-624 04 03"}</span>
             </span>
           </a>
         </div>
