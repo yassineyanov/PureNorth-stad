@@ -531,7 +531,7 @@ export default function SettingsPanel() {
             </div>
             <div>
               <label className={lbl}>Siffra 2</label>
-              <input value={data.about_stat2_number||""} onChange={e=>set("about_stat2_number",e.target.value)} placeholder="5★" className={inp}/>
+              <input value={data.about_stat2_number||""} onChange={e=>set("about_stat2_number",e.target.value)} placeholder="5 (stjärna läggs till automatiskt)" className={inp}/>
               <label className={lbl+" mt-1"}>Etikett 2</label>
               <input value={data.about_stat2_label||""} onChange={e=>set("about_stat2_label",e.target.value)} placeholder="Betyg" className={inp}/>
             </div>

@@ -35,7 +35,7 @@ export default function OmOss() {
                 </div>
                 <div className="w-px bg-slate-100"/>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-[#141414]">{ws.about_stat2_number || "5★"}</p>
+                  <p className="text-2xl font-bold text-[#141414]">{ws.about_stat2_number || "5"}★</p>
                   <p className="text-xs text-slate-500">{ws.about_stat2_label || "Betyg"}</p>
                 </div>
                 <div className="w-px bg-slate-100"/>
