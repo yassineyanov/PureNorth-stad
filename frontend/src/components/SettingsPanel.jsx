@@ -123,6 +123,18 @@ export default function SettingsPanel() {
               contact_box_title: "Redo att boka?",
               contact_box_text: "Vi erbjuder professionell städning anpassad efter dina behov. Kontakta oss idag!",
               contact_box_btn: "Boka tid",
+              hero_badge_color: "#166534",
+              hero_badge_bg: "#dcfce7",
+              hero_title_color: "#141414",
+              hero_title_bg: "transparent",
+              hero_subtitle_color: "#475569",
+              hero_subtitle_bg: "transparent",
+              hero_cta_color: "#ffffff",
+              hero_cta_bg: "#141414",
+              hero_badge1_color: "#475569",
+              hero_badge1_bg: "transparent",
+              hero_badge2_color: "#475569",
+              hero_badge2_bg: "transparent",
             };
             try {
               await api.patch("/settings/website", defaults);
