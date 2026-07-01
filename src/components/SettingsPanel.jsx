@@ -31,6 +31,7 @@ export default function SettingsPanel() {
   const [loading, setLoading] = useState(true);
   const logoRef = useRef();
   const aboutImgRef = useRef();
+  const badgeImgRef = useRef();
   const heroImgRef = useRef();
 
   useEffect(() => {
@@ -130,6 +131,29 @@ export default function SettingsPanel() {
           <div>
             <label className={lbl}>Badge-text (grön etikett)</label>
             <input value={data.hero_badge} onChange={e => set("hero_badge", e.target.value)} placeholder="Svanenmärkt & miljöcertifierat" className={inp}/>
+            <label className={lbl + " mt-2"}>Badge-ikon</label>
+            <select value={data.hero_badge_icon||"Leaf"} onChange={e=>set("hero_badge_icon",e.target.value)} className={inp}>
+              <option value="Leaf">🌿 Leaf (löv)</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck (sköld)</option>
+              <option value="Star">⭐ Star (stjärna)</option>
+              <option value="Heart">❤️ Heart (hjärta)</option>
+              <option value="Zap">⚡ Zap (blixt)</option>
+              <option value="Award">🏆 Award (utmärkelse)</option>
+              <option value="CheckCircle">✅ CheckCircle (bock)</option>
+              <option value="Sparkles">✨ Sparkles (gnistor)</option>
+            </select>
+            <label className={lbl + " mt-2"}>Badge-logotyp (valfritt - ersätter ikon)</label>
+            {data.hero_badge_image && (
+              <div className="flex items-center gap-2 mb-2">
+                <img src={data.hero_badge_image} alt="Badge" className="h-6 w-6 object-contain"/>
+                <button onClick={()=>set("hero_badge_image","")} className="text-red-500 text-xs hover:underline">Ta bort</button>
+              </div>
+            )}
+            <input ref={badgeImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "hero_badge_image")}/>
+            <button onClick={() => badgeImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-2.5 text-sm hover:border-slate-400 transition-colors">
+              <Upload size={14}/> {data.hero_badge_image ? "Byt logotyp" : "Ladda upp logotyp"}
+            </button>
+            <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 32×32px · PNG med transparent bakgrund</p>
           </div>
           <div>
             <label className={lbl}>Stor rubrik (H1)</label>

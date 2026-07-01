@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Phone, Leaf, ShieldCheck } from "lucide-react";
+import { Phone, Leaf, ShieldCheck, Star, Heart, Zap, Award, CheckCircle } from "lucide-react";
 import { useWebsite } from "@/context/WebsiteContext";
 
 export const Hero = () => {
@@ -15,7 +15,15 @@ export const Hero = () => {
           transition={{ duration: 0.6 }}
         >
           <span className="inline-flex items-center gap-2 rounded-full bg-[#166534]/10 text-[#166534] px-4 py-1.5 text-sm font-semibold mb-6">
-            <Leaf size={15} /> {ws.hero_badge || "Svanenmärkt & miljöcertifierat"}
+            {ws.hero_badge_image ? <img src={ws.hero_badge_image} alt="" className="h-4 w-4 object-contain"/> : 
+              ws.hero_badge_icon === "ShieldCheck" ? <ShieldCheck size={15}/> :
+              ws.hero_badge_icon === "Star" ? <Star size={15}/> :
+              ws.hero_badge_icon === "Heart" ? <Heart size={15}/> :
+              ws.hero_badge_icon === "Zap" ? <Zap size={15}/> :
+              ws.hero_badge_icon === "Award" ? <Award size={15}/> :
+              ws.hero_badge_icon === "CheckCircle" ? <CheckCircle size={15}/> :
+              <Leaf size={15}/>
+            } {ws.hero_badge || "Svanenmärkt & miljöcertifierat"}
           </span>
           <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4rem] leading-[1.05] tracking-tight text-[#141414]">
             {ws.hero_title || "Renhet med norrländsk precision i Umeå."}
