@@ -5766,6 +5766,13 @@ class WebsiteSettings(BaseModel):
     contact_box_bg: Optional[str] = ""
     contact_box_btn_color: Optional[str] = ""
     contact_box_btn_bg: Optional[str] = ""
+    show_contact_title: Optional[bool] = True
+    show_contact_subtitle: Optional[bool] = True
+    show_contact_description: Optional[bool] = True
+    show_contact_phone: Optional[bool] = True
+    show_contact_address: Optional[bool] = True
+    show_contact_hours: Optional[bool] = True
+    show_contact_box: Optional[bool] = True
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
