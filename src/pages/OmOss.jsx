@@ -23,7 +23,7 @@ export default function OmOss() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <span className="text-sm font-semibold uppercase tracking-widest text-[#166534]">Om oss</span>
-            <h1 className="font-display font-bold text-5xl sm:text-6xl tracking-tight text-[#141414] mt-3 mb-6">
+            <h1 className="font-display font-bold text-5xl sm:text-6xl tracking-tight mt-3 mb-6" style={{color: ws.about_title_color || "#141414"}}>
               {ws.about_title || "Städning med hjärta & precision"}
             </h1>
           </motion.div>
@@ -38,17 +38,17 @@ export default function OmOss() {
               />
               <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl shadow-lg p-5 flex gap-6">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-[#141414]">{ws.about_stat1_number || "100+"}</p>
+                  <p className="text-2xl font-bold" style={{color: ws.about_stat_color || "#141414"}}>{ws.about_stat1_number || "100+"}</p>
                   <p className="text-xs text-slate-500">{ws.about_stat1_label || "Nöjda kunder"}</p>
                 </div>
                 <div className="w-px bg-slate-100"/>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-[#141414]">{ws.about_stat2_number || "5"}★</p>
+                  <p className="text-2xl font-bold" style={{color: ws.about_stat_color || "#141414"}}>{ws.about_stat2_number || "5"}★</p>
                   <p className="text-xs text-slate-500">{ws.about_stat2_label || "Betyg"}</p>
                 </div>
                 <div className="w-px bg-slate-100"/>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-[#141414]">{ws.about_stat3_number || "3 år"}</p>
+                  <p className="text-2xl font-bold" style={{color: ws.about_stat_color || "#141414"}}>{ws.about_stat3_number || "3 år"}</p>
                   <p className="text-xs text-slate-500">{ws.about_stat3_label || "Erfarenhet"}</p>
                 </div>
               </div>
@@ -56,25 +56,25 @@ export default function OmOss() {
 
             {/* Text */}
             <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-              <p className="text-lg text-slate-600 leading-relaxed mb-8">{text}</p>
+              <p className="text-lg leading-relaxed mb-8" style={{color: ws.about_text_color || "#475569"}}>{text}</p>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
-                    <PointIcon name={ws.about_point1_icon || "ShieldCheck"} size={16} className="text-[#166534]"/>
+                    <PointIcon name={ws.about_point1_icon || "ShieldCheck"} size={16} className="" style={{color: ws.about_point1_icon_color || "#166534"}}/>
                   </span>
-                  <span className="text-slate-700 font-medium">{ws.about_point1 || "SRY-certifierad personal"}</span>
+                  <span className="font-medium" style={{color: ws.about_point1_color || "#374151"}}>{ws.about_point1 || "SRY-certifierad personal"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
-                    <PointIcon name={ws.about_point2_icon || "Leaf"} size={16} className="text-[#166534]"/>
+                    <PointIcon name={ws.about_point2_icon || "Leaf"} size={16} className="" style={{color: ws.about_point2_icon_color || "#166534"}}/>
                   </span>
-                  <span className="text-slate-700 font-medium">{ws.about_point2 || "Svanenmärkta Pur-Eco produkter"}</span>
+                  <span className="font-medium" style={{color: ws.about_point2_color || "#374151"}}>{ws.about_point2 || "Svanenmärkta Pur-Eco produkter"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
-                    <PointIcon name={ws.about_point3_icon || "Star"} size={16} className="text-[#166534]"/>
+                    <PointIcon name={ws.about_point3_icon || "Star"} size={16} className="" style={{color: ws.about_point3_icon_color || "#166534"}}/>
                   </span>
-                  <span className="text-slate-700 font-medium">{ws.about_point3 || "50% RUT-avdrag på arbetskostnaden"}</span>
+                  <span className="font-medium" style={{color: ws.about_point3_color || "#374151"}}>{ws.about_point3 || "50% RUT-avdrag på arbetskostnaden"}</span>
                 </div>
               </div>
               <a href="/#boka" className="mt-10 inline-flex items-center justify-center rounded-full bg-[#141414] hover:bg-black text-white px-8 py-4 text-base font-semibold transition-colors">

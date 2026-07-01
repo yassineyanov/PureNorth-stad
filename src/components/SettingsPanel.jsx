@@ -733,12 +733,15 @@ export default function SettingsPanel() {
           <div>
             <label className={lbl}>Rubrik</label>
             <input value={data.about_title||""} onChange={e=>set("about_title",e.target.value)} placeholder="Städning med hjärta & precision" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="about_title_color" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Beskrivningstext</label>
             <textarea value={data.about_text||""} onChange={e => set("about_text", e.target.value)} rows={6} placeholder="Berätta om ditt företag..." className={inp + " resize-none"}/>
+            <TextColorPicker label="Text färg" colorKey="about_text_color" data={data} set={set}/>
           </div>
           <h4 className="font-medium text-slate-700 mt-2">Statistik (3 siffror)</h4>
+          <TextColorPicker label="Siffror färg" colorKey="about_stat_color" data={data} set={set}/>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className={lbl}>Siffra 1</label>
@@ -774,6 +777,8 @@ export default function SettingsPanel() {
               <option value="Sparkles">✨ Sparkles</option>
             </select>
             <input value={data.about_point1||""} onChange={e=>set("about_point1",e.target.value)} placeholder="SRY-certifierad personal" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="about_point1_color" data={data} set={set}/>
+            <TextColorPicker label="Ikon färg" colorKey="about_point1_icon_color" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Punkt 2</label>
@@ -789,6 +794,8 @@ export default function SettingsPanel() {
               <option value="Sparkles">✨ Sparkles</option>
             </select>
             <input value={data.about_point2||""} onChange={e=>set("about_point2",e.target.value)} placeholder="Svanenmärkta Pur-Eco produkter" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="about_point2_color" data={data} set={set}/>
+            <TextColorPicker label="Ikon färg" colorKey="about_point2_icon_color" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Punkt 3</label>
@@ -804,6 +811,8 @@ export default function SettingsPanel() {
               <option value="Sparkles">✨ Sparkles</option>
             </select>
             <input value={data.about_point3||""} onChange={e=>set("about_point3",e.target.value)} placeholder="50% RUT-avdrag på arbetskostnaden" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="about_point3_color" data={data} set={set}/>
+            <TextColorPicker label="Ikon färg" colorKey="about_point3_icon_color" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Bild på Om oss-sidan</label>
