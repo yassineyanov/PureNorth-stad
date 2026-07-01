@@ -11,6 +11,7 @@ import NojdKundgaranti from "@/pages/NojdKundgaranti";
 import Integritetspolicy from "@/pages/Integritetspolicy";
 import Varderingar from "@/pages/Varderingar";
 import Malsattning from "@/pages/Malsattning";
+import OmOss from "@/pages/OmOss";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/om-oss" element={<OmOss />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/kundavtal" element={<Kundavtal />} />
             <Route path="/nojd-kundgaranti" element={<NojdKundgaranti />} />
