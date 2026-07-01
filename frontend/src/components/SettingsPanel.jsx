@@ -187,7 +187,7 @@ export default function SettingsPanel() {
             <button onClick={() => logoRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-2.5 text-sm hover:border-slate-400 transition-colors">
               <Upload size={14}/> Ladda upp logotyp
             </button>
-            <p className="text-xs text-slate-400 mt-2">Rekommenderad storlek: 200×200px (PNG med transparent bakgrund)</p>
+            <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 200×200px · PNG med transparent bakgrund</p>
           </div>
           <div>
             <label className={lbl}>Hero-bild (stor bild på startsidan)</label>
