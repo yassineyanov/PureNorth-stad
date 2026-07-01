@@ -59,23 +59,29 @@ export default function OmOss() {
               {ws.show_about_text !== false && <p className="text-lg leading-relaxed mb-8" style={{color: ws.about_text_color || "#475569"}}>{text}</p>}
               <div className="space-y-4">
                 {ws.show_about_point1 !== false && (
-                  <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
-                    <PointIcon name={ws.about_point1_icon || "ShieldCheck"} size={16} className="" style={{color: ws.about_point1_icon_color || "#166534"}}/>
-                  </span>
-                  <span className="font-medium" style={{color: ws.about_point1_color || "#374151"}}>{ws.about_point1 || "SRY-certifierad personal"}</span>
-                </div>
-                {ws.show_about_point1 !== false && (
-                  <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
-                    <PointIcon name={ws.about_point2_icon || "Leaf"} size={16} className="" style={{color: ws.about_point2_icon_color || "#166534"}}/>
-                  </span>
-                  <span className="font-medium" style={{color: ws.about_point2_color || "#374151"}}>{ws.about_point2 || "Svanenmärkta Pur-Eco produkter"}</span>
-                </div>
-                {ws.show_about_point1 !== false && (
-                  <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
-                    <PointIcon name={ws.about_point3_icon || "Star"} size={16} className="" style={{color: ws.about_point3_icon_color || "#166534"}}/>
-                  </span>
-                  <span className="font-medium" style={{color: ws.about_point3_color || "#374151"}}>{ws.about_point3 || "50% RUT-avdrag på arbetskostnaden"}</span>
-                </div>
+                  <div className="flex items-center gap-3">
+                    <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
+                      <PointIcon name={ws.about_point1_icon || "ShieldCheck"} size={16} className="" style={{color: ws.about_point1_icon_color || "#166534"}}/>
+                    </span>
+                    <span className="font-medium" style={{color: ws.about_point1_color || "#374151"}}>{ws.about_point1 || "SRY-certifierad personal"}</span>
+                  </div>
+                )}
+                {ws.show_about_point2 !== false && (
+                  <div className="flex items-center gap-3">
+                    <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
+                      <PointIcon name={ws.about_point2_icon || "Leaf"} size={16} className="" style={{color: ws.about_point2_icon_color || "#166634"}}/>
+                    </span>
+                    <span className="font-medium" style={{color: ws.about_point2_color || "#374151"}}>{ws.about_point2 || "Svanenmärkta Pur-Eco produkter"}</span>
+                  </div>
+                )}
+                {ws.show_about_point3 !== false && (
+                  <div className="flex items-center gap-3">
+                    <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
+                      <PointIcon name={ws.about_point3_icon || "Star"} size={16} className="" style={{color: ws.about_point3_icon_color || "#166534"}}/>
+                    </span>
+                    <span className="font-medium" style={{color: ws.about_point3_color || "#374151"}}>{ws.about_point3 || "50% RUT-avdrag på arbetskostnaden"}</span>
+                  </div>
+                )}
               </div>
               {ws.show_about_btn !== false && <a href="/#boka" className="mt-10 inline-flex items-center justify-center rounded-full px-8 py-4 text-base font-semibold transition-colors" style={{backgroundColor: ws.about_btn_bg || "#141414", color: ws.about_btn_color || "#ffffff"}}>
                 {ws.about_btn_text || "Boka städning"}
