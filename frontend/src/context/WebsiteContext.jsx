@@ -48,6 +48,16 @@ const DEFAULTS = {
   badge1_image: "",
   badge2_icon: "Zap",
   badge2_image: "",
+  contact_title_color: "#141414",
+  contact_title_bg: "transparent",
+  contact_subtitle_color: "#141414",
+  contact_subtitle_bg: "transparent",
+  contact_box_title_color: "#ffffff",
+  contact_box_title_bg: "transparent",
+  contact_box_text_color: "rgba(255,255,255,0.8)",
+  contact_box_bg: "#141414",
+  contact_box_btn_color: "#141414",
+  contact_box_btn_bg: "#ffffff",
 };
 
 export const WebsiteProvider = ({ children }) => {
