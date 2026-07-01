@@ -30,18 +30,18 @@ export default function OmOss() {
               />
               <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl shadow-lg p-5 flex gap-6">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-[#141414]">100+</p>
-                  <p className="text-xs text-slate-500">Nöjda kunder</p>
+                  <p className="text-2xl font-bold text-[#141414]">{ws.about_stat1_number || "100+"}</p>
+                  <p className="text-xs text-slate-500">{ws.about_stat1_label || "Nöjda kunder"}</p>
                 </div>
                 <div className="w-px bg-slate-100"/>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-[#141414]">5★</p>
-                  <p className="text-xs text-slate-500">Betyg</p>
+                  <p className="text-2xl font-bold text-[#141414]">{ws.about_stat2_number || "5★"}</p>
+                  <p className="text-xs text-slate-500">{ws.about_stat2_label || "Betyg"}</p>
                 </div>
                 <div className="w-px bg-slate-100"/>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-[#141414]">3 år</p>
-                  <p className="text-xs text-slate-500">Erfarenhet</p>
+                  <p className="text-2xl font-bold text-[#141414]">{ws.about_stat3_number || "3 år"}</p>
+                  <p className="text-xs text-slate-500">{ws.about_stat3_label || "Erfarenhet"}</p>
                 </div>
               </div>
             </motion.div>
