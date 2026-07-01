@@ -1,11 +1,13 @@
 import React from "react";
-import { useWebsite } from "@/context/WebsiteContext";
+import { useWebsite, useWebsiteReady } from "@/context/WebsiteContext";
 import { motion } from "framer-motion";
 import { ShieldCheck, Leaf, Star } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 
 export default function OmOss() {
   const ws = useWebsite();
+  const ready = useWebsiteReady();
+  if (!ready) return <div className="min-h-screen bg-white"><div className="h-1 bg-[#166534] animate-pulse"/></div>;
   const text = ws.about_text || "PureNorth Städ grundades med en enkel vision: att leverera städtjänster av högsta kvalitet med respekt för miljön. Vi är ett lokalt städföretag i Umeå med SRY-certifierad personal och Svanenmärkta Pur-Eco produkter. Varje städning utförs med noggrannhet, punktlighet och ett äkta engagemang för ditt hem.";
 
   return (

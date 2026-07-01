@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 const WebsiteContext = createContext({});
+const WebsiteReadyContext = createContext(false);
 export const useWebsite = () => useContext(WebsiteContext);
+export const useWebsiteReady = () => useContext(WebsiteReadyContext);
 
 const DEFAULTS = {
   hero_badge: "Svanenmärkt & miljöcertifierat",
@@ -32,16 +34,19 @@ const DEFAULTS = {
 
 export const WebsiteProvider = ({ children }) => {
   const [ws, setWs] = useState(DEFAULTS);
+  const [ready, setReady] = useState(false);
   useEffect(() => {
     const base = process.env.REACT_APP_BACKEND_URL || "";
     fetch(`${base}/api/settings/website`)
       .then(r => r.json())
-      .then(d => setWs(prev => ({...prev, ...Object.fromEntries(Object.entries(d).filter(([,v]) => v !== "" && v !== null))})))
-      .catch(() => {});
+      .then(d => { setWs(prev => ({...prev, ...Object.fromEntries(Object.entries(d).filter(([,v]) => v !== "" && v !== null))})); setReady(true); })
+      .catch(() => setReady(true));
   }, []);
   return (
-    <WebsiteContext.Provider value={ws}>
-      {children}
-    </WebsiteContext.Provider>
+    <WebsiteReadyContext.Provider value={ready}>
+      <WebsiteContext.Provider value={ws}>
+        {children}
+      </WebsiteContext.Provider>
+    </WebsiteReadyContext.Provider>
   );
 };
