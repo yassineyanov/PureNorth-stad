@@ -195,7 +195,13 @@ export default function SettingsPanel() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={lbl}>Badge 1 (under knapparna)</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className={lbl}>Badge 1 (under knapparna)</label>
+                <button type="button" onClick={()=>set("show_hero_badge1", data.show_hero_badge1 === false ? true : false)}
+                  className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_badge1 !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                  <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_badge1 !== false ? "translate-x-5" : "translate-x-0"}`}/>
+                </button>
+              </div>
               <input value={data.badge1} onChange={e => set("badge1", e.target.value)} placeholder="SRY-kvalifikation" className={inp}/>
               <label className={lbl + " mt-2"}>Badge 1 ikon</label>
               <select value={data.badge1_icon||"ShieldCheck"} onChange={e=>set("badge1_icon",e.target.value)} className={inp}>
@@ -215,7 +221,13 @@ export default function SettingsPanel() {
               </button>
             </div>
             <div>
-              <label className={lbl}>Badge 2</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className={lbl}>Badge 2</label>
+                <button type="button" onClick={()=>set("show_hero_badge2", data.show_hero_badge2 === false ? true : false)}
+                  className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_badge2 !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                  <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_badge2 !== false ? "translate-x-5" : "translate-x-0"}`}/>
+                </button>
+              </div>
               <input value={data.badge2} onChange={e => set("badge2", e.target.value)} placeholder="Pur-Eco produkter" className={inp}/>
               <label className={lbl + " mt-2"}>Badge 2 ikon</label>
               <select value={data.badge2_icon||"Leaf"} onChange={e=>set("badge2_icon",e.target.value)} className={inp}>
