@@ -5778,6 +5778,11 @@ class WebsiteSettings(BaseModel):
     show_email: Optional[bool] = True
     show_address: Optional[bool] = True
     show_opening_hours: Optional[bool] = True
+    company_name_color: Optional[str] = ""
+    phone_color: Optional[str] = ""
+    email_color: Optional[str] = ""
+    address_color: Optional[str] = ""
+    opening_hours_color: Optional[str] = ""
     about_point1_icon: Optional[str] = "ShieldCheck"
     about_point2_icon: Optional[str] = "Leaf"
     about_point3_icon: Optional[str] = "Star"

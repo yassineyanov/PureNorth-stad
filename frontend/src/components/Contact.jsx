@@ -42,7 +42,7 @@ export const Contact = () => {
               </span>
               <div>
                 <span className="block text-xs text-slate-500">Telefon</span>
-                <span className="block font-semibold text-slate-900">{ws.phone}</span>
+                <span className="block font-semibold" style={{color: ws.phone_color || "#0f172a"}}>{ws.phone}</span>
               </div>
             </a>}
             {ws.show_email !== false && ws.email && (
@@ -62,7 +62,7 @@ export const Contact = () => {
               </span>
               <div>
                 <span className="block text-xs text-slate-500">Ort</span>
-                <span className="block font-semibold text-slate-900">{ws.address || "Umeå, Sverige"}</span>
+                <span className="block font-semibold" style={{color: ws.address_color || "#0f172a"}}>{ws.address || "Umeå, Sverige"}</span>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -71,7 +71,7 @@ export const Contact = () => {
               </span>
               <div>
                 <span className="block text-xs text-slate-500">Öppettider</span>
-                <span className="block font-semibold text-slate-900">{ws.opening_hours}</span>
+                <span className="block font-semibold" style={{color: ws.opening_hours_color || "#0f172a"}}>{ws.opening_hours}</span>
               </div>
             </div>
           </div>

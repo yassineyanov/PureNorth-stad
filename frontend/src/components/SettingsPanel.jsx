@@ -349,6 +349,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <input value={data.company_name} onChange={e => set("company_name", e.target.value)} placeholder="PureNorth Städ" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="company_name_color" data={data} set={set}/>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -359,6 +360,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <input value={data.phone} onChange={e => set("phone", e.target.value)} placeholder="070-624 04 03" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="phone_color" data={data} set={set}/>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -369,6 +371,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <input value={data.email} onChange={e => set("email", e.target.value)} placeholder="info@purenorth.se" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="email_color" data={data} set={set}/>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -379,6 +382,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <input value={data.address} onChange={e => set("address", e.target.value)} placeholder="Storgatan 1, Umeå" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="address_color" data={data} set={set}/>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -389,6 +393,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <input value={data.opening_hours} onChange={e => set("opening_hours", e.target.value)} placeholder="Mån–Fre: 08:00–18:00" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="opening_hours_color" data={data} set={set}/>
           </div>
         </>}
 
