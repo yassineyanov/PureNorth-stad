@@ -5773,6 +5773,9 @@ class WebsiteSettings(BaseModel):
     show_contact_address: Optional[bool] = True
     show_contact_hours: Optional[bool] = True
     show_contact_box: Optional[bool] = True
+    about_point1_icon: Optional[str] = "ShieldCheck"
+    about_point2_icon: Optional[str] = "Leaf"
+    about_point3_icon: Optional[str] = "Star"
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
