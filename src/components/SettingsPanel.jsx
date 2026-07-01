@@ -152,6 +152,8 @@ export default function SettingsPanel() {
               hero_badge1_bg: "transparent",
               hero_badge2_color: "#475569",
               hero_badge2_bg: "transparent",
+              hero_image: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+              about_image: "https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
             };
             try {
               await api.patch("/settings/website", defaults);
