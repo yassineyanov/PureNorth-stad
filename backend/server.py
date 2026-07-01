@@ -5791,6 +5791,15 @@ class WebsiteSettings(BaseModel):
     about_btn_text: Optional[str] = ""
     about_btn_color: Optional[str] = ""
     about_btn_bg: Optional[str] = ""
+    show_about_label: Optional[bool] = True
+    show_about_title: Optional[bool] = True
+    show_about_text: Optional[bool] = True
+    show_about_stats: Optional[bool] = True
+    show_about_point1: Optional[bool] = True
+    show_about_point2: Optional[bool] = True
+    show_about_point3: Optional[bool] = True
+    show_about_btn: Optional[bool] = True
+    show_about_image: Optional[bool] = True
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
