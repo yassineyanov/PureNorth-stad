@@ -37,7 +37,7 @@ export const Contact = () => {
 
           <div className="mt-9 space-y-4">
             {ws.show_phone !== false && <a href={`tel:${ws.phone?.replace(/[^0-9+]/g,"")}`} data-testid="contact-phone" className="flex items-center gap-4 group">
-              <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition-colors">
+              <span className="h-12 w-12 rounded-2xl flex items-center justify-center transition-colors" style={{backgroundColor: (ws.phone_icon_color||"#166534")+"1a", color: ws.phone_icon_color||"#166534"}}>
                 <Phone size={20} />
               </span>
               <div>
@@ -47,7 +47,7 @@ export const Contact = () => {
             </a>}
             {ws.show_email !== false && ws.email && (
             <a href={`mailto:${ws.email}`} className="flex items-center gap-4 group">
-              <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition-colors">
+              <span className="h-12 w-12 rounded-2xl flex items-center justify-center transition-colors" style={{backgroundColor: (ws.email_icon_color||"#166534")+"1a", color: ws.email_icon_color||"#166534"}}>
                 <Mail size={20} />
               </span>
               <div>
@@ -57,7 +57,7 @@ export const Contact = () => {
             </a>
             )}
             {ws.show_address !== false && <div className="flex items-center gap-4">
-              <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534]">
+              <span className="h-12 w-12 rounded-2xl flex items-center justify-center" style={{backgroundColor: (ws.address_icon_color||"#166534")+"1a", color: ws.address_icon_color||"#166534"}}>
                 <MapPin size={20} />
               </span>
               <div>
@@ -66,7 +66,7 @@ export const Contact = () => {
               </div>
             </div>}
             {ws.show_opening_hours !== false && <div className="flex items-center gap-4">
-              <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534]">
+              <span className="h-12 w-12 rounded-2xl flex items-center justify-center" style={{backgroundColor: (ws.hours_icon_color||"#166534")+"1a", color: ws.hours_icon_color||"#166534"}}>
                 <Clock size={20} />
               </span>
               <div>

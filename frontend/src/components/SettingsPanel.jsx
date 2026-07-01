@@ -361,6 +361,10 @@ export default function SettingsPanel() {
           </div>
             <input value={data.phone} onChange={e => set("phone", e.target.value)} placeholder="070-624 04 03" className={inp}/>
             <TextColorPicker label="Text färg" colorKey="phone_color" data={data} set={set}/>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-xs text-slate-500">Ikon färg</span>
+              <input type="color" value={data.phone_icon_color||"#166534"} onChange={e=>set("phone_icon_color",e.target.value)} className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+            </div>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -372,6 +376,10 @@ export default function SettingsPanel() {
           </div>
             <input value={data.email} onChange={e => set("email", e.target.value)} placeholder="info@purenorth.se" className={inp}/>
             <TextColorPicker label="Text färg" colorKey="email_color" data={data} set={set}/>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-xs text-slate-500">Ikon färg</span>
+              <input type="color" value={data.email_icon_color||"#166534"} onChange={e=>set("email_icon_color",e.target.value)} className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+            </div>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -383,6 +391,10 @@ export default function SettingsPanel() {
           </div>
             <input value={data.address} onChange={e => set("address", e.target.value)} placeholder="Storgatan 1, Umeå" className={inp}/>
             <TextColorPicker label="Text färg" colorKey="address_color" data={data} set={set}/>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-xs text-slate-500">Ikon färg</span>
+              <input type="color" value={data.address_icon_color||"#166534"} onChange={e=>set("address_icon_color",e.target.value)} className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+            </div>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -394,6 +406,10 @@ export default function SettingsPanel() {
           </div>
             <input value={data.opening_hours} onChange={e => set("opening_hours", e.target.value)} placeholder="Mån–Fre: 08:00–18:00" className={inp}/>
             <TextColorPicker label="Text färg" colorKey="opening_hours_color" data={data} set={set}/>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-xs text-slate-500">Ikon färg</span>
+              <input type="color" value={data.hours_icon_color||"#166534"} onChange={e=>set("hours_icon_color",e.target.value)} className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+            </div>
           </div>
         </>}
 
