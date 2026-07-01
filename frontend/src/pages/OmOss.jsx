@@ -22,7 +22,7 @@ export default function OmOss() {
       <section className="pt-32 pb-24 sm:pt-40 sm:pb-28">
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            {ws.show_about_label !== false && {ws.show_about_label !== false && <span className="text-sm font-semibold uppercase tracking-widest" style={{color: ws.about_label_color || "#166534"}}>{ws.about_label || "Om oss"}</span>}
+            {ws.show_about_label !== false && <span className="text-sm font-semibold uppercase tracking-widest" style={{color: ws.about_label_color || "#166534"}}>{ws.about_label || "Om oss"}</span>}
             {ws.show_about_title !== false && <h1 className="font-display font-bold text-5xl sm:text-6xl tracking-tight mt-3 mb-6" style={{color: ws.about_title_color || "#141414"}}>
               {ws.about_title || "Städning med hjärta & precision"}
             </h1>}
