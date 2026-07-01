@@ -731,22 +731,48 @@ export default function SettingsPanel() {
         {section === "about" && <>
           <h3 className="font-semibold text-slate-800">Om oss</h3>
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-1">
               <label className={lbl}>Etikett (liten grön text)</label>
+              <button type="button" onClick={()=>set("show_about_label", data.show_about_label === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_label !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_label !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Etikett färg</label>
               <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Färg<input type="color" value={data.about_label_color||"#166534"} onChange={e=>set("about_label_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
             </div>
             <input value={data.about_label||""} onChange={e=>set("about_label",e.target.value)} placeholder="Om oss" className={inp}/>
           </div>
           <div>
-            <label className={lbl}>Rubrik</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Rubrik</label>
+              <button type="button" onClick={()=>set("show_about_title", data.show_about_title === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_title !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_title !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
             <input value={data.about_title||""} onChange={e=>set("about_title",e.target.value)} placeholder="Städning med hjärta & precision" className={inp}/>
             <TextColorPicker label="Text färg" colorKey="about_title_color" data={data} set={set}/>
           </div>
           <div>
-            <label className={lbl}>Beskrivningstext</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Beskrivningstext</label>
+              <button type="button" onClick={()=>set("show_about_text", data.show_about_text === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_text !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_text !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
             <textarea value={data.about_text||""} onChange={e => set("about_text", e.target.value)} rows={6} placeholder="Berätta om ditt företag..." className={inp + " resize-none"}/>
             <TextColorPicker label="Text färg" colorKey="about_text_color" data={data} set={set}/>
           </div>
+          <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Statistik (3 siffror)</label>
+              <button type="button" onClick={()=>set("show_about_stats", data.show_about_stats === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_stats !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_stats !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
           <h4 className="font-medium text-slate-700 mt-2">Statistik (3 siffror)</h4>
           <TextColorPicker label="Siffror färg" colorKey="about_stat_color" data={data} set={set}/>
           <div className="grid grid-cols-3 gap-3">
@@ -771,8 +797,15 @@ export default function SettingsPanel() {
           </div>
           <h4 className="font-medium text-slate-700 mt-2">Punkter (3 fördelar)</h4>
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-1">
               <label className={lbl}>Punkt 1</label>
+              <button type="button" onClick={()=>set("show_about_point1", data.show_about_point1 === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_point1 !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_point1 !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Punkt 1 färger</label>
               <div className="flex items-center gap-2">
                 <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_point1_color||"#374151"} onChange={e=>set("about_point1_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
                 <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<input type="color" value={data.about_point1_icon_color||"#166534"} onChange={e=>set("about_point1_icon_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
@@ -793,8 +826,15 @@ export default function SettingsPanel() {
 
           </div>
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-1">
               <label className={lbl}>Punkt 2</label>
+              <button type="button" onClick={()=>set("show_about_point2", data.show_about_point2 === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_point2 !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_point2 !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Punkt 2 färger</label>
               <div className="flex items-center gap-2">
                 <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_point2_color||"#374151"} onChange={e=>set("about_point2_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
                 <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<input type="color" value={data.about_point2_icon_color||"#166534"} onChange={e=>set("about_point2_icon_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
@@ -815,8 +855,15 @@ export default function SettingsPanel() {
 
           </div>
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-1">
               <label className={lbl}>Punkt 3</label>
+              <button type="button" onClick={()=>set("show_about_point3", data.show_about_point3 === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_point3 !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_point3 !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Punkt 3 färger</label>
               <div className="flex items-center gap-2">
                 <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_point3_color||"#374151"} onChange={e=>set("about_point3_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
                 <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<input type="color" value={data.about_point3_icon_color||"#166534"} onChange={e=>set("about_point3_icon_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
@@ -837,8 +884,15 @@ export default function SettingsPanel() {
 
           </div>
           <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Knapp (Boka städning)</label>
+              <button type="button" onClick={()=>set("show_about_btn", data.show_about_btn === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_btn !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_btn !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
             <div className="flex items-center justify-between">
-              <label className={lbl}>Knapp text (Boka städning)</label>
+              <label className={lbl}>Knapp färger</label>
               <div className="flex items-center gap-2">
                 <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_btn_color||"#ffffff"} onChange={e=>set("about_btn_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
                 <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">BG<input type="color" value={data.about_btn_bg||"#141414"} onChange={e=>set("about_btn_bg",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
@@ -847,6 +901,13 @@ export default function SettingsPanel() {
             <input value={data.about_btn_text||""} onChange={e=>set("about_btn_text",e.target.value)} placeholder="Boka städning" className={inp}/>
           </div>
           <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Bild</label>
+              <button type="button" onClick={()=>set("show_about_image", data.show_about_image === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_image !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_image !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
             <label className={lbl}>Bild på Om oss-sidan</label>
             {data.about_image && (
               <div className="relative mb-3">
