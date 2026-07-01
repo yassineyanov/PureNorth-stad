@@ -165,6 +165,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <input value={data.hero_badge} onChange={e => set("hero_badge", e.target.value)} placeholder="Svanenmärkt & miljöcertifierat" className={inp}/>
+            <ColorPicker label="Färger" colorKey="hero_badge_color" bgKey="hero_badge_bg" data={data} set={set}/>
             <label className={lbl + " mt-2"}>Badge-ikon</label>
             <select value={data.hero_badge_icon||"Leaf"} onChange={e=>set("hero_badge_icon",e.target.value)} className={inp}>
               <option value="none">— Ingen ikon</option>
@@ -199,6 +200,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <textarea value={data.hero_title} onChange={e => set("hero_title", e.target.value)} rows={3} placeholder="Renhet med norrländsk precision i Umeå." className={inp + " resize-none"}/>
+            <ColorPicker label="Färger" colorKey="hero_title_color" bgKey="hero_title_bg" data={data} set={set}/>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -209,6 +211,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <textarea value={data.hero_subtitle} onChange={e => set("hero_subtitle", e.target.value)} rows={3} placeholder="Vi definierar premiumstädning..." className={inp + " resize-none"}/>
+            <ColorPicker label="Färger" colorKey="hero_subtitle_color" bgKey="hero_subtitle_bg" data={data} set={set}/>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -231,6 +234,7 @@ export default function SettingsPanel() {
                 </button>
               </div>
               <input value={data.badge1} onChange={e => set("badge1", e.target.value)} placeholder="SRY-kvalifikation" className={inp}/>
+              <ColorPicker label="Färger" colorKey="hero_badge1_color" bgKey="hero_badge1_bg" data={data} set={set}/>
               <label className={lbl + " mt-2"}>Badge 1 ikon</label>
               <select value={data.badge1_icon||"ShieldCheck"} onChange={e=>set("badge1_icon",e.target.value)} className={inp}>
                 <option value="none">— Ingen ikon</option>
@@ -259,6 +263,7 @@ export default function SettingsPanel() {
                 </button>
               </div>
               <input value={data.badge2} onChange={e => set("badge2", e.target.value)} placeholder="Pur-Eco produkter" className={inp}/>
+              <ColorPicker label="Färger" colorKey="hero_badge2_color" bgKey="hero_badge2_bg" data={data} set={set}/>
               <label className={lbl + " mt-2"}>Badge 2 ikon</label>
               <select value={data.badge2_icon||"Leaf"} onChange={e=>set("badge2_icon",e.target.value)} className={inp}>
                 <option value="none">— Ingen ikon</option>
