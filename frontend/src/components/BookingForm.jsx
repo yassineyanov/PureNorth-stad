@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useWebsite } from "@/context/WebsiteContext";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Phone, Send, CheckCircle2, ChevronDown, ChevronUp, Check, X } from "lucide-react";
@@ -24,6 +25,7 @@ const darkInput =
   "mt-1.5 bg-white/[0.06] border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30";
 
 export const BookingForm = () => {
+  const ws = useWebsite();
   const [form, setForm] = useState(initialForm);
   const [services, setServices] = useState([]);
   const [submitting, setSubmitting] = useState(false);
