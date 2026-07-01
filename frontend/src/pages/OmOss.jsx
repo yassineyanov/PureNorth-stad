@@ -30,12 +30,14 @@ export default function OmOss() {
 
           <div className="grid lg:grid-cols-2 gap-16 items-center mt-12">
             {/* Image */}
+            {ws.show_about_image !== false && (
             <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="relative">
               <img
                 src={ws.about_image || "https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"}
                 alt="PureNorth Städ"
                 className="rounded-3xl w-full h-[500px] object-cover shadow-xl"
               />
+              {ws.show_about_stats !== false && (
               <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl shadow-lg p-5 flex gap-6">
                 <div className="text-center">
                   <p className="text-2xl font-bold" style={{color: ws.about_stat_color || "#141414"}}>{ws.about_stat1_number || "100+"}</p>
@@ -52,7 +54,9 @@ export default function OmOss() {
                   <p className="text-xs text-slate-500">{ws.about_stat3_label || "Erfarenhet"}</p>
                 </div>
               </div>
+              )}
             </motion.div>
+            )}
 
             {/* Text */}
             <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
