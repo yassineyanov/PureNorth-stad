@@ -33,25 +33,27 @@ function TextColorPicker({ label, colorKey, data, set }) {
   );
 }
 
-function ColorPicker({ label, colorKey, bgKey, data, set }) {
+function ColorPicker({ label, colorKey, bgKey, defaultColor, defaultBg, data, set }) {
+  const colorChanged = data[colorKey] && data[colorKey] !== defaultColor;
+  const bgChanged = data[bgKey] && data[bgKey] !== defaultBg;
   return (
     <div className="flex items-center gap-3 mt-2">
       <span className="text-xs text-slate-500">{label}</span>
       <div className="flex items-center gap-2">
         <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
           Text
-          <input type="color" value={data[colorKey] || "#141414"}
+          <input type="color" value={data[colorKey] || defaultColor || "#141414"}
             onChange={e => set(colorKey, e.target.value)}
             className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
         </label>
         <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
           BG
-          <input type="color" value={data[bgKey] || "#ffffff"}
+          <input type="color" value={data[bgKey] || defaultBg || "#ffffff"}
             onChange={e => set(bgKey, e.target.value)}
             className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
         </label>
-        {(data[colorKey] || data[bgKey]) && (
-          <button onClick={() => { set(colorKey, ""); set(bgKey, ""); }}
+        {(colorChanged || bgChanged) && (
+          <button onClick={() => { set(colorKey, defaultColor || ""); set(bgKey, defaultBg || ""); }}
             className="text-xs text-red-400 hover:text-red-600">↺</button>
         )}
       </div>
@@ -192,7 +194,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <input value={data.hero_badge} onChange={e => set("hero_badge", e.target.value)} placeholder="Svanenmärkt & miljöcertifierat" className={inp}/>
-            <ColorPicker label="Färger" colorKey="hero_badge_color" bgKey="hero_badge_bg" data={data} set={set}/>
+            <ColorPicker label="Färger" colorKey="hero_badge_color" bgKey="hero_badge_bg" defaultColor="#166534" defaultBg="#dcfce7" data={data} set={set}/>
             <label className={lbl + " mt-2"}>Badge-ikon</label>
             <select value={data.hero_badge_icon||"Leaf"} onChange={e=>set("hero_badge_icon",e.target.value)} className={inp}>
               <option value="none">— Ingen ikon</option>
@@ -234,7 +236,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <textarea value={data.hero_title} onChange={e => set("hero_title", e.target.value)} rows={3} placeholder="Renhet med norrländsk precision i Umeå." className={inp + " resize-none"}/>
-            <ColorPicker label="Färger" colorKey="hero_title_color" bgKey="hero_title_bg" data={data} set={set}/>
+            <ColorPicker label="Färger" colorKey="hero_title_color" bgKey="hero_title_bg" defaultColor="#141414" defaultBg="transparent" data={data} set={set}/>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -245,7 +247,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <textarea value={data.hero_subtitle} onChange={e => set("hero_subtitle", e.target.value)} rows={3} placeholder="Vi definierar premiumstädning..." className={inp + " resize-none"}/>
-            <ColorPicker label="Färger" colorKey="hero_subtitle_color" bgKey="hero_subtitle_bg" data={data} set={set}/>
+            <ColorPicker label="Färger" colorKey="hero_subtitle_color" bgKey="hero_subtitle_bg" defaultColor="#475569" defaultBg="transparent" data={data} set={set}/>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -256,7 +258,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <input value={data.cta_text} onChange={e => set("cta_text", e.target.value)} placeholder="Boka tid online" className={inp}/>
-            <ColorPicker label="Färger" colorKey="hero_cta_color" bgKey="hero_cta_bg" data={data} set={set}/>
+            <ColorPicker label="Färger" colorKey="hero_cta_color" bgKey="hero_cta_bg" defaultColor="#ffffff" defaultBg="#141414" data={data} set={set}/>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -268,7 +270,7 @@ export default function SettingsPanel() {
                 </button>
               </div>
               <input value={data.badge1} onChange={e => set("badge1", e.target.value)} placeholder="SRY-kvalifikation" className={inp}/>
-              <ColorPicker label="Färger" colorKey="hero_badge1_color" bgKey="hero_badge1_bg" data={data} set={set}/>
+              <ColorPicker label="Färger" colorKey="hero_badge1_color" bgKey="hero_badge1_bg" defaultColor="#475569" defaultBg="transparent" data={data} set={set}/>
               <label className={lbl + " mt-2"}>Badge 1 ikon</label>
               <select value={data.badge1_icon||"ShieldCheck"} onChange={e=>set("badge1_icon",e.target.value)} className={inp}>
                 <option value="none">— Ingen ikon</option>
@@ -304,7 +306,7 @@ export default function SettingsPanel() {
                 </button>
               </div>
               <input value={data.badge2} onChange={e => set("badge2", e.target.value)} placeholder="Pur-Eco produkter" className={inp}/>
-              <ColorPicker label="Färger" colorKey="hero_badge2_color" bgKey="hero_badge2_bg" data={data} set={set}/>
+              <ColorPicker label="Färger" colorKey="hero_badge2_color" bgKey="hero_badge2_bg" defaultColor="#475569" defaultBg="transparent" data={data} set={set}/>
               <label className={lbl + " mt-2"}>Badge 2 ikon</label>
               <select value={data.badge2_icon||"Leaf"} onChange={e=>set("badge2_icon",e.target.value)} className={inp}>
                 <option value="none">— Ingen ikon</option>
@@ -425,12 +427,12 @@ export default function SettingsPanel() {
           <div>
             <label className={lbl}>Box text</label>
             <textarea value={data.contact_box_text||""} onChange={e=>set("contact_box_text",e.target.value)} rows={3} placeholder="Miljövänlig städning med SRY-utbildad personal..." className={inp+" resize-none"}/>
-            <ColorPicker label="Box BG" colorKey="contact_box_text_color" bgKey="contact_box_bg" data={data} set={set}/>
+            <ColorPicker label="Box BG" colorKey="contact_box_text_color" bgKey="contact_box_bg" defaultColor="rgba(255,255,255,0.75)" defaultBg="#141414" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Box knapp text</label>
             <input value={data.contact_box_btn||""} onChange={e=>set("contact_box_btn",e.target.value)} placeholder="Boka tid nu" className={inp}/>
-            <ColorPicker label="Knapp färger" colorKey="contact_box_btn_color" bgKey="contact_box_btn_bg" data={data} set={set}/>
+            <ColorPicker label="Knapp färger" colorKey="contact_box_btn_color" bgKey="contact_box_btn_bg" defaultColor="#141414" defaultBg="#ffffff" data={data} set={set}/>
           </div>
         </>}
 
