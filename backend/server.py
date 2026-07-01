@@ -5818,7 +5818,7 @@ async def get_website_settings():
 
 @api_router.patch("/settings/website")
 async def update_website_settings(payload: WebsiteSettings, current=Depends(get_current_user)):
-    data = {k: v for k, v in payload.dict().items() if v is not None or isinstance(v, list)}
+    data = {k: v for k, v in payload.dict().items() if v is not None}
     await db.website_settings.update_one(
         {"_id": "main"},
         {"$set": data},
