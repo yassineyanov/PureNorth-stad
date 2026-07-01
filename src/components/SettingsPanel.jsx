@@ -731,6 +731,13 @@ export default function SettingsPanel() {
         {section === "about" && <>
           <h3 className="font-semibold text-slate-800">Om oss</h3>
           <div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Etikett (liten grön text)</label>
+              <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Färg<input type="color" value={data.about_label_color||"#166534"} onChange={e=>set("about_label_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+            </div>
+            <input value={data.about_label||""} onChange={e=>set("about_label",e.target.value)} placeholder="Om oss" className={inp}/>
+          </div>
+          <div>
             <label className={lbl}>Rubrik</label>
             <input value={data.about_title||""} onChange={e=>set("about_title",e.target.value)} placeholder="Städning med hjärta & precision" className={inp}/>
             <TextColorPicker label="Text färg" colorKey="about_title_color" data={data} set={set}/>
@@ -828,6 +835,16 @@ export default function SettingsPanel() {
             </select>
             <input value={data.about_point3||""} onChange={e=>set("about_point3",e.target.value)} placeholder="50% RUT-avdrag på arbetskostnaden" className={inp}/>
 
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Knapp text (Boka städning)</label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_btn_color||"#ffffff"} onChange={e=>set("about_btn_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">BG<input type="color" value={data.about_btn_bg||"#141414"} onChange={e=>set("about_btn_bg",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+              </div>
+            </div>
+            <input value={data.about_btn_text||""} onChange={e=>set("about_btn_text",e.target.value)} placeholder="Boka städning" className={inp}/>
           </div>
           <div>
             <label className={lbl}>Bild på Om oss-sidan</label>
