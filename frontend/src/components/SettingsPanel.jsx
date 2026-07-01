@@ -18,6 +18,21 @@ const SECTIONS = [
   { id: "testimonials", label: "Omdömen", icon: Star },
 ];
 
+function TextColorPicker({ label, colorKey, data, set }) {
+  return (
+    <div className="flex items-center gap-3 mt-2">
+      <span className="text-xs text-slate-500">{label}</span>
+      <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+        Text
+        <input type="color" value={data[colorKey] || "#141414"}
+          onChange={e => set(colorKey, e.target.value)}
+          className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+      </label>
+      {data[colorKey] && <button onClick={() => set(colorKey, "")} className="text-xs text-red-400 hover:text-red-600">↺</button>}
+    </div>
+  );
+}
+
 function ColorPicker({ label, colorKey, bgKey, data, set }) {
   return (
     <div className="flex items-center gap-3 mt-2">
@@ -388,12 +403,12 @@ export default function SettingsPanel() {
           <div>
             <label className={lbl}>Etikett (liten text ovan rubrik)</label>
             <input value={data.contact_title||""} onChange={e=>set("contact_title",e.target.value)} placeholder="Kontakt" className={inp}/>
-            <ColorPicker label="Färger" colorKey="contact_title_color" bgKey="contact_title_bg" data={data} set={set}/>
+            <TextColorPicker label="Text färg" colorKey="contact_title_color" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Rubrik</label>
             <input value={data.contact_subtitle||""} onChange={e=>set("contact_subtitle",e.target.value)} placeholder="Vi finns i Umeå" className={inp}/>
-            <ColorPicker label="Färger" colorKey="contact_subtitle_color" bgKey="contact_subtitle_bg" data={data} set={set}/>
+            <TextColorPicker label="Text färg" colorKey="contact_subtitle_color" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Undertext</label>
@@ -405,7 +420,7 @@ export default function SettingsPanel() {
           <div>
             <label className={lbl}>Box rubrik</label>
             <input value={data.contact_box_title||""} onChange={e=>set("contact_box_title",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
-            <ColorPicker label="Färger" colorKey="contact_box_title_color" bgKey="contact_box_title_bg" data={data} set={set}/>
+            <TextColorPicker label="Text färg" colorKey="contact_box_title_color" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Box text</label>
