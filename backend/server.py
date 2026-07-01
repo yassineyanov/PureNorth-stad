@@ -5732,6 +5732,14 @@ class WebsiteSettings(BaseModel):
     badge1_image: Optional[str] = ""
     badge2_icon: Optional[str] = "Leaf"
     badge2_image: Optional[str] = ""
+    show_hero_badge: Optional[bool] = True
+    show_hero_title: Optional[bool] = True
+    show_hero_subtitle: Optional[bool] = True
+    show_hero_cta: Optional[bool] = True
+    show_hero_phone: Optional[bool] = True
+    show_hero_badge1: Optional[bool] = True
+    show_hero_badge2: Optional[bool] = True
+    show_hero_image: Optional[bool] = True
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
