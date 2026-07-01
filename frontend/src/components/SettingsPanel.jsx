@@ -413,7 +413,7 @@ export default function SettingsPanel() {
           <div>
             <label className={lbl}>Undertext</label>
             <textarea value={data.contact_description||""} onChange={e=>set("contact_description",e.target.value)} rows={3} placeholder="Har du frågor eller vill boka en städning?" className={inp+" resize-none"}/>
-            <ColorPicker label="Färger" colorKey="contact_description_color" bgKey="contact_description_color" data={data} set={set}/>
+            <TextColorPicker label="Text färg" colorKey="contact_description_color" data={data} set={set}/>
           </div>
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700">Svart box (höger)</h4>
