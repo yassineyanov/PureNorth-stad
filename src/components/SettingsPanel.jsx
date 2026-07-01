@@ -131,7 +131,13 @@ export default function SettingsPanel() {
         {section === "hero" && <>
           <h3 className="font-semibold text-slate-800">Hero-sektion</h3>
           <div>
+            <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Badge-text (grön etikett)</label>
+            <button type="button" onClick={()=>set("show_hero_badge", !data.show_hero_badge)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_badge !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_badge !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
             <input value={data.hero_badge} onChange={e => set("hero_badge", e.target.value)} placeholder="Svanenmärkt & miljöcertifierat" className={inp}/>
             <label className={lbl + " mt-2"}>Badge-ikon</label>
             <select value={data.hero_badge_icon||"Leaf"} onChange={e=>set("hero_badge_icon",e.target.value)} className={inp}>
@@ -158,15 +164,33 @@ export default function SettingsPanel() {
             <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 32×32px · PNG med transparent bakgrund</p>
           </div>
           <div>
+            <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Stor rubrik (H1)</label>
+            <button type="button" onClick={()=>set("show_hero_title", !data.show_hero_title)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_title !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_title !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
             <textarea value={data.hero_title} onChange={e => set("hero_title", e.target.value)} rows={3} placeholder="Renhet med norrländsk precision i Umeå." className={inp + " resize-none"}/>
           </div>
           <div>
+            <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Undertext</label>
+            <button type="button" onClick={()=>set("show_hero_subtitle", !data.show_hero_subtitle)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_subtitle !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_subtitle !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
             <textarea value={data.hero_subtitle} onChange={e => set("hero_subtitle", e.target.value)} rows={3} placeholder="Vi definierar premiumstädning..." className={inp + " resize-none"}/>
           </div>
           <div>
+            <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Knapptext (Boka-knapp)</label>
+            <button type="button" onClick={()=>set("show_hero_cta", !data.show_hero_cta)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_cta !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_cta !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
             <input value={data.cta_text} onChange={e => set("cta_text", e.target.value)} placeholder="Boka tid online" className={inp}/>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -249,7 +273,13 @@ export default function SettingsPanel() {
             <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 200×200px · PNG med transparent bakgrund</p>
           </div>
           <div>
+            <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Hero-bild (stor bild på startsidan)</label>
+            <button type="button" onClick={()=>set("show_hero_image", !data.show_hero_image)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_image !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_image !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
             {data.hero_image && <img src={data.hero_image} alt="Hero" className="w-full h-32 object-cover rounded-xl mb-3"/>}
             <input ref={heroImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "hero_image")}/>
             <button onClick={() => heroImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-2.5 text-sm hover:border-slate-400 transition-colors">

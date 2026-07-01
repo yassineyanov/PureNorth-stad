@@ -16,7 +16,7 @@ export const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#166534]/10 text-[#166534] px-4 py-1.5 text-sm font-semibold mb-6">
+          {ws.show_hero_badge !== false && <span className="inline-flex items-center gap-2 rounded-full bg-[#166534]/10 text-[#166534] px-4 py-1.5 text-sm font-semibold mb-6">
             {ws.hero_badge_image ? <img src={ws.hero_badge_image} alt="" className="h-4 w-4 object-contain"/> : 
               ws.hero_badge_icon === "ShieldCheck" ? <ShieldCheck size={15}/> :
               ws.hero_badge_icon === "Star" ? <Star size={15}/> :
@@ -26,11 +26,11 @@ export const Hero = () => {
               ws.hero_badge_icon === "CheckCircle" ? <CheckCircle size={15}/> :
               <Leaf size={15}/>
             } {ws.hero_badge || "Svanenmärkt & miljöcertifierat"}
-          </span>
-          <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4rem] leading-[1.05] tracking-tight text-[#141414]">
+          </span>}
+          {ws.show_hero_title !== false && <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4rem] leading-[1.05] tracking-tight text-[#141414]">
             {ws.hero_title || "Renhet med norrländsk precision i Umeå."}
-          </h1>
-          <p className="mt-6 text-lg text-slate-600 leading-relaxed max-w-xl">
+          </h1>}
+          {ws.show_hero_subtitle !== false && <p className="mt-6 text-lg text-slate-600 leading-relaxed max-w-xl">
             {ws.hero_subtitle || "Vi definierar premiumstädning genom certifierad expertis och hållbara metoder. Från fönsterputs till flyttstädning, vi tar hand om detaljerna."}
           </p>
 
