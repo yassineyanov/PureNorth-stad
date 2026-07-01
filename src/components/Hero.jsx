@@ -25,7 +25,7 @@ export const Hero = () => {
             <span className="inline-flex items-center gap-2 rounded-full bg-[#166534]/10 text-[#166534] px-4 py-1.5 text-sm font-semibold mb-6">
               {ws.hero_badge_image
                 ? <img src={ws.hero_badge_image} alt="" className="h-4 w-4 object-contain"/>
-                : <BadgeIcon name={ws.hero_badge_icon || "Leaf"} size={15} />
+                : ws.hero_badge_icon !== "none" && <BadgeIcon name={ws.hero_badge_icon || "Leaf"} size={15} />
               }
               {ws.hero_badge || "Svanenmärkt & miljöcertifierat"}
             </span>
@@ -63,7 +63,7 @@ export const Hero = () => {
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
                 {ws.badge1_image
                   ? <img src={ws.badge1_image} alt="" className="h-4 w-4 object-contain"/>
-                  : <BadgeIcon name={ws.badge1_icon || "ShieldCheck"} size={16} className="text-[#166534]" />
+                  : ws.badge1_icon !== "none" && <BadgeIcon name={ws.badge1_icon || "ShieldCheck"} size={16} className="text-[#166534]" />
                 }
                 {ws.badge1 || "SRY-kvalifikation"}
               </span>
@@ -72,7 +72,7 @@ export const Hero = () => {
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
                 {ws.badge2_image
                   ? <img src={ws.badge2_image} alt="" className="h-4 w-4 object-contain"/>
-                  : <BadgeIcon name={ws.badge2_icon || "Leaf"} size={16} className="text-[#166534]" />
+                  : ws.badge2_icon !== "none" && <BadgeIcon name={ws.badge2_icon || "Leaf"} size={16} className="text-[#166534]" />
                 }
                 {ws.badge2 || "Pur-Eco produkter"}
               </span>

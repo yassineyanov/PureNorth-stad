@@ -141,6 +141,7 @@ export default function SettingsPanel() {
             <input value={data.hero_badge} onChange={e => set("hero_badge", e.target.value)} placeholder="Svanenmärkt & miljöcertifierat" className={inp}/>
             <label className={lbl + " mt-2"}>Badge-ikon</label>
             <select value={data.hero_badge_icon||"Leaf"} onChange={e=>set("hero_badge_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
               <option value="Leaf">🌿 Leaf (löv)</option>
               <option value="ShieldCheck">🛡️ ShieldCheck (sköld)</option>
               <option value="Star">⭐ Star (stjärna)</option>
@@ -205,6 +206,7 @@ export default function SettingsPanel() {
               <input value={data.badge1} onChange={e => set("badge1", e.target.value)} placeholder="SRY-kvalifikation" className={inp}/>
               <label className={lbl + " mt-2"}>Badge 1 ikon</label>
               <select value={data.badge1_icon||"ShieldCheck"} onChange={e=>set("badge1_icon",e.target.value)} className={inp}>
+                <option value="none">— Ingen ikon</option>
                 <option value="ShieldCheck">🛡️ ShieldCheck</option>
                 <option value="Leaf">🌿 Leaf</option>
                 <option value="Star">⭐ Star</option>
@@ -231,6 +233,7 @@ export default function SettingsPanel() {
               <input value={data.badge2} onChange={e => set("badge2", e.target.value)} placeholder="Pur-Eco produkter" className={inp}/>
               <label className={lbl + " mt-2"}>Badge 2 ikon</label>
               <select value={data.badge2_icon||"Leaf"} onChange={e=>set("badge2_icon",e.target.value)} className={inp}>
+                <option value="none">— Ingen ikon</option>
                 <option value="Leaf">🌿 Leaf</option>
                 <option value="ShieldCheck">🛡️ ShieldCheck</option>
                 <option value="Star">⭐ Star</option>
