@@ -79,12 +79,12 @@ export const Contact = () => {
 
         <div className="rounded-3xl p-10 sm:p-12 relative overflow-hidden" style={{backgroundColor: ws.contact_box_bg || "#141414", color: "white"}}>
           <Logo className="h-14 w-14 mb-6 !bg-white" />
-          <h3 className="font-display font-bold text-3xl mb-3">{ws.contact_box_title || "Redo att boka?"}</h3>
-          <p className="text-white/75 leading-relaxed max-w-md">
+          <h3 className="font-display font-bold text-3xl mb-3" style={{color: ws.contact_box_title_color || "#ffffff"}}>{ws.contact_box_title || "Redo att boka?"}</h3>
+          <p className="leading-relaxed max-w-md" style={{color: ws.contact_box_text_color || "rgba(255,255,255,0.75)"}}>
             {ws.contact_box_text || "Vi erbjuder professionell städning anpassad efter dina behov. Kontakta oss idag!"}
           </p>
           <a href="#boka"
-            className="mt-8 inline-flex items-center justify-center rounded-full bg-white text-[#141414] px-8 py-4 font-semibold hover:bg-white/90 transition-colors">
+            className="mt-8 inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold transition-colors" style={{backgroundColor: ws.contact_box_btn_bg || "#ffffff", color: ws.contact_box_btn_color || "#141414"}}>
             {ws.contact_box_btn || "Boka tid"}
           </a>
           <div className="absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-white/[0.04]" />
