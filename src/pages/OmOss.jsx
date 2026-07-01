@@ -1,7 +1,13 @@
 import React from "react";
 import { useWebsite, useWebsiteReady } from "@/context/WebsiteContext";
 import { motion } from "framer-motion";
-import { ShieldCheck, Leaf, Star } from "lucide-react";
+import { ShieldCheck, Leaf, Star, Heart, Zap, Award, CheckCircle, Sparkles } from "lucide-react";
+
+const IconMap = { ShieldCheck, Leaf, Star, Heart, Zap, Award, CheckCircle, Sparkles };
+function PointIcon({ name, size=16, className="" }) {
+  const Icon = IconMap[name] || ShieldCheck;
+  return <Icon size={size} className={className}/>;
+}
 import { Navbar } from "@/components/Navbar";
 
 export default function OmOss() {
@@ -54,19 +60,19 @@ export default function OmOss() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
-                    <ShieldCheck size={16} className="text-[#166534]"/>
+                    <PointIcon name={ws.about_point1_icon || "ShieldCheck"} size={16} className="text-[#166534]"/>
                   </span>
                   <span className="text-slate-700 font-medium">{ws.about_point1 || "SRY-certifierad personal"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
-                    <Leaf size={16} className="text-[#166534]"/>
+                    <PointIcon name={ws.about_point2_icon || "Leaf"} size={16} className="text-[#166534]"/>
                   </span>
                   <span className="text-slate-700 font-medium">{ws.about_point2 || "Svanenmärkta Pur-Eco produkter"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="h-9 w-9 rounded-full bg-[#166534]/10 flex items-center justify-center shrink-0">
-                    <Star size={16} className="text-[#166534]"/>
+                    <PointIcon name={ws.about_point3_icon || "Star"} size={16} className="text-[#166534]"/>
                   </span>
                   <span className="text-slate-700 font-medium">{ws.about_point3 || "50% RUT-avdrag på arbetskostnaden"}</span>
                 </div>

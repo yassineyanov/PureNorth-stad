@@ -762,14 +762,47 @@ export default function SettingsPanel() {
           <h4 className="font-medium text-slate-700 mt-2">Punkter (3 fördelar)</h4>
           <div>
             <label className={lbl}>Punkt 1</label>
+            <select value={data.about_point1_icon||"ShieldCheck"} onChange={e=>set("about_point1_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="Award">🏆 Award</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
             <input value={data.about_point1||""} onChange={e=>set("about_point1",e.target.value)} placeholder="SRY-certifierad personal" className={inp}/>
           </div>
           <div>
             <label className={lbl}>Punkt 2</label>
+            <select value={data.about_point2_icon||"Leaf"} onChange={e=>set("about_point2_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="Award">🏆 Award</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
             <input value={data.about_point2||""} onChange={e=>set("about_point2",e.target.value)} placeholder="Svanenmärkta Pur-Eco produkter" className={inp}/>
           </div>
           <div>
             <label className={lbl}>Punkt 3</label>
+            <select value={data.about_point3_icon||"Star"} onChange={e=>set("about_point3_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="Award">🏆 Award</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
             <input value={data.about_point3||""} onChange={e=>set("about_point3",e.target.value)} placeholder="50% RUT-avdrag på arbetskostnaden" className={inp}/>
           </div>
           <div>
