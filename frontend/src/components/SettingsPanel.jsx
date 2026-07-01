@@ -18,6 +18,32 @@ const SECTIONS = [
   { id: "testimonials", label: "Omdömen", icon: Star },
 ];
 
+function ColorPicker({ label, colorKey, bgKey, data, set }) {
+  return (
+    <div className="flex items-center gap-3 mt-2">
+      <span className="text-xs text-slate-500">{label}</span>
+      <div className="flex items-center gap-2">
+        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          Text
+          <input type="color" value={data[colorKey] || "#141414"}
+            onChange={e => set(colorKey, e.target.value)}
+            className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+        </label>
+        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          BG
+          <input type="color" value={data[bgKey] || "#ffffff"}
+            onChange={e => set(bgKey, e.target.value)}
+            className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+        </label>
+        {(data[colorKey] || data[bgKey]) && (
+          <button onClick={() => { set(colorKey, ""); set(bgKey, ""); }}
+            className="text-xs text-red-400 hover:text-red-600">↺</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPanel() {
   const [data, setData] = useState({
     hero_title: "", hero_subtitle: "", hero_badge: "", cta_text: "",
@@ -193,6 +219,7 @@ export default function SettingsPanel() {
             </button>
           </div>
             <input value={data.cta_text} onChange={e => set("cta_text", e.target.value)} placeholder="Boka tid online" className={inp}/>
+            <ColorPicker label="Färger" colorKey="hero_cta_color" bgKey="hero_cta_bg" data={data} set={set}/>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

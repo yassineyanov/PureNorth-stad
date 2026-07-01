@@ -22,7 +22,7 @@ export const Hero = () => {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
 
           {ws.show_hero_badge !== false && (
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#166534]/10 text-[#166534] px-4 py-1.5 text-sm font-semibold mb-6">
+            <span className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold mb-6" style={{color: ws.hero_badge_color || "#166534", backgroundColor: ws.hero_badge_bg || "rgba(22,101,52,0.1)"}}>
               {ws.hero_badge_image
                 ? <img src={ws.hero_badge_image} alt="" className="h-4 w-4 object-contain"/>
                 : ws.hero_badge_icon !== "none" && <BadgeIcon name={ws.hero_badge_icon || "Leaf"} size={15} />
@@ -32,13 +32,13 @@ export const Hero = () => {
           )}
 
           {ws.show_hero_title !== false && (
-            <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4rem] leading-[1.05] tracking-tight text-[#141414]">
+            <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4rem] leading-[1.05] tracking-tight" style={{color: ws.hero_title_color || "#141414", backgroundColor: ws.hero_title_bg || "transparent"}}>
               {ws.hero_title || "Renhet med norrländsk precision i Umeå."}
             </h1>
           )}
 
           {ws.show_hero_subtitle !== false && (
-            <p className="mt-6 text-lg text-slate-600 leading-relaxed max-w-xl">
+            <p className="mt-6 text-lg leading-relaxed max-w-xl" style={{color: ws.hero_subtitle_color || "#475569", backgroundColor: ws.hero_subtitle_bg || "transparent"}}>
               {ws.hero_subtitle || "Vi definierar premiumstädning genom certifierad expertis och hållbara metoder."}
             </p>
           )}
@@ -46,7 +46,7 @@ export const Hero = () => {
           {ws.show_hero_cta !== false && (
             <div className="mt-9 flex flex-col sm:flex-row gap-4">
               <a href="#boka" data-testid="hero-boka-btn"
-                className="inline-flex items-center justify-center rounded-full bg-[#141414] hover:bg-[#000000] text-white px-8 py-4 text-base font-semibold transition-colors">
+                className="inline-flex items-center justify-center rounded-full px-8 py-4 text-base font-semibold transition-colors" style={{color: ws.hero_cta_color || "#ffffff", backgroundColor: ws.hero_cta_bg || "#141414"}}>
                 {ws.cta_text || "Boka tid online"}
               </a>
               {ws.show_hero_phone !== false && (
