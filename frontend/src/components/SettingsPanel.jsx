@@ -388,28 +388,34 @@ export default function SettingsPanel() {
           <div>
             <label className={lbl}>Etikett (liten text ovan rubrik)</label>
             <input value={data.contact_title||""} onChange={e=>set("contact_title",e.target.value)} placeholder="Kontakt" className={inp}/>
+            <ColorPicker label="Färger" colorKey="contact_title_color" bgKey="contact_title_bg" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Rubrik</label>
             <input value={data.contact_subtitle||""} onChange={e=>set("contact_subtitle",e.target.value)} placeholder="Vi finns i Umeå" className={inp}/>
+            <ColorPicker label="Färger" colorKey="contact_subtitle_color" bgKey="contact_subtitle_bg" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Undertext</label>
             <textarea value={data.contact_description||""} onChange={e=>set("contact_description",e.target.value)} rows={3} placeholder="Har du frågor eller vill boka en städning?" className={inp+" resize-none"}/>
+            <ColorPicker label="Färger" colorKey="contact_description_color" bgKey="contact_description_color" data={data} set={set}/>
           </div>
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700">Svart box (höger)</h4>
           <div>
             <label className={lbl}>Box rubrik</label>
             <input value={data.contact_box_title||""} onChange={e=>set("contact_box_title",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
+            <ColorPicker label="Färger" colorKey="contact_box_title_color" bgKey="contact_box_title_bg" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Box text</label>
             <textarea value={data.contact_box_text||""} onChange={e=>set("contact_box_text",e.target.value)} rows={3} placeholder="Miljövänlig städning med SRY-utbildad personal..." className={inp+" resize-none"}/>
+            <ColorPicker label="Box BG" colorKey="contact_box_text_color" bgKey="contact_box_bg" data={data} set={set}/>
           </div>
           <div>
             <label className={lbl}>Box knapp text</label>
             <input value={data.contact_box_btn||""} onChange={e=>set("contact_box_btn",e.target.value)} placeholder="Boka tid nu" className={inp}/>
+            <ColorPicker label="Knapp färger" colorKey="contact_box_btn_color" bgKey="contact_box_btn_bg" data={data} set={set}/>
           </div>
         </>}
 
