@@ -190,6 +190,13 @@ export default function SettingsPanel() {
               <option value="CheckCircle">✅ CheckCircle (bock)</option>
               <option value="Sparkles">✨ Sparkles (gnistor)</option>
             </select>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-xs text-slate-500">Ikon färg</span>
+              <input type="color" value={data.hero_badge_icon_color || "#166534"}
+                onChange={e => set("hero_badge_icon_color", e.target.value)}
+                className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+              {data.hero_badge_icon_color && <button onClick={()=>set("hero_badge_icon_color","")} className="text-xs text-red-400">↺</button>}
+            </div>
             <label className={lbl + " mt-2"}>Badge-logotyp (valfritt - ersätter ikon)</label>
             {data.hero_badge_image && (
               <div className="flex items-center gap-2 mb-2">
@@ -258,6 +265,13 @@ export default function SettingsPanel() {
                 <option value="Award">🏆 Award</option>
                 <option value="CheckCircle">✅ CheckCircle</option>
               </select>
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-xs text-slate-500">Ikon färg</span>
+                <input type="color" value={data.hero_badge1_icon_color || "#166534"}
+                  onChange={e => set("hero_badge1_icon_color", e.target.value)}
+                  className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+                {data.hero_badge1_icon_color && <button onClick={()=>set("hero_badge1_icon_color","")} className="text-xs text-red-400">↺</button>}
+              </div>
               <label className={lbl + " mt-2"}>Badge 1 logotyp (ersätter ikon)</label>
               {data.badge1_image && <div className="flex items-center gap-2 mb-2"><img src={data.badge1_image} alt="" className="h-5 w-5 object-contain"/><button onClick={()=>set("badge1_image","")} className="text-red-500 text-xs">Ta bort</button></div>}
               <input ref={badge1ImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "badge1_image")}/>
@@ -287,6 +301,13 @@ export default function SettingsPanel() {
                 <option value="Award">🏆 Award</option>
                 <option value="CheckCircle">✅ CheckCircle</option>
               </select>
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-xs text-slate-500">Ikon färg</span>
+                <input type="color" value={data.hero_badge2_icon_color || "#166534"}
+                  onChange={e => set("hero_badge2_icon_color", e.target.value)}
+                  className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+                {data.hero_badge2_icon_color && <button onClick={()=>set("hero_badge2_icon_color","")} className="text-xs text-red-400">↺</button>}
+              </div>
               <label className={lbl + " mt-2"}>Badge 2 logotyp (ersätter ikon)</label>
               {data.badge2_image && <div className="flex items-center gap-2 mb-2"><img src={data.badge2_image} alt="" className="h-5 w-5 object-contain"/><button onClick={()=>set("badge2_image","")} className="text-red-500 text-xs">Ta bort</button></div>}
               <input ref={badge2ImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "badge2_image")}/>
