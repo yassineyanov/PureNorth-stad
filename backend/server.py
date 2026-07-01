@@ -5752,6 +5752,9 @@ class WebsiteSettings(BaseModel):
     hero_badge1_bg: Optional[str] = ""
     hero_badge2_color: Optional[str] = ""
     hero_badge2_bg: Optional[str] = ""
+    hero_badge_icon_color: Optional[str] = ""
+    hero_badge1_icon_color: Optional[str] = ""
+    hero_badge2_icon_color: Optional[str] = ""
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
