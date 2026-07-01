@@ -514,8 +514,46 @@ export default function SettingsPanel() {
         {section === "about" && <>
           <h3 className="font-semibold text-slate-800">Om oss</h3>
           <div>
-            <label className={lbl}>Om oss text</label>
-            <textarea value={data.about_text} onChange={e => set("about_text", e.target.value)} rows={8} placeholder="Berätta om ditt företag..." className={inp + " resize-none"}/>
+            <label className={lbl}>Rubrik</label>
+            <input value={data.about_title||""} onChange={e=>set("about_title",e.target.value)} placeholder="Städning med hjärta & precision" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Beskrivningstext</label>
+            <textarea value={data.about_text||""} onChange={e => set("about_text", e.target.value)} rows={6} placeholder="Berätta om ditt företag..." className={inp + " resize-none"}/>
+          </div>
+          <h4 className="font-medium text-slate-700 mt-2">Statistik (3 siffror)</h4>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={lbl}>Siffra 1</label>
+              <input value={data.about_stat1_number||""} onChange={e=>set("about_stat1_number",e.target.value)} placeholder="100+" className={inp}/>
+              <label className={lbl+" mt-1"}>Etikett 1</label>
+              <input value={data.about_stat1_label||""} onChange={e=>set("about_stat1_label",e.target.value)} placeholder="Nöjda kunder" className={inp}/>
+            </div>
+            <div>
+              <label className={lbl}>Siffra 2</label>
+              <input value={data.about_stat2_number||""} onChange={e=>set("about_stat2_number",e.target.value)} placeholder="5★" className={inp}/>
+              <label className={lbl+" mt-1"}>Etikett 2</label>
+              <input value={data.about_stat2_label||""} onChange={e=>set("about_stat2_label",e.target.value)} placeholder="Betyg" className={inp}/>
+            </div>
+            <div>
+              <label className={lbl}>Siffra 3</label>
+              <input value={data.about_stat3_number||""} onChange={e=>set("about_stat3_number",e.target.value)} placeholder="3 år" className={inp}/>
+              <label className={lbl+" mt-1"}>Etikett 3</label>
+              <input value={data.about_stat3_label||""} onChange={e=>set("about_stat3_label",e.target.value)} placeholder="Erfarenhet" className={inp}/>
+            </div>
+          </div>
+          <h4 className="font-medium text-slate-700 mt-2">Punkter (3 fördelar)</h4>
+          <div>
+            <label className={lbl}>Punkt 1</label>
+            <input value={data.about_point1||""} onChange={e=>set("about_point1",e.target.value)} placeholder="SRY-certifierad personal" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Punkt 2</label>
+            <input value={data.about_point2||""} onChange={e=>set("about_point2",e.target.value)} placeholder="Svanenmärkta Pur-Eco produkter" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Punkt 3</label>
+            <input value={data.about_point3||""} onChange={e=>set("about_point3",e.target.value)} placeholder="50% RUT-avdrag på arbetskostnaden" className={inp}/>
           </div>
         </>}
 
