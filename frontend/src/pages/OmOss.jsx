@@ -22,7 +22,7 @@ export default function OmOss() {
       <section className="pt-32 pb-24 sm:pt-40 sm:pb-28">
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="text-sm font-semibold uppercase tracking-widest text-[#166534]">Om oss</span>
+            <span className="text-sm font-semibold uppercase tracking-widest" style={{color: ws.about_label_color || "#166534"}}>{ws.about_label || "Om oss"}</span>
             <h1 className="font-display font-bold text-5xl sm:text-6xl tracking-tight mt-3 mb-6" style={{color: ws.about_title_color || "#141414"}}>
               {ws.about_title || "Städning med hjärta & precision"}
             </h1>
@@ -77,8 +77,8 @@ export default function OmOss() {
                   <span className="font-medium" style={{color: ws.about_point3_color || "#374151"}}>{ws.about_point3 || "50% RUT-avdrag på arbetskostnaden"}</span>
                 </div>
               </div>
-              <a href="/#boka" className="mt-10 inline-flex items-center justify-center rounded-full bg-[#141414] hover:bg-black text-white px-8 py-4 text-base font-semibold transition-colors">
-                Boka städning
+              <a href="/#boka" className="mt-10 inline-flex items-center justify-center rounded-full px-8 py-4 text-base font-semibold transition-colors" style={{backgroundColor: ws.about_btn_bg || "#141414", color: ws.about_btn_color || "#ffffff"}}>
+                {ws.about_btn_text || "Boka städning"}
               </a>
             </motion.div>
           </div>
