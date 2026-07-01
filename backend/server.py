@@ -5773,6 +5773,11 @@ class WebsiteSettings(BaseModel):
     show_contact_address: Optional[bool] = True
     show_contact_hours: Optional[bool] = True
     show_contact_box: Optional[bool] = True
+    show_company_name: Optional[bool] = True
+    show_phone: Optional[bool] = True
+    show_email: Optional[bool] = True
+    show_address: Optional[bool] = True
+    show_opening_hours: Optional[bool] = True
     about_point1_icon: Optional[str] = "ShieldCheck"
     about_point2_icon: Optional[str] = "Leaf"
     about_point3_icon: Optional[str] = "Star"
