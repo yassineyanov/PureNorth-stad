@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import { ShieldCheck, Leaf, Star, Heart, Zap, Award, CheckCircle, Sparkles } from "lucide-react";
 
 const IconMap = { ShieldCheck, Leaf, Star, Heart, Zap, Award, CheckCircle, Sparkles };
-function PointIcon({ name, size=16, className="" }) {
+function PointIcon({ name, size=16, className="", style={} }) {
   const Icon = IconMap[name] || ShieldCheck;
-  return <Icon size={size} className={className}/>;
+  return <Icon size={size} className={className} style={style}/>;
 }
 import { Navbar } from "@/components/Navbar";
 
