@@ -438,9 +438,6 @@ export default function SettingsPanel() {
             <TextColorPicker label="Text färg" colorKey="contact_description_color" data={data} set={set}/>
           </div>
           <hr className="border-slate-100"/>
-          <div className="flex items-center justify-between mb-1"><label className={lbl}>Telefon</label><button type="button" onClick={()=>set("show_contact_phone", data.show_contact_phone === false ? true : false)} className={`w-10 h-5 rounded-full transition-colors ${data.show_contact_phone !== false ? "bg-blue-500" : "bg-slate-200"}`}><span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_contact_phone !== false ? "translate-x-5" : "translate-x-0"}`}/></button></div>
-          <div className="flex items-center justify-between mb-1"><label className={lbl}>Adress/Ort</label><button type="button" onClick={()=>set("show_contact_address", data.show_contact_address === false ? true : false)} className={`w-10 h-5 rounded-full transition-colors ${data.show_contact_address !== false ? "bg-blue-500" : "bg-slate-200"}`}><span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_contact_address !== false ? "translate-x-5" : "translate-x-0"}`}/></button></div>
-          <div className="flex items-center justify-between mb-1"><label className={lbl}>Öppettider</label><button type="button" onClick={()=>set("show_contact_hours", data.show_contact_hours === false ? true : false)} className={`w-10 h-5 rounded-full transition-colors ${data.show_contact_hours !== false ? "bg-blue-500" : "bg-slate-200"}`}><span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_contact_hours !== false ? "translate-x-5" : "translate-x-0"}`}/></button></div>
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700">Svart box (höger)</h4>
           <div>
