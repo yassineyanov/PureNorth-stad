@@ -52,11 +52,11 @@ export const Contact = () => {
               </span>
               <div>
                 <span className="block text-xs text-slate-500">E-post</span>
-                <span className="block font-semibold text-slate-900">{ws.email}</span>
+                <span className="block font-semibold" style={{color: ws.email_color || "#0f172a"}}>{ws.email}</span>
               </div>
             </a>
             )}
-            <div className="flex items-center gap-4">
+            {ws.show_address !== false && <div className="flex items-center gap-4">
               <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534]">
                 <MapPin size={20} />
               </span>
@@ -65,7 +65,7 @@ export const Contact = () => {
                 <span className="block font-semibold" style={{color: ws.address_color || "#0f172a"}}>{ws.address || "Umeå, Sverige"}</span>
               </div>
             </div>}
-            <div className="flex items-center gap-4">
+            {ws.show_opening_hours !== false && <div className="flex items-center gap-4">
               <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534]">
                 <Clock size={20} />
               </span>
