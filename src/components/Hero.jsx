@@ -1,10 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Phone, Leaf, ShieldCheck, Star, Heart, Zap, Award, CheckCircle } from "lucide-react";
-import { useWebsite } from "@/context/WebsiteContext";
+import { useWebsite, useWebsiteReady } from "@/context/WebsiteContext";
 
 export const Hero = () => {
   const ws = useWebsite();
+  const ready = useWebsiteReady();
+  if (!ready) return null;
   return (
     <section id="hem" className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 overflow-hidden bg-soft-grid">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
