@@ -764,7 +764,13 @@ export default function SettingsPanel() {
           </div>
           <h4 className="font-medium text-slate-700 mt-2">Punkter (3 fördelar)</h4>
           <div>
-            <label className={lbl}>Punkt 1</label>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Punkt 1</label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_point1_color||"#374151"} onChange={e=>set("about_point1_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<input type="color" value={data.about_point1_icon_color||"#166534"} onChange={e=>set("about_point1_icon_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+              </div>
+            </div>
             <select value={data.about_point1_icon||"ShieldCheck"} onChange={e=>set("about_point1_icon",e.target.value)} className={inp}>
               <option value="none">— Ingen ikon</option>
               <option value="ShieldCheck">🛡️ ShieldCheck</option>
@@ -777,11 +783,16 @@ export default function SettingsPanel() {
               <option value="Sparkles">✨ Sparkles</option>
             </select>
             <input value={data.about_point1||""} onChange={e=>set("about_point1",e.target.value)} placeholder="SRY-certifierad personal" className={inp}/>
-            <TextColorPicker label="Text färg" colorKey="about_point1_color" data={data} set={set}/>
-            <TextColorPicker label="Ikon färg" colorKey="about_point1_icon_color" data={data} set={set}/>
+
           </div>
           <div>
-            <label className={lbl}>Punkt 2</label>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Punkt 2</label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_point2_color||"#374151"} onChange={e=>set("about_point2_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<input type="color" value={data.about_point2_icon_color||"#166534"} onChange={e=>set("about_point2_icon_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+              </div>
+            </div>
             <select value={data.about_point2_icon||"Leaf"} onChange={e=>set("about_point2_icon",e.target.value)} className={inp}>
               <option value="none">— Ingen ikon</option>
               <option value="ShieldCheck">🛡️ ShieldCheck</option>
@@ -794,11 +805,16 @@ export default function SettingsPanel() {
               <option value="Sparkles">✨ Sparkles</option>
             </select>
             <input value={data.about_point2||""} onChange={e=>set("about_point2",e.target.value)} placeholder="Svanenmärkta Pur-Eco produkter" className={inp}/>
-            <TextColorPicker label="Text färg" colorKey="about_point2_color" data={data} set={set}/>
-            <TextColorPicker label="Ikon färg" colorKey="about_point2_icon_color" data={data} set={set}/>
+
           </div>
           <div>
-            <label className={lbl}>Punkt 3</label>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Punkt 3</label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_point3_color||"#374151"} onChange={e=>set("about_point3_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<input type="color" value={data.about_point3_icon_color||"#166534"} onChange={e=>set("about_point3_icon_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+              </div>
+            </div>
             <select value={data.about_point3_icon||"Star"} onChange={e=>set("about_point3_icon",e.target.value)} className={inp}>
               <option value="none">— Ingen ikon</option>
               <option value="ShieldCheck">🛡️ ShieldCheck</option>
@@ -811,8 +827,7 @@ export default function SettingsPanel() {
               <option value="Sparkles">✨ Sparkles</option>
             </select>
             <input value={data.about_point3||""} onChange={e=>set("about_point3",e.target.value)} placeholder="50% RUT-avdrag på arbetskostnaden" className={inp}/>
-            <TextColorPicker label="Text färg" colorKey="about_point3_color" data={data} set={set}/>
-            <TextColorPicker label="Ikon färg" colorKey="about_point3_icon_color" data={data} set={set}/>
+
           </div>
           <div>
             <label className={lbl}>Bild på Om oss-sidan</label>
