@@ -60,7 +60,7 @@ export const Hero = () => {
 
           <div className="mt-8 flex items-center gap-5">
             {ws.show_hero_badge1 !== false && (
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold" style={{color: ws.hero_badge1_color || "#475569"}}>
                 {ws.badge1_image
                   ? <img src={ws.badge1_image} alt="" className="h-4 w-4 object-contain"/>
                   : ws.badge1_icon !== "none" && <BadgeIcon name={ws.badge1_icon || "ShieldCheck"} size={16} className="text-[#166534]" />
@@ -69,7 +69,7 @@ export const Hero = () => {
               </span>
             )}
             {ws.show_hero_badge2 !== false && (
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold" style={{color: ws.hero_badge2_color || "#475569"}}>
                 {ws.badge2_image
                   ? <img src={ws.badge2_image} alt="" className="h-4 w-4 object-contain"/>
                   : ws.badge2_icon !== "none" && <BadgeIcon name={ws.badge2_icon || "Leaf"} size={16} className="text-[#166534]" />
