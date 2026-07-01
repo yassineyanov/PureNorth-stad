@@ -33,7 +33,7 @@ export const Contact = () => {
           </h2>}
           {ws.show_contact_description !== false && <p className="mt-5 text-lg max-w-lg" style={{color: ws.contact_description_color || "#475569"}}>
             {(ws.contact_description && ws.contact_description.length > 0) ? ws.contact_description : "Har du frågor eller vill boka en städning? Hör av dig så hjälper vi dig."}
-          </p>
+          </p>}
 
           <div className="mt-9 space-y-4">
             {ws.show_contact_phone !== false && <a href={`tel:${ws.phone?.replace(/[^0-9+]/g,"")}`} data-testid="contact-phone" className="flex items-center gap-4 group">
