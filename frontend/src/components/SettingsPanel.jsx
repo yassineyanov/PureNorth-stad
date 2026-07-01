@@ -30,6 +30,7 @@ export default function SettingsPanel() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const logoRef = useRef();
+  const aboutImgRef = useRef();
   const heroImgRef = useRef();
 
   useEffect(() => {
@@ -554,6 +555,20 @@ export default function SettingsPanel() {
           <div>
             <label className={lbl}>Punkt 3</label>
             <input value={data.about_point3||""} onChange={e=>set("about_point3",e.target.value)} placeholder="50% RUT-avdrag på arbetskostnaden" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Bild på Om oss-sidan</label>
+            {data.about_image && (
+              <div className="relative mb-3">
+                <img src={data.about_image} alt="Om oss" className="w-full h-48 object-cover rounded-xl border border-slate-100"/>
+                <button onClick={()=>set("about_image","")} className="absolute top-2 right-2 bg-red-500 text-white rounded-full h-7 w-7 flex items-center justify-center text-xs hover:bg-red-600">✕</button>
+              </div>
+            )}
+            <input ref={aboutImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "about_image")}/>
+            <button onClick={() => aboutImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-2.5 text-sm hover:border-slate-400 transition-colors">
+              <Upload size={14}/> {data.about_image ? "Byt bild" : "Ladda upp bild"}
+            </button>
+            <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 1200×800px</p>
           </div>
         </>}
 
