@@ -5740,6 +5740,18 @@ class WebsiteSettings(BaseModel):
     show_hero_badge1: Optional[bool] = True
     show_hero_badge2: Optional[bool] = True
     show_hero_image: Optional[bool] = True
+    hero_badge_color: Optional[str] = ""
+    hero_badge_bg: Optional[str] = ""
+    hero_title_color: Optional[str] = ""
+    hero_title_bg: Optional[str] = ""
+    hero_subtitle_color: Optional[str] = ""
+    hero_subtitle_bg: Optional[str] = ""
+    hero_cta_color: Optional[str] = ""
+    hero_cta_bg: Optional[str] = ""
+    hero_badge1_color: Optional[str] = ""
+    hero_badge1_bg: Optional[str] = ""
+    hero_badge2_color: Optional[str] = ""
+    hero_badge2_bg: Optional[str] = ""
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
