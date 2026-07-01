@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
+import { useWebsiteReady } from "@/context/WebsiteContext";
 import { Hero } from "@/components/Hero";
 import { Services } from "@/components/Services";
 import { BeforeAfter } from "@/components/BeforeAfter";
@@ -9,6 +10,8 @@ import { BookingForm } from "@/components/BookingForm";
 import { Contact, Footer } from "@/components/Contact";
 
 export default function Home() {
+  const ready = useWebsiteReady();
+  if (!ready) return <div className="min-h-screen bg-white"><div className="h-1 bg-[#166534] animate-pulse w-1/3"/></div>;
   const [ws, setWs] = React.useState({});
   React.useEffect(() => {
     const base = process.env.REACT_APP_BACKEND_URL || "";
