@@ -1,7 +1,7 @@
 import React from "react";
 import { useWebsite } from "@/context/WebsiteContext";
 import { Link } from "react-router-dom";
-import { Phone, MapPin, Clock } from "lucide-react";
+import { Phone, MapPin, Clock, Mail } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 const DEFAULT = {
@@ -45,6 +45,17 @@ export const Contact = () => {
                 <span className="block font-semibold text-slate-900">{ws.phone}</span>
               </div>
             </a>
+            {ws.email && (
+            <a href={`mailto:${ws.email}`} className="flex items-center gap-4 group">
+              <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition-colors">
+                <Mail size={20} />
+              </span>
+              <div>
+                <span className="block text-xs text-slate-500">E-post</span>
+                <span className="block font-semibold text-slate-900">{ws.email}</span>
+              </div>
+            </a>
+            )}
             <div className="flex items-center gap-4">
               <span className="h-12 w-12 rounded-2xl bg-[#166534]/10 flex items-center justify-center text-[#166534]">
                 <MapPin size={20} />
