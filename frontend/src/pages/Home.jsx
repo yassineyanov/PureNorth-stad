@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
+import { AboutSection } from "@/components/AboutSection";
 import { Hero } from "@/components/Hero";
 import { Services } from "@/components/Services";
 import { BeforeAfter } from "@/components/BeforeAfter";
@@ -56,6 +57,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
+      <AboutSection />
         <Services />
         <BeforeAfter />
         <WhyUs />
