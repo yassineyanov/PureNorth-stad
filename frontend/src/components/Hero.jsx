@@ -51,10 +51,26 @@ export const Hero = () => {
 
           <div className="mt-10 flex items-center gap-6 text-sm text-slate-500">
             <span className="inline-flex items-center gap-2">
-              <ShieldCheck size={16} className="text-[#166534]" /> {ws.badge1 || "SRY-kvalifikation"}
+              {ws.badge1_image ? <img src={ws.badge1_image} alt="" className="h-4 w-4 object-contain"/> :
+                ws.badge1_icon === "Leaf" ? <Leaf size={16} className="text-[#166534]"/> :
+                ws.badge1_icon === "Star" ? <Star size={16} className="text-[#166534]"/> :
+                ws.badge1_icon === "Heart" ? <Heart size={16} className="text-[#166534]"/> :
+                ws.badge1_icon === "Zap" ? <Zap size={16} className="text-[#166534]"/> :
+                ws.badge1_icon === "Award" ? <Award size={16} className="text-[#166534]"/> :
+                ws.badge1_icon === "CheckCircle" ? <CheckCircle size={16} className="text-[#166534]"/> :
+                <ShieldCheck size={16} className="text-[#166534]"/>
+              } {ws.badge1 || "SRY-kvalifikation"}
             </span>
             <span className="inline-flex items-center gap-2">
-              <Leaf size={16} className="text-[#166534]" /> {ws.badge2 || "Pur-Eco produkter"}
+              {ws.badge2_image ? <img src={ws.badge2_image} alt="" className="h-4 w-4 object-contain"/> :
+                ws.badge2_icon === "ShieldCheck" ? <ShieldCheck size={16} className="text-[#166534]"/> :
+                ws.badge2_icon === "Star" ? <Star size={16} className="text-[#166534]"/> :
+                ws.badge2_icon === "Heart" ? <Heart size={16} className="text-[#166534]"/> :
+                ws.badge2_icon === "Zap" ? <Zap size={16} className="text-[#166534]"/> :
+                ws.badge2_icon === "Award" ? <Award size={16} className="text-[#166534]"/> :
+                ws.badge2_icon === "CheckCircle" ? <CheckCircle size={16} className="text-[#166534]"/> :
+                <Leaf size={16} className="text-[#166534]"/>
+              } {ws.badge2 || "Pur-Eco produkter"}
             </span>
           </div>
         </motion.div>

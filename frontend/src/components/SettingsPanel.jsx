@@ -32,6 +32,8 @@ export default function SettingsPanel() {
   const logoRef = useRef();
   const aboutImgRef = useRef();
   const badgeImgRef = useRef();
+  const badge1ImgRef = useRef();
+  const badge2ImgRef = useRef();
   const heroImgRef = useRef();
 
   useEffect(() => {
@@ -171,10 +173,42 @@ export default function SettingsPanel() {
             <div>
               <label className={lbl}>Badge 1 (under knapparna)</label>
               <input value={data.badge1} onChange={e => set("badge1", e.target.value)} placeholder="SRY-kvalifikation" className={inp}/>
+              <label className={lbl + " mt-2"}>Badge 1 ikon</label>
+              <select value={data.badge1_icon||"ShieldCheck"} onChange={e=>set("badge1_icon",e.target.value)} className={inp}>
+                <option value="ShieldCheck">🛡️ ShieldCheck</option>
+                <option value="Leaf">🌿 Leaf</option>
+                <option value="Star">⭐ Star</option>
+                <option value="Heart">❤️ Heart</option>
+                <option value="Zap">⚡ Zap</option>
+                <option value="Award">🏆 Award</option>
+                <option value="CheckCircle">✅ CheckCircle</option>
+              </select>
+              <label className={lbl + " mt-2"}>Badge 1 logotyp (ersätter ikon)</label>
+              {data.badge1_image && <div className="flex items-center gap-2 mb-2"><img src={data.badge1_image} alt="" className="h-5 w-5 object-contain"/><button onClick={()=>set("badge1_image","")} className="text-red-500 text-xs">Ta bort</button></div>}
+              <input ref={badge1ImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "badge1_image")}/>
+              <button onClick={() => badge1ImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2 text-xs hover:border-slate-400 transition-colors mt-1">
+                <Upload size={12}/> {data.badge1_image ? "Byt" : "Ladda upp"}
+              </button>
             </div>
             <div>
               <label className={lbl}>Badge 2</label>
               <input value={data.badge2} onChange={e => set("badge2", e.target.value)} placeholder="Pur-Eco produkter" className={inp}/>
+              <label className={lbl + " mt-2"}>Badge 2 ikon</label>
+              <select value={data.badge2_icon||"Leaf"} onChange={e=>set("badge2_icon",e.target.value)} className={inp}>
+                <option value="Leaf">🌿 Leaf</option>
+                <option value="ShieldCheck">🛡️ ShieldCheck</option>
+                <option value="Star">⭐ Star</option>
+                <option value="Heart">❤️ Heart</option>
+                <option value="Zap">⚡ Zap</option>
+                <option value="Award">🏆 Award</option>
+                <option value="CheckCircle">✅ CheckCircle</option>
+              </select>
+              <label className={lbl + " mt-2"}>Badge 2 logotyp (ersätter ikon)</label>
+              {data.badge2_image && <div className="flex items-center gap-2 mb-2"><img src={data.badge2_image} alt="" className="h-5 w-5 object-contain"/><button onClick={()=>set("badge2_image","")} className="text-red-500 text-xs">Ta bort</button></div>}
+              <input ref={badge2ImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "badge2_image")}/>
+              <button onClick={() => badge2ImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2 text-xs hover:border-slate-400 transition-colors mt-1">
+                <Upload size={12}/> {data.badge2_image ? "Byt" : "Ladda upp"}
+              </button>
             </div>
           </div>
         </>}
