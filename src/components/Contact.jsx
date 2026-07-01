@@ -25,13 +25,13 @@ export const Contact = () => {
     <section id="kontakt" className="py-24 sm:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 items-center">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
+          <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{color: ws.contact_title_color || "#141414"}}>
             {ws.contact_title || "Kontakt"}
           </p>
-          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-[#141414]">
+          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight" style={{color: ws.contact_subtitle_color || "#141414"}}>
             {ws.contact_subtitle || "Vi finns i Umeå"}
           </h2>
-          <p className="mt-5 text-lg text-slate-600 max-w-lg">
+          <p className="mt-5 text-lg max-w-lg" style={{color: ws.contact_description_color || "#475569"}}>
             {(ws.contact_description && ws.contact_description.length > 0) ? ws.contact_description : "Har du frågor eller vill boka en städning? Hör av dig så hjälper vi dig."}
           </p>
 
