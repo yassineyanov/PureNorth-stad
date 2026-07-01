@@ -18,15 +18,21 @@ const SECTIONS = [
   { id: "testimonials", label: "Omdömen", icon: Star },
 ];
 
+function CircleColor({ value, onChange }) {
+  return (
+    <div className="relative h-6 w-6 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 cursor-pointer" style={{backgroundColor: value}}>
+      <input type="color" value={value} onChange={onChange} className="absolute inset-0 opacity-0 w-8 h-8 cursor-pointer" style={{transform: "translate(-25%, -25%)"}}/>
+    </div>
+  );
+}
+
 function TextColorPicker({ label, colorKey, data, set }) {
   return (
     <div className="flex items-center gap-3 mt-2">
       <span className="text-xs text-slate-500">{label}</span>
       <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
         Text
-        <input type="color" value={data[colorKey] || "#141414"}
-          onChange={e => set(colorKey, e.target.value)}
-          className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+        <CircleColor value={data[colorKey] || "#141414"} onChange={e => set(colorKey, e.target.value)}/>
       </label>
       {data[colorKey] && <button onClick={() => set(colorKey, "")} className="text-xs text-red-400 hover:text-red-600">↺</button>}
     </div>
@@ -42,15 +48,11 @@ function ColorPicker({ label, colorKey, bgKey, defaultColor, defaultBg, data, se
       <div className="flex items-center gap-2">
         <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
           Text
-          <input type="color" value={data[colorKey] || defaultColor || "#141414"}
-            onChange={e => set(colorKey, e.target.value)}
-            className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+          <CircleColor value={data[colorKey] || defaultColor || "#141414"} onChange={e => set(colorKey, e.target.value)}/>
         </label>
         <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
           BG
-          <input type="color" value={data[bgKey] || defaultBg || "#ffffff"}
-            onChange={e => set(bgKey, e.target.value)}
-            className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+          <CircleColor value={data[bgKey] || defaultBg || "#ffffff"} onChange={e => set(bgKey, e.target.value)}/>
         </label>
         {(colorChanged || bgChanged) && (
           <button onClick={() => { set(colorKey, defaultColor || ""); set(bgKey, defaultBg || ""); }}
@@ -209,9 +211,7 @@ export default function SettingsPanel() {
             </select>
             <div className="flex items-center gap-3 mt-2">
               <span className="text-xs text-slate-500">Ikon färg</span>
-              <input type="color" value={data.hero_badge_icon_color || "#166534"}
-                onChange={e => set("hero_badge_icon_color", e.target.value)}
-                className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+              <CircleColor value={data.hero_badge_icon_color || "#166534"} onChange={e => set("hero_badge_icon_color", e.target.value)}/>
               {data.hero_badge_icon_color && <button onClick={()=>set("hero_badge_icon_color","")} className="text-xs text-red-400">↺</button>}
             </div>
             <label className={lbl + " mt-2"}>Badge-logotyp (valfritt - ersätter ikon)</label>
@@ -284,9 +284,7 @@ export default function SettingsPanel() {
               </select>
               <div className="flex items-center gap-3 mt-2">
                 <span className="text-xs text-slate-500">Ikon färg</span>
-                <input type="color" value={data.hero_badge1_icon_color || "#166534"}
-                  onChange={e => set("hero_badge1_icon_color", e.target.value)}
-                  className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+                <CircleColor value={data.hero_badge1_icon_color || "#166534"} onChange={e => set("hero_badge1_icon_color", e.target.value)}/>
                 {data.hero_badge1_icon_color && <button onClick={()=>set("hero_badge1_icon_color","")} className="text-xs text-red-400">↺</button>}
               </div>
               <label className={lbl + " mt-2"}>Badge 1 logotyp (ersätter ikon)</label>
@@ -320,9 +318,7 @@ export default function SettingsPanel() {
               </select>
               <div className="flex items-center gap-3 mt-2">
                 <span className="text-xs text-slate-500">Ikon färg</span>
-                <input type="color" value={data.hero_badge2_icon_color || "#166534"}
-                  onChange={e => set("hero_badge2_icon_color", e.target.value)}
-                  className="h-6 w-8 rounded cursor-pointer border border-slate-200"/>
+                <CircleColor value={data.hero_badge2_icon_color || "#166534"} onChange={e => set("hero_badge2_icon_color", e.target.value)}/>
                 {data.hero_badge2_icon_color && <button onClick={()=>set("hero_badge2_icon_color","")} className="text-xs text-red-400">↺</button>}
               </div>
               <label className={lbl + " mt-2"}>Badge 2 logotyp (ersätter ikon)</label>
@@ -628,9 +624,7 @@ export default function SettingsPanel() {
             <div>
               <label className={lbl}>Primärfärg (grön)</label>
               <div className="flex items-center gap-3 mt-1">
-                <input type="color" value={data.primary_color||"#166534"}
-                  onChange={e=>set("primary_color",e.target.value)}
-                  className="h-12 w-12 rounded-xl border border-slate-200 cursor-pointer p-1"/>
+                <CircleColor value={data.primary_color||"#166534"} onChange={e=>set("primary_color",e.target.value)}/>
                 <input value={data.primary_color||"#166534"}
                   onChange={e=>set("primary_color",e.target.value)}
                   placeholder="#166534" className={inp}/>
@@ -646,9 +640,7 @@ export default function SettingsPanel() {
             <div>
               <label className={lbl}>Sekundärfärg (svart)</label>
               <div className="flex items-center gap-3 mt-1">
-                <input type="color" value={data.secondary_color||"#141414"}
-                  onChange={e=>set("secondary_color",e.target.value)}
-                  className="h-12 w-12 rounded-xl border border-slate-200 cursor-pointer p-1"/>
+                <CircleColor value={data.secondary_color||"#141414"} onChange={e=>set("secondary_color",e.target.value)}/>
                 <input value={data.secondary_color||"#141414"}
                   onChange={e=>set("secondary_color",e.target.value)}
                   placeholder="#141414" className={inp}/>
@@ -733,7 +725,7 @@ export default function SettingsPanel() {
           <div>
             <div className="flex items-center justify-between">
               <label className={lbl}>Etikett (liten grön text)</label>
-              <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Färg<input type="color" value={data.about_label_color||"#166534"} onChange={e=>set("about_label_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+              <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Färg<CircleColor value={data.about_label_color||"#166534"} onChange={e=>set("about_label_color",e.target.value)}/></label>
             </div>
             <input value={data.about_label||""} onChange={e=>set("about_label",e.target.value)} placeholder="Om oss" className={inp}/>
           </div>
@@ -774,8 +766,8 @@ export default function SettingsPanel() {
             <div className="flex items-center justify-between">
               <label className={lbl}>Punkt 1</label>
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_point1_color||"#374151"} onChange={e=>set("about_point1_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
-                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<input type="color" value={data.about_point1_icon_color||"#166534"} onChange={e=>set("about_point1_icon_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<CircleColor value={data.about_point1_color||"#374151"} onChange={e=>set("about_point1_color",e.target.value)}/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<CircleColor value={data.about_point1_icon_color||"#166534"} onChange={e=>set("about_point1_icon_color",e.target.value)}/></label>
               </div>
             </div>
             <select value={data.about_point1_icon||"ShieldCheck"} onChange={e=>set("about_point1_icon",e.target.value)} className={inp}>
@@ -796,8 +788,8 @@ export default function SettingsPanel() {
             <div className="flex items-center justify-between">
               <label className={lbl}>Punkt 2</label>
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_point2_color||"#374151"} onChange={e=>set("about_point2_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
-                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<input type="color" value={data.about_point2_icon_color||"#166534"} onChange={e=>set("about_point2_icon_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<CircleColor value={data.about_point2_color||"#374151"} onChange={e=>set("about_point2_color",e.target.value)}/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<CircleColor value={data.about_point2_icon_color||"#166534"} onChange={e=>set("about_point2_icon_color",e.target.value)}/></label>
               </div>
             </div>
             <select value={data.about_point2_icon||"Leaf"} onChange={e=>set("about_point2_icon",e.target.value)} className={inp}>
@@ -818,8 +810,8 @@ export default function SettingsPanel() {
             <div className="flex items-center justify-between">
               <label className={lbl}>Punkt 3</label>
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_point3_color||"#374151"} onChange={e=>set("about_point3_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
-                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<input type="color" value={data.about_point3_icon_color||"#166534"} onChange={e=>set("about_point3_icon_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<CircleColor value={data.about_point3_color||"#374151"} onChange={e=>set("about_point3_color",e.target.value)}/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<CircleColor value={data.about_point3_icon_color||"#166534"} onChange={e=>set("about_point3_icon_color",e.target.value)}/></label>
               </div>
             </div>
             <select value={data.about_point3_icon||"Star"} onChange={e=>set("about_point3_icon",e.target.value)} className={inp}>
@@ -840,8 +832,8 @@ export default function SettingsPanel() {
             <div className="flex items-center justify-between">
               <label className={lbl}>Knapp text (Boka städning)</label>
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<input type="color" value={data.about_btn_color||"#ffffff"} onChange={e=>set("about_btn_color",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
-                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">BG<input type="color" value={data.about_btn_bg||"#141414"} onChange={e=>set("about_btn_bg",e.target.value)} className="h-5 w-7 rounded cursor-pointer border-0"/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<CircleColor value={data.about_btn_color||"#ffffff"} onChange={e=>set("about_btn_color",e.target.value)}/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">BG<CircleColor value={data.about_btn_bg||"#141414"} onChange={e=>set("about_btn_bg",e.target.value)}/></label>
               </div>
             </div>
             <input value={data.about_btn_text||""} onChange={e=>set("about_btn_text",e.target.value)} placeholder="Boka städning" className={inp}/>
