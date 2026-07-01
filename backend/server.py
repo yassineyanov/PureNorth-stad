@@ -5728,6 +5728,10 @@ class WebsiteSettings(BaseModel):
     about_image: Optional[str] = ""
     hero_badge_icon: Optional[str] = "Leaf"
     hero_badge_image: Optional[str] = ""
+    badge1_icon: Optional[str] = "ShieldCheck"
+    badge1_image: Optional[str] = ""
+    badge2_icon: Optional[str] = "Leaf"
+    badge2_image: Optional[str] = ""
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
