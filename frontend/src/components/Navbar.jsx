@@ -6,6 +6,7 @@ import { Logo } from "@/components/Logo";
 
 const DEFAULT_LINKS = [
   { label: "Tjänster", href: "/#tjanster" },
+  { label: "Om oss", href: "/om-oss" },
   { label: "Vårt arbete", href: "/#vart-arbete" },
   { label: "Kontakt", href: "/#kontakt" },
 ];
