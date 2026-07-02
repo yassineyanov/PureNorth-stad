@@ -5767,6 +5767,7 @@ class WebsiteSettings(BaseModel):
     vart_fore_label_bg: Optional[str] = ""
     vart_efter_label_bg: Optional[str] = ""
     vart_handle_color: Optional[str] = ""
+    vart_transition_type: Optional[str] = "slider"
     navbar_bg: Optional[str] = ""
     navbar_text_color: Optional[str] = ""
     navbar_link_color: Optional[str] = ""
