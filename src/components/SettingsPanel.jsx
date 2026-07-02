@@ -274,6 +274,21 @@ export default function SettingsPanel() {
             <input value={data.cta_text} onChange={e => set("cta_text", e.target.value)} placeholder="Boka tid online" className={inp}/>
             <ColorPicker label="Färger" colorKey="hero_cta_color" bgKey="hero_cta_bg" defaultColor="#ffffff" defaultBg="#141414" data={data} set={set}/>
           </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Telefonnummer (knapp)</label>
+              <button type="button" onClick={()=>set("show_hero_phone", data.show_hero_phone === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_phone !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_phone !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-xs text-slate-500">Text färg</span>
+              <CircleColor value={data.hero_phone_color||"#141414"} onChange={e=>set("hero_phone_color",e.target.value)}/>
+              <span className="text-xs text-slate-500 ml-2">Ikon färg</span>
+              <CircleColor value={data.hero_phone_icon_color||"#141414"} onChange={e=>set("hero_phone_icon_color",e.target.value)}/>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="flex items-center justify-between mb-1">
