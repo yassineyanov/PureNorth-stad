@@ -1110,9 +1110,7 @@ export default function SettingsPanel() {
               </div>
               <div>
                 <label className={lbl}>Punkter (en per rad)</label>
-                <textarea value={(sec.items||[]).join("
-")} onChange={e=>{const s=[...data.kundavtal_sections];s[idx]={...s[idx],items:e.target.value.split("
-")};set("kundavtal_sections",s);}} rows={4} className={inp+" resize-none"}/>
+                <textarea value={(sec.items||[]).join("\n")} onChange={e=>{const s=[...data.kundavtal_sections];s[idx]={...s[idx],items:e.target.value.split("\n")};set("kundavtal_sections",s);}} rows={4} className={inp+" resize-none"}/>
               </div>
             </div>
           ))}
