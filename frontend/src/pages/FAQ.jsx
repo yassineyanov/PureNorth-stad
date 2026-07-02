@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Phone, Mail } from "lucide-react";
+import { Phone, Mail, Smartphone, MessageCircle, Send } from "lucide-react";
+const IconMap = { Phone, Mail, Smartphone, MessageCircle, Send };
+function BtnIcon({ name, size=17 }) { const Icon = IconMap[name] || Phone; return <Icon size={size}/>; }
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Contact";
 import { useWebsite } from "@/context/WebsiteContext";
@@ -75,12 +77,22 @@ export default function FAQ() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <a href={`tel:${(ws.phone || "070-624 04 03").replace(/[^0-9]/g,"")}`} className="inline-flex items-center gap-2 rounded-full bg-white text-[#141414] px-6 py-3 font-semibold hover:bg-white/90 transition-colors">
-                <Phone size={17} /> Ring oss
-              </a>
-              <a href={`mailto:${ws.email || "kundtjanst@purenorthstad.se"}`} className="inline-flex items-center gap-2 rounded-full border border-white/30 text-white px-6 py-3 font-semibold hover:bg-white/10 transition-colors">
-                <Mail size={17} /> Mejla oss
-              </a>
+              {ws.show_faq_ring_btn !== false && (
+                <a href={`tel:${(ws.phone || "070-624 04 03").replace(/[^0-9]/g,"")}`}
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold transition-colors"
+                  style={{backgroundColor: ws.faq_ring_bg || "#ffffff", color: ws.faq_ring_color || "#141414"}}>
+                  {ws.faq_ring_icon !== "none" && <BtnIcon name={ws.faq_ring_icon || "Phone"} size={17} style={{color: ws.faq_ring_icon_color || "#141414"}}/>}
+                  {ws.faq_ring_text || "Ring oss"}
+                </a>
+              )}
+              {ws.show_faq_mail_btn !== false && (
+                <a href={`mailto:${ws.email || "kundtjanst@purenorthstad.se"}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/30 px-6 py-3 font-semibold transition-colors"
+                  style={{backgroundColor: ws.faq_mail_bg || "transparent", color: ws.faq_mail_color || "#ffffff"}}>
+                  {ws.faq_mail_icon !== "none" && <BtnIcon name={ws.faq_mail_icon || "Mail"} size={17} style={{color: ws.faq_mail_icon_color || "#ffffff"}}/>}
+                  {ws.faq_mail_text || "Mejla oss"}
+                </a>
+              )}
             </div>
           </div>
           )}
