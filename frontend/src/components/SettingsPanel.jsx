@@ -283,10 +283,8 @@ export default function SettingsPanel() {
               </button>
             </div>
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-xs text-slate-500">Text färg</span>
-              <CircleColor value={data.hero_phone_color||"#141414"} onChange={e=>set("hero_phone_color",e.target.value)}/>
-              <span className="text-xs text-slate-500 ml-2">Ikon färg</span>
-              <CircleColor value={data.hero_phone_icon_color||"#141414"} onChange={e=>set("hero_phone_icon_color",e.target.value)}/>
+              <span className="text-xs text-slate-500">BG färg</span>
+              <CircleColor value={data.hero_phone_color||"#ffffff"} onChange={e=>set("hero_phone_color",e.target.value)}/>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

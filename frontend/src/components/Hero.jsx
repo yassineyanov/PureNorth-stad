@@ -52,8 +52,8 @@ export const Hero = () => {
               {ws.show_hero_phone !== false && (
                 <a href={`tel:${(ws.phone || "070-624 04 03").replace(/[^0-9]/g, "")}`}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 hover:border-slate-400 px-8 py-4 text-base font-semibold transition-colors"
-                  style={{color: ws.hero_phone_color || "#374151"}}>
-                  <Phone size={18} style={{color: ws.hero_phone_icon_color || "#374151"}}/> {ws.phone || "070-624 04 03"}
+                  style={{backgroundColor: ws.hero_phone_color || "transparent"}}>
+                  <Phone size={18}/> {ws.phone || "070-624 04 03"}
                 </a>
               )}
             </div>
