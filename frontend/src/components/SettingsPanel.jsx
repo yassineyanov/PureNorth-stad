@@ -1316,6 +1316,126 @@ export default function SettingsPanel() {
           </button>
         </>}
 
+        {section === "footer_malsattning" && <>
+          <div className="flex items-center gap-2 mb-4">
+            <button onClick={()=>setSection("footer")} className="text-sm text-slate-500 hover:text-slate-800">← Footer</button>
+            <span className="text-slate-300">/</span>
+            <span className="text-sm font-medium text-slate-800">Målsättning</span>
+          </div>
+          <h3 className="font-semibold text-slate-800">Målsättning</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-slate-500">Sida BG</span>
+            <CircleColor value={data.mal_bg||"#ffffff"} onChange={e=>set("mal_bg",e.target.value)}/>
+          </div>
+          <div>
+            <label className={lbl}>Etikett</label>
+            <input value={data.mal_eyebrow||""} onChange={e=>set("mal_eyebrow",e.target.value)} placeholder="Målsättning" className={inp}/>
+            <TextColorPicker label="Färg" colorKey="mal_eyebrow_color" defaultColor="#141414" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Rubrik</label>
+            <input value={data.mal_title||""} onChange={e=>set("mal_title",e.target.value)} placeholder="Vår målsättning" className={inp}/>
+            <TextColorPicker label="Färg" colorKey="mal_title_color" defaultColor="#141414" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Intro text</label>
+            <textarea value={data.mal_intro||""} onChange={e=>set("mal_intro",e.target.value)} rows={3} placeholder="PureNorth Städ drivs med ambition..." className={inp+" resize-none"}/>
+            <TextColorPicker label="Färg" colorKey="mal_intro_color" defaultColor="#475569" data={data} set={set}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Kort 1 (Svanenmärkt)</h4>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-slate-500">Kort BG</span>
+            <CircleColor value={data.mal_card_bg||"#ffffff"} onChange={e=>set("mal_card_bg",e.target.value)}/>
+            <span className="text-xs text-slate-500">Titel</span>
+            <CircleColor value={data.mal_card_title_color||"#141414"} onChange={e=>set("mal_card_title_color",e.target.value)}/>
+            <span className="text-xs text-slate-500">Text</span>
+            <CircleColor value={data.mal_card_text_color||"#475569"} onChange={e=>set("mal_card_text_color",e.target.value)}/>
+          </div>
+          <div>
+            <label className={lbl}>Kort 1 titel</label>
+            <input value={data.mal_card1_title||""} onChange={e=>set("mal_card1_title",e.target.value)} placeholder="Miljövänliga val är viktiga för oss" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Kort 1 text</label>
+            <textarea value={data.mal_card1_text||""} onChange={e=>set("mal_card1_text",e.target.value)} rows={2} className={inp+" resize-none"}/>
+          </div>
+          <div>
+            <label className={lbl}>Kort 1 bild URL</label>
+            <input value={data.mal_card1_img||""} onChange={e=>set("mal_card1_img",e.target.value)} placeholder="/svanen-new.png" className={inp}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Kort 2 (Trygg arbetsplats)</h4>
+          <div>
+            <label className={lbl}>Kort 2 titel</label>
+            <input value={data.mal_card2_title||""} onChange={e=>set("mal_card2_title",e.target.value)} placeholder="En trygg arbetsplats" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Kort 2 text</label>
+            <textarea value={data.mal_card2_text||""} onChange={e=>set("mal_card2_text",e.target.value)} rows={2} className={inp+" resize-none"}/>
+          </div>
+          <div>
+            <label className={lbl}>Kort 2 bild URL</label>
+            <input value={data.mal_card2_img||""} onChange={e=>set("mal_card2_img",e.target.value)} placeholder="https://..." className={inp}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Check-kort färger</h4>
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            <span className="text-xs text-slate-500">Kort BG</span>
+            <CircleColor value={data.mal_check_card_bg||"#ffffff"} onChange={e=>set("mal_check_card_bg",e.target.value)}/>
+            <span className="text-xs text-slate-500">Ikon BG</span>
+            <CircleColor value={data.mal_check_icon_bg||"#141414"} onChange={e=>set("mal_check_icon_bg",e.target.value)}/>
+            <span className="text-xs text-slate-500">Ikon</span>
+            <CircleColor value={data.mal_check_icon_color||"#ffffff"} onChange={e=>set("mal_check_icon_color",e.target.value)}/>
+            <span className="text-xs text-slate-500">Titel</span>
+            <CircleColor value={data.mal_check_title_color||"#141414"} onChange={e=>set("mal_check_title_color",e.target.value)}/>
+            <span className="text-xs text-slate-500">Text</span>
+            <CircleColor value={data.mal_check_text_color||"#475569"} onChange={e=>set("mal_check_text_color",e.target.value)}/>
+          </div>
+          <div>
+            <label className={lbl}>Check 1 titel</label>
+            <input value={data.mal_check1_title||""} onChange={e=>set("mal_check1_title",e.target.value)} placeholder="Hög kvalité" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Check 1 text</label>
+            <textarea value={data.mal_check1_text||""} onChange={e=>set("mal_check1_text",e.target.value)} rows={2} className={inp+" resize-none"}/>
+          </div>
+          <div>
+            <label className={lbl}>Check 2 titel</label>
+            <input value={data.mal_check2_title||""} onChange={e=>set("mal_check2_title",e.target.value)} placeholder="Klart inom 24 timmar" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Check 2 text</label>
+            <textarea value={data.mal_check2_text||""} onChange={e=>set("mal_check2_text",e.target.value)} rows={2} className={inp+" resize-none"}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">SRY-sektion</h4>
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            <span className="text-xs text-slate-500">BG</span>
+            <CircleColor value={data.mal_sry_bg||"#141414"} onChange={e=>set("mal_sry_bg",e.target.value)}/>
+            <span className="text-xs text-slate-500">Titel</span>
+            <CircleColor value={data.mal_sry_title_color||"#ffffff"} onChange={e=>set("mal_sry_title_color",e.target.value)}/>
+            <span className="text-xs text-slate-500">Text</span>
+            <CircleColor value={data.mal_sry_text_color||"#ffffff"} onChange={e=>set("mal_sry_text_color",e.target.value)}/>
+            <span className="text-xs text-slate-500">Ikon BG</span>
+            <CircleColor value={data.mal_sry_icon_bg||"#ffffff"} onChange={e=>set("mal_sry_icon_bg",e.target.value)}/>
+            <span className="text-xs text-slate-500">Ikon</span>
+            <CircleColor value={data.mal_sry_icon_color||"#141414"} onChange={e=>set("mal_sry_icon_color",e.target.value)}/>
+          </div>
+          <div>
+            <label className={lbl}>SRY rubrik</label>
+            <input value={data.mal_sry_title||""} onChange={e=>set("mal_sry_title",e.target.value)} placeholder="SRY-kvalifikation" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>SRY text 1</label>
+            <textarea value={data.mal_sry_text1||""} onChange={e=>set("mal_sry_text1",e.target.value)} rows={3} className={inp+" resize-none"}/>
+          </div>
+          <div>
+            <label className={lbl}>SRY text 2</label>
+            <textarea value={data.mal_sry_text2||""} onChange={e=>set("mal_sry_text2",e.target.value)} rows={2} className={inp+" resize-none"}/>
+          </div>
+        </>}
+
         {section === "seo" && <>
           <h3 className="font-semibold text-slate-800">SEO — Sökmotoroptimering</h3>
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 mb-2">
