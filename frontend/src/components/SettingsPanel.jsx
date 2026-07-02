@@ -1675,8 +1675,22 @@ export default function SettingsPanel() {
             <div key={idx} className="border border-slate-200 rounded-xl p-3 space-y-2 relative">
               <button onClick={()=>set("vart_slides",data.vart_slides.filter((_,i)=>i!==idx))}
                 className="absolute top-2 right-2 text-slate-400 hover:text-red-500"><Trash2 size={14}/></button>
-              <p className="text-xs font-medium text-slate-600">Bild {idx+1}: {slide.alt||""}</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium text-slate-600">Bild {idx+1}: {slide.alt||""}</p>
+                <button type="button" onClick={()=>{const s=[...data.vart_slides];s[idx]={...s[idx],show:s[idx].show===false?true:false};set("vart_slides",s);}}
+                  className={`w-10 h-5 rounded-full transition-colors ${slide.show!==false?"bg-blue-500":"bg-slate-200"}`}>
+                  <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${slide.show!==false?"translate-x-5":"translate-x-0"}`}/>
+                </button>
+              </div>
               <input value={slide.alt||""} onChange={e=>{const s=[...data.vart_slides];s[idx]={...s[idx],alt:e.target.value};set("vart_slides",s);}} placeholder="Alt text (t.ex. Sovrum)" className={inp}/>
+              <div>
+                <label className={lbl}>Visningsläge</label>
+                <select value={slide.mode||"slider"} onChange={e=>{const s=[...data.vart_slides];s[idx]={...s[idx],mode:e.target.value};set("vart_slides",s);}} className={inp}>
+                  <option value="slider">↔️ Före & efter slider</option>
+                  <option value="before">📷 Bara Före-bild</option>
+                  <option value="after">📷 Bara Efter-bild</option>
+                </select>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className={lbl}>Före bild</label>

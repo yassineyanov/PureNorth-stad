@@ -58,10 +58,30 @@ export const BeforeAfter = () => {
           </p>
         </div>
         <div className="grid md:grid-cols-2 gap-7">
-          {slides.filter(s => s.before || s.after).map((s, i) => (
+          {slides.filter(s => s.show !== false && (s.before || s.after)).map((s, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.1 }}>
-              <BeforeAfterSlider {...s} testid={s.testid || `before-after-${i+1}`} ws={ws}/>
+              {(!s.mode || s.mode === "slider") && (
+                <BeforeAfterSlider {...s} testid={s.testid || `before-after-${i+1}`} ws={ws}/>
+              )}
+              {s.mode === "before" && (
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/10">
+                  <img src={s.before} alt={s.alt} className="w-full h-full object-cover"/>
+                  <span className="absolute top-3 left-3 text-xs font-semibold text-white px-3 py-1 rounded-full"
+                    style={{backgroundColor: ws.vart_fore_label_bg || "#141414"}}>
+                    {ws.vart_fore_label || "Före"}
+                  </span>
+                </div>
+              )}
+              {s.mode === "after" && (
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/10">
+                  <img src={s.after} alt={s.alt} className="w-full h-full object-cover"/>
+                  <span className="absolute top-3 right-3 text-xs font-semibold text-white px-3 py-1 rounded-full"
+                    style={{backgroundColor: ws.vart_efter_label_bg || "#166534"}}>
+                    {ws.vart_efter_label || "Efter"}
+                  </span>
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
