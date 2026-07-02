@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useWebsite } from "@/context/WebsiteContext";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Quote, Star, PenLine, ChevronDown, ChevronUp } from "lucide-react";
@@ -59,7 +60,7 @@ const featured = [
   { name: "Christoffer Ek", role: "Storstädning", rating: 5, text: "Grundligt och proffsigt jobb. Skulle anlita dem igen direkt." },
 ];
 
-const ReviewCard = ({ name, role, rating, text, i }) => (
+const ReviewCard = ({ name, role, rating, text, i, ws={} }) => (
   <motion.div
     data-testid={`testimonial-${i}`}
     initial={{ opacity: 0, y: 16 }}
@@ -67,13 +68,14 @@ const ReviewCard = ({ name, role, rating, text, i }) => (
     viewport={{ once: true }}
     transition={{ duration: 0.4 }}
     className="rounded-3xl border border-slate-200 p-8 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300"
+    style={{backgroundColor: ws.testimonials_card_bg || "#ffffff"}}
   >
-    <Quote size={28} className="text-[#141414] mb-4" />
+    <Quote size={28} className="mb-4" style={{color: ws.testimonials_icon_color || "#141414"}}/>
     <StarRating value={rating} className="mb-4" />
-    <p className="text-[15px] text-slate-700 leading-relaxed flex-1">"{text}"</p>
+    <p className="text-[15px] leading-relaxed flex-1" style={{color: ws.testimonials_text_color || "#334155"}}>"{text}"</p>
     <div className="mt-6 pt-5 border-t border-slate-100">
-      <p className="font-display font-semibold text-slate-900">{name}</p>
-      {role && <p className="text-sm text-slate-500">{role}</p>}
+      <p className="font-display font-semibold" style={{color: ws.testimonials_name_color || "#0f172a"}}>{name}</p>
+      {role && <p className="text-sm" style={{color: ws.testimonials_role_color || "#64748b"}}>{role}</p>}
     </div>
   </motion.div>
 );
@@ -135,6 +137,7 @@ const ReviewForm = ({ onDone }) => {
 const INITIAL = 3;
 
 export const Testimonials = () => {
+  const ws = useWebsite();
   const [approved, setApproved] = useState([]);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -153,17 +156,17 @@ export const Testimonials = () => {
     <section id="omdomen" className="py-24 sm:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
         <div className="max-w-2xl mb-14">
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#141414] mb-3">
-            Omdömen
-          </p>
-          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-[#141414]">
-            Vad våra kunder säger
-          </h2>
+          {ws.show_testimonials_label !== false && <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{color: ws.testimonials_label_color || "#141414"}}>
+            {ws.testimonials_label || "Omdömen"}
+          </p>}
+          {ws.show_testimonials_title !== false && <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight" style={{color: ws.testimonials_title_color || "#141414"}}>
+            {ws.testimonials_title || "Vad våra kunder säger"}
+          </h2>}
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
           {visible.map((r, i) => (
-            <ReviewCard key={`${r.name}-${i}`} {...r} i={i} />
+            <ReviewCard key={`${r.name}-${i}`} {...r} i={i} ws={ws}/>
           ))}
         </div>
 
