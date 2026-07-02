@@ -191,6 +191,14 @@ export default function SettingsPanel() {
                 {"heading":"13. Ändring av integritetspolicy","text":"PureNorth Städ har rätt att när som helst ändra integritetspolicyn."},
                 {"heading":"14. Kontaktinformation","text":"Har du frågor kring denna policy kan du kontakta oss på kundtjanst@purenorthstad.se."}
               ],
+              services_label_color: "",
+              services_title_color: "",
+              services: [
+                {"title":"Hemstädning","desc":"Regelbunden eller engångsstädning som ger dig mer tid till det du älskar.","icon_name":"Home","icon_color":"#166534","img":"https://images.pexels.com/photos/36777855/pexels-photo-36777855.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940","show":true,"title_color":"#0f172a","desc_color":"#475569"},
+                {"title":"Flyttstädning","desc":"Noggrann städning vid in och utflyttning, med nöjd kund garanti.","icon_name":"Truck","icon_color":"#166534","img":"https://images.unsplash.com/photo-1600585152220-90363fe7e115?crop=entropy&cs=srgb&fm=jpg&q=85&w=940","show":true,"title_color":"#0f172a","desc_color":"#475569"},
+                {"title":"Kontorsstädning","desc":"Professionell städning av arbetsplatser för en frisk arbetsmiljö.","icon_name":"Building2","icon_color":"#166534","img":"https://images.unsplash.com/photo-1449247709967-d4461a6a6103?crop=entropy&cs=srgb&fm=jpg&q=85&w=940","show":true,"title_color":"#0f172a","desc_color":"#475569"},
+                {"title":"Storstädning","desc":"Djuprengöring av hela bostaden, perfekt inför högtider och säsong.","icon_name":"Sparkles","icon_color":"#166534","img":"https://images.pexels.com/photos/4239146/pexels-photo-4239146.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940","show":true,"title_color":"#0f172a","desc_color":"#475569"}
+              ],
               vart_slides: [
                 {"before":"/before-1.png","after":"/after-1.png","alt":"Sovrum","testid":"before-after-1","show":true,"mode":"slider"},
                 {"before":"/before-2.png","after":"/after-2.png","alt":"Kontor","testid":"before-after-2","show":true,"mode":"slider"}
