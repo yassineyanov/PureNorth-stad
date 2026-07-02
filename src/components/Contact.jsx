@@ -136,8 +136,8 @@ export const Footer = () => {
           )}
         </div>
       )}
-      <p className="text-sm text-slate-500 text-center mt-4">
-        © {new Date().getFullYear()} {ws.company_name || "PureNorth Städ"} · Umeå
+      <p className="text-sm text-center mt-4" style={{color: ws.footer_copyright_color || "#64748b"}}>
+        {ws.footer_copyright || `© ${new Date().getFullYear()} ${ws.company_name || "PureNorth Städ"} · Umeå`}
       </p>
     </footer>
   );
