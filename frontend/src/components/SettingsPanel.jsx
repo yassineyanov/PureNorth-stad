@@ -165,6 +165,23 @@ export default function SettingsPanel() {
               testimonials_name_color: "",
               testimonials_role_color: "",
               testimonials_icon_color: "",
+              integritet_sections: [
+                {"heading":"Behandling av personuppgifter","bullets":["För att kunna erbjuda dig våra tjänster behöver vi behandla dina personuppgifter.","Vi värnar om din personliga integritet och eftersträvar alltid en hög nivå av dataskydd.","PureNorth Städ avser att behandla personuppgifter i enlighet med dataskyddsförordningen GDPR."]},
+                {"heading":"1. Allmänt","text":"Denna integritetspolicy beskriver hur PureNorth Städ samlar in och behandlar dina personuppgifter."},
+                {"heading":"2. Personuppgiftsansvarig","text":"Respektive bolag som du lämnat personuppgifter till är personuppgiftsansvarig för behandling av dina uppgifter."},
+                {"heading":"3. Insamling av information","text":"Vi samlar in information från dig när du besöker vår hemsida eller på annat sätt har kontakt med oss."},
+                {"heading":"4. Vilken information behandlar vi?","bullets":["Namn och identifikationsnummer","Adress","Telefonnummer och e-post","Betalningsuppgifter","Uppgifter om dina beställningar"]},
+                {"heading":"5. Användning av information","bullets":["Fullgöra våra förpliktelser gentemot dig som kund","Möjliggöra allmän kundvård och kundservice","Hantera kundförhållandet och tillhandahålla våra tjänster"]},
+                {"heading":"6. De lagliga grunderna","text":"Uppfyllande av avtal: vi behandlar dina personuppgifter för att kunna fullgöra avtalet med dig som kund."},
+                {"heading":"7. Hur länge sparar vi informationen","text":"Vi sparar uppgifter om kunder i högst 24 månader efter senaste interaktion."},
+                {"heading":"8. E-handelssäkerhet","text":"PureNorth Städ är de enda som äger informationen som samlas in på våra webbplatser."},
+                {"heading":"9. Utlämnande till tredje part","text":"Vi säljer inte personligt identifierbar information till utomstående parter."},
+                {"heading":"10. Informationsskydd","text":"Vi använder avancerade krypteringsmetoder för att skydda känsliga uppgifter."},
+                {"heading":"11. Dina rättigheter","text":"Du har rätt att kostnadsfritt erhålla ett registerutdrag över vilken information som finns registrerad om dig."},
+                {"heading":"12. Cookies","text":"När du besöker vår hemsida använder vi cookies för att ge dig en mer användarvänlig webbplats."},
+                {"heading":"13. Ändring av integritetspolicy","text":"PureNorth Städ har rätt att när som helst ändra integritetspolicyn."},
+                {"heading":"14. Kontaktinformation","text":"Har du frågor kring denna policy kan du kontakta oss på kundtjanst@purenorthstad.se."}
+              ],
               mal_card1_img: "/svanen-new.png",
               mal_card2_img: "https://images.pexels.com/photos/4239146/pexels-photo-4239146.jpeg?auto=compress&cs=tinysrgb&w=900",
               kundavtal_sections: [
