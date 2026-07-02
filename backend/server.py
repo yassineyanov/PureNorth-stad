@@ -5881,6 +5881,17 @@ class WebsiteSettings(BaseModel):
     mal_check1_icon: Optional[str] = "Check"
     mal_check2_icon: Optional[str] = "Clock"
     mal_sry_icon: Optional[str] = "Award"
+    integritet_eyebrow: Optional[str] = ""
+    integritet_title: Optional[str] = ""
+    integritet_intro: Optional[str] = ""
+    integritet_bg: Optional[str] = ""
+    integritet_eyebrow_color: Optional[str] = ""
+    integritet_title_color: Optional[str] = ""
+    integritet_intro_color: Optional[str] = ""
+    integritet_heading_color: Optional[str] = ""
+    integritet_text_color: Optional[str] = ""
+    integritet_bullet_color: Optional[str] = ""
+    integritet_sections: Optional[list] = None
     show_navbar_links: Optional[bool] = True
     show_navbar_btn: Optional[bool] = True
     show_navbar_company: Optional[bool] = True
