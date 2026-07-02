@@ -1038,7 +1038,6 @@ export default function SettingsPanel() {
               <option value="none">— Ingen ikon</option>
             </select>
           </div>
-        </>}
           <h4 className="font-medium text-slate-700 mb-2">Frågor (FAQ items)</h4>
           {(data.faq_items||[]).map((item, idx) => (
             <div key={idx} className="border border-slate-200 rounded-xl p-3 space-y-2 relative">
@@ -1060,6 +1059,7 @@ export default function SettingsPanel() {
           </button>
           <hr className="border-slate-100"/>
 
+        </>}
         {section === "seo" && <>
           <h3 className="font-semibold text-slate-800">SEO — Sökmotoroptimering</h3>
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 mb-2">
