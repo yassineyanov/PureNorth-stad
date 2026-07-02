@@ -5744,6 +5744,15 @@ class WebsiteSettings(BaseModel):
     hero_phone_color: Optional[str] = ""
     hero_phone_icon_color: Optional[str] = ""
     hero_phone_bg: Optional[str] = ""
+    navbar_bg: Optional[str] = ""
+    navbar_text_color: Optional[str] = ""
+    navbar_link_color: Optional[str] = ""
+    navbar_btn_color: Optional[str] = ""
+    navbar_btn_bg: Optional[str] = ""
+    navbar_company_color: Optional[str] = ""
+    show_navbar_links: Optional[bool] = True
+    show_navbar_btn: Optional[bool] = True
+    show_navbar_company: Optional[bool] = True
     hero_badge_color: Optional[str] = ""
     hero_badge_bg: Optional[str] = ""
     hero_title_color: Optional[str] = ""
