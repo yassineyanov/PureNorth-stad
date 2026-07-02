@@ -31,9 +31,12 @@ export const LegalSection = ({ heading, children, headingColor, textColor }) => 
 );
 
 export const Bullets = ({ items, textColor, bulletColor }) => (
-  <ul className="space-y-3 text-[15px] leading-relaxed list-disc pl-5" style={{color: textColor || "#475569", "--tw-prose-bullets": bulletColor || "#141414"}}>
+  <ul className="space-y-3 text-[15px] leading-relaxed pl-5">
     {items.map((t, i) => (
-      <li key={i} style={{markerColor: bulletColor || "#141414"}}>{t}</li>
+      <li key={i} className="flex items-start gap-2">
+        <span className="mt-1.5 h-2 w-2 rounded-full shrink-0" style={{backgroundColor: bulletColor || "#141414"}}/>
+        <span style={{color: textColor || "#475569"}}>{t}</span>
+      </li>
     ))}
   </ul>
 );
