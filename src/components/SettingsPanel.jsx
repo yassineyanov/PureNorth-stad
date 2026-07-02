@@ -282,9 +282,13 @@ export default function SettingsPanel() {
                 <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_phone !== false ? "translate-x-5" : "translate-x-0"}`}/>
               </button>
             </div>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-xs text-slate-500">BG färg</span>
-              <CircleColor value={data.hero_phone_color||"#ffffff"} onChange={e=>set("hero_phone_color",e.target.value)}/>
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
+              <span className="text-xs text-slate-500">Text</span>
+              <CircleColor value={data.hero_phone_color||"#374151"} onChange={e=>set("hero_phone_color",e.target.value)}/>
+              <span className="text-xs text-slate-500">Ikon</span>
+              <CircleColor value={data.hero_phone_icon_color||"#374151"} onChange={e=>set("hero_phone_icon_color",e.target.value)}/>
+              <span className="text-xs text-slate-500">BG</span>
+              <CircleColor value={data.hero_phone_bg||"transparent"} onChange={e=>set("hero_phone_bg",e.target.value)}/>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
