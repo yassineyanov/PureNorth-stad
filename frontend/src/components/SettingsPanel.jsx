@@ -552,6 +552,21 @@ export default function SettingsPanel() {
             <label className={lbl}>Taggar (kommaseparerade)</label>
             <input value={data.sry_tags||""} onChange={e=>set("sry_tags",e.target.value)} placeholder="SRY-utbildad personal, Hög standard, Trygg & försäkrad" className={inp}/>
           </div>
+          <div>
+            <label className={lbl}>Ikon</label>
+            <select value={data.sry_icon||"Award"} onChange={e=>set("sry_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="Award">🏆 Award</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Percent">% Percent</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
+          </div>
           <div className="flex items-center gap-3 mt-1">
             <span className="text-xs text-slate-500">Ikon färg</span>
             <CircleColor value={data.sry_icon_color||"#ffffff"} onChange={e=>set("sry_icon_color",e.target.value)}/>
@@ -577,6 +592,21 @@ export default function SettingsPanel() {
             <textarea value={data.eco_text||""} onChange={e=>set("eco_text",e.target.value)} rows={3} className={inp+" resize-none"}/>
             <TextColorPicker label="Text färg" colorKey="eco_text_color" data={data} set={set}/>
           </div>
+          <div>
+            <label className={lbl}>Ikon</label>
+            <select value={data.eco_icon||"Leaf"} onChange={e=>set("eco_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="Award">🏆 Award</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Percent">% Percent</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
+          </div>
           <div className="flex items-center gap-3 mt-1">
             <span className="text-xs text-slate-500">Ikon färg</span>
             <CircleColor value={data.eco_icon_color||"#166534"} onChange={e=>set("eco_icon_color",e.target.value)}/>
@@ -601,6 +631,21 @@ export default function SettingsPanel() {
             <label className={lbl}>Text</label>
             <textarea value={data.rut_text||""} onChange={e=>set("rut_text",e.target.value)} rows={3} className={inp+" resize-none"}/>
             <TextColorPicker label="Text färg" colorKey="rut_text_color" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Ikon</label>
+            <select value={data.rut_icon||"Percent"} onChange={e=>set("rut_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="Award">🏆 Award</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Percent">% Percent</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
           </div>
           <div className="flex items-center gap-3 mt-1">
             <span className="text-xs text-slate-500">Ikon färg</span>
