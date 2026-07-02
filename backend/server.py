@@ -5878,6 +5878,9 @@ class WebsiteSettings(BaseModel):
     mal_sry_text_color: Optional[str] = ""
     mal_sry_icon_bg: Optional[str] = ""
     mal_sry_icon_color: Optional[str] = ""
+    mal_check1_icon: Optional[str] = "Check"
+    mal_check2_icon: Optional[str] = "Clock"
+    mal_sry_icon: Optional[str] = "Award"
     show_navbar_links: Optional[bool] = True
     show_navbar_btn: Optional[bool] = True
     show_navbar_company: Optional[bool] = True
