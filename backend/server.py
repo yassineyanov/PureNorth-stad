@@ -6065,6 +6065,7 @@ class WebsiteSettings(BaseModel):
     show_vart_in_navbar: Optional[bool] = True
     show_kontakt_in_navbar: Optional[bool] = True
     show_whyus_in_navbar: Optional[bool] = True
+    show_kontaktuppgifter: Optional[bool] = True
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
