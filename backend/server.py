@@ -5845,6 +5845,15 @@ class WebsiteSettings(BaseModel):
     service4_title_color: Optional[str] = ""
     service4_desc_color: Optional[str] = ""
     service4_icon_color: Optional[str] = ""
+    show_testimonials_label: Optional[bool] = True
+    show_testimonials_title: Optional[bool] = True
+    testimonials_label_color: Optional[str] = ""
+    testimonials_title_color: Optional[str] = ""
+    testimonials_card_bg: Optional[str] = ""
+    testimonials_text_color: Optional[str] = ""
+    testimonials_name_color: Optional[str] = ""
+    testimonials_role_color: Optional[str] = ""
+    testimonials_icon_color: Optional[str] = ""
     about_point1_icon: Optional[str] = "ShieldCheck"
     about_point2_icon: Optional[str] = "Leaf"
     about_point3_icon: Optional[str] = "Star"
