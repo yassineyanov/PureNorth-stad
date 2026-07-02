@@ -162,6 +162,12 @@ export default function SettingsPanel() {
               testimonials_name_color: "",
               testimonials_role_color: "",
               testimonials_icon_color: "",
+              nav_links: [{"label":"Tjänster","href":"/#tjanster"},{"label":"Om oss","href":"/om-oss"},{"label":"Vårt arbete","href":"/#vart-arbete"},{"label":"Kontakt","href":"/#kontakt"}],
+              navbar_bg: "",
+              navbar_company_color: "",
+              navbar_link_color: "",
+              navbar_btn_color: "",
+              navbar_btn_bg: "",
               services: [
                 {title:"Hemstädning",desc:"Regelbunden eller engångsstädning som ger dig mer tid till det du älskar.",icon_name:"Home",icon_color:"#166534",img:"https://images.pexels.com/photos/36777855/pexels-photo-36777855.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",show:true,title_color:"#0f172a",desc_color:"#475569"},
                 {title:"Flyttstädning",desc:"Noggrann städning vid in och utflyttning, med nöjd kund garanti.",icon_name:"Truck",icon_color:"#166534",img:"https://images.unsplash.com/photo-1600585152220-90363fe7e115?crop=entropy&cs=srgb&fm=jpg&q=85&w=940",show:true,title_color:"#0f172a",desc_color:"#475569"},
@@ -786,18 +792,57 @@ export default function SettingsPanel() {
 
         {section === "navbar" && <>
           <h3 className="font-semibold text-slate-800">Navbar</h3>
+          <div>
+            <label className={lbl}>Navbar BG färg</label>
+            <div className="flex items-center gap-2 mt-1">
+              <CircleColor value={data.navbar_bg||"#ffffff"} onChange={e=>set("navbar_bg",e.target.value)}/>
+              <span className="text-xs text-slate-400">Bakgrundsfärg</span>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={lbl}>Företagsnamn i navbar</label>
+              <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Företagsnamn</label>
+            <button type="button" onClick={()=>set("show_navbar_company", data.show_navbar_company === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_navbar_company !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_navbar_company !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
               <input value={data.nav_company||""} onChange={e=>set("nav_company",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-slate-500">Färg</span>
+                <CircleColor value={data.navbar_company_color||"#0f172a"} onChange={e=>set("navbar_company_color",e.target.value)}/>
+              </div>
             </div>
             <div>
-              <label className={lbl}>Boka-knapp text</label>
+              <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Boka-knapp</label>
+            <button type="button" onClick={()=>set("show_navbar_btn", data.show_navbar_btn === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_navbar_btn !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_navbar_btn !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
               <input value={data.nav_boka_text||""} onChange={e=>set("nav_boka_text",e.target.value)} placeholder="Boka tid" className={inp}/>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-xs text-slate-500">Text</span>
+                <CircleColor value={data.navbar_btn_color||"#ffffff"} onChange={e=>set("navbar_btn_color",e.target.value)}/>
+                <span className="text-xs text-slate-500">BG</span>
+                <CircleColor value={data.navbar_btn_bg||"#141414"} onChange={e=>set("navbar_btn_bg",e.target.value)}/>
+              </div>
             </div>
           </div>
           <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700 mb-2">Menylänkar</h4>
+          <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Menylänkar</label>
+            <button type="button" onClick={()=>set("show_navbar_links", data.show_navbar_links === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_navbar_links !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_navbar_links !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs text-slate-500">Länk färg</span>
+            <CircleColor value={data.navbar_link_color||"#475569"} onChange={e=>set("navbar_link_color",e.target.value)}/>
+          </div>
           {(data.nav_links||[]).map((link, idx) => (
             <div key={idx} className="flex items-center gap-2">
               <input value={link.label||""} onChange={e=>{const l=[...data.nav_links];l[idx]={...l[idx],label:e.target.value};set("nav_links",l);}}
@@ -812,9 +857,6 @@ export default function SettingsPanel() {
             className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
             <Plus size={14}/> Lägg till länk
           </button>
-          <div className="bg-slate-50 rounded-xl p-3 text-xs text-slate-500">
-            💡 Standard href: /#tjanster, /#kontakt, /#boka
-          </div>
         </>}
 
         {section === "seo" && <>
