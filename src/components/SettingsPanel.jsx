@@ -707,15 +707,17 @@ export default function SettingsPanel() {
               <div>
                 <label className={lbl}>Namn</label>
                 <input value={svc.title||""} onChange={e=>{const s=[...data.services];s[idx]={...s[idx],title:e.target.value};set("services",s);}} placeholder="Hemstädning" className={inp}/>
-                <div className="flex gap-3 mt-1">
-                  <TextColorPicker label="Text" colorKey="dummy" data={{dummy: svc.title_color||""}} set={(k,v)=>{const s=[...data.services];s[idx]={...s[idx],title_color:v};set("services",s);}}/>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-slate-500">Färg</span>
+                  <CircleColor value={svc.title_color||"#0f172a"} onChange={e=>{const s=[...data.services];s[idx]={...s[idx],title_color:e.target.value};set("services",s);}}/>
                 </div>
               </div>
               <div>
                 <label className={lbl}>Beskrivning</label>
                 <textarea value={svc.desc||""} onChange={e=>{const s=[...data.services];s[idx]={...s[idx],desc:e.target.value};set("services",s);}} rows={2} className={inp+" resize-none"}/>
-                <div className="flex gap-3 mt-1">
-                  <TextColorPicker label="Text" colorKey="dummy" data={{dummy: svc.desc_color||""}} set={(k,v)=>{const s=[...data.services];s[idx]={...s[idx],desc_color:v};set("services",s);}}/>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-slate-500">Färg</span>
+                  <CircleColor value={svc.desc_color||"#475569"} onChange={e=>{const s=[...data.services];s[idx]={...s[idx],desc_color:e.target.value};set("services",s);}}/>
                 </div>
               </div>
               <div>
