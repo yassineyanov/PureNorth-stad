@@ -76,6 +76,8 @@ export default function SettingsPanel() {
   const [loading, setLoading] = useState(true);
   const logoRef = useRef();
   const aboutImgRef = useRef();
+  const mal1ImgRef = useRef();
+  const mal2ImgRef = useRef();
   const badgeImgRef = useRef();
   const badge1ImgRef = useRef();
   const badge2ImgRef = useRef();
@@ -1361,8 +1363,13 @@ export default function SettingsPanel() {
             <textarea value={data.mal_card1_text||""} onChange={e=>set("mal_card1_text",e.target.value)} rows={2} className={inp+" resize-none"}/>
           </div>
           <div>
-            <label className={lbl}>Kort 1 bild URL</label>
-            <input value={data.mal_card1_img||""} onChange={e=>set("mal_card1_img",e.target.value)} placeholder="/svanen-new.png" className={inp}/>
+            <label className={lbl}>Kort 1 bild</label>
+            {data.mal_card1_img && <div className="relative mb-2"><img src={data.mal_card1_img} alt="" className="w-full h-24 object-contain rounded-lg border"/><button onClick={()=>set("mal_card1_img","")} className="absolute top-1 right-1 bg-red-500 text-white rounded-full h-5 w-5 text-xs">✕</button></div>}
+            <input ref={mal1ImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "mal_card1_img")}/>
+            <button onClick={() => mal1ImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2 text-xs hover:border-slate-400">
+              <Upload size={12}/> {data.mal_card1_img ? "Byt bild" : "Ladda upp bild"}
+            </button>
+            <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 400×400px</p>
           </div>
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700">Kort 2 (Trygg arbetsplats)</h4>
@@ -1375,8 +1382,13 @@ export default function SettingsPanel() {
             <textarea value={data.mal_card2_text||""} onChange={e=>set("mal_card2_text",e.target.value)} rows={2} className={inp+" resize-none"}/>
           </div>
           <div>
-            <label className={lbl}>Kort 2 bild URL</label>
-            <input value={data.mal_card2_img||""} onChange={e=>set("mal_card2_img",e.target.value)} placeholder="https://..." className={inp}/>
+            <label className={lbl}>Kort 2 bild</label>
+            {data.mal_card2_img && <div className="relative mb-2"><img src={data.mal_card2_img} alt="" className="w-full h-24 object-cover rounded-lg"/><button onClick={()=>set("mal_card2_img","")} className="absolute top-1 right-1 bg-red-500 text-white rounded-full h-5 w-5 text-xs">✕</button></div>}
+            <input ref={mal2ImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "mal_card2_img")}/>
+            <button onClick={() => mal2ImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2 text-xs hover:border-slate-400">
+              <Upload size={12}/> {data.mal_card2_img ? "Byt bild" : "Ladda upp bild"}
+            </button>
+            <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 900×600px</p>
           </div>
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700">Check-kort färger</h4>
