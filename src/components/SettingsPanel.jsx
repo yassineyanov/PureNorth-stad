@@ -914,16 +914,20 @@ export default function SettingsPanel() {
             {key:"malsattning", label:"Målsättning"},
             {key:"integritet", label:"Integritetspolicy"},
           ].map(({key, label}) => (
-            <div key={key} className="flex items-center justify-between border border-slate-200 rounded-xl px-4 py-3 hover:border-slate-300 transition-colors">
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={()=>set(`show_footer_${key}`, data[`show_footer_${key}`] === false ? true : false)}
+            <div key={key} className="border border-slate-200 rounded-xl hover:border-slate-400 transition-colors overflow-hidden">
+              <button onClick={()=>setSection(`footer_${key}`)} className="w-full flex items-center justify-between px-4 py-3 text-left">
+                <span className="text-sm font-medium text-slate-700">{label}</span>
+                <span className="text-slate-400 text-lg">→</span>
+              </button>
+              <div className="flex items-center gap-3 px-4 pb-3 border-t border-slate-100">
+                <button type="button" onClick={e=>{e.stopPropagation();set(`show_footer_${key}`, data[`show_footer_${key}`] === false ? true : false)}}
                   className={`w-10 h-5 rounded-full transition-colors shrink-0 ${data[`show_footer_${key}`] !== false ? "bg-blue-500" : "bg-slate-200"}`}>
                   <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data[`show_footer_${key}`] !== false ? "translate-x-5" : "translate-x-0"}`}/>
                 </button>
-                <span className="text-sm font-medium text-slate-700">{label}</span>
-                <CircleColor value={data[`footer_${key}_color`]||"#475569"} onChange={e=>set(`footer_${key}_color`,e.target.value)}/>
+                <span className="text-xs text-slate-500">Visa i footer</span>
+                <CircleColor value={data[`footer_${key}_color`]||"#475569"} onChange={e=>{e.stopPropagation();set(`footer_${key}_color`,e.target.value);}}/>
+                <span className="text-xs text-slate-500">Länk färg</span>
               </div>
-              <button onClick={()=>setSection(`footer_${key}`)} className="text-slate-400 hover:text-slate-700 text-sm">→</button>
             </div>
           ))}
         </>}
