@@ -1671,10 +1671,7 @@ export default function SettingsPanel() {
           </div>
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700 mb-2">Bilder (Före & Efter)</h4>
-          {(data.vart_slides||[]).map((slide, idx) => {
-            const b1Ref = React.useRef();
-            const b2Ref = React.useRef();
-            return (
+          {(data.vart_slides||[]).map((slide, idx) => (
             <div key={idx} className="border border-slate-200 rounded-xl p-3 space-y-2 relative">
               <button onClick={()=>set("vart_slides",data.vart_slides.filter((_,i)=>i!==idx))}
                 className="absolute top-2 right-2 text-slate-400 hover:text-red-500"><Trash2 size={14}/></button>
@@ -1684,19 +1681,18 @@ export default function SettingsPanel() {
                 <div>
                   <label className={lbl}>Före bild</label>
                   {slide.before && <div className="relative mb-1"><img src={slide.before} alt="" className="w-full h-16 object-cover rounded"/><button onClick={()=>{const s=[...data.vart_slides];s[idx]={...s[idx],before:""};set("vart_slides",s);}} className="absolute top-0 right-0 bg-red-500 text-white rounded-full h-4 w-4 text-xs">✕</button></div>}
-                  <input ref={b1Ref} type="file" accept="image/*" className="hidden" onChange={async e=>{if(!e.target.files[0])return;const url=await uploadImage(e.target.files[0],`vart_before_${idx}`);const s=[...data.vart_slides];s[idx]={...s[idx],before:url};set("vart_slides",s);}}/>
-                  <button onClick={()=>b1Ref.current.click()} className="inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2 py-1 text-xs hover:border-slate-400"><Upload size={10}/> {slide.before?"Byt":"Ladda upp"}</button>
+                  <input id={`vart-before-${idx}`} type="file" accept="image/*" className="hidden" onChange={async e=>{if(!e.target.files[0])return;const url=await uploadImage(e.target.files[0],`vart_before_${idx}`);const s=[...data.vart_slides];s[idx]={...s[idx],before:url};set("vart_slides",s);}}/>
+                  <button onClick={()=>document.getElementById(`vart-before-${idx}`).click()} className="inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2 py-1 text-xs hover:border-slate-400"><Upload size={10}/> {slide.before?"Byt":"Ladda upp"}</button>
                 </div>
                 <div>
                   <label className={lbl}>Efter bild</label>
                   {slide.after && <div className="relative mb-1"><img src={slide.after} alt="" className="w-full h-16 object-cover rounded"/><button onClick={()=>{const s=[...data.vart_slides];s[idx]={...s[idx],after:""};set("vart_slides",s);}} className="absolute top-0 right-0 bg-red-500 text-white rounded-full h-4 w-4 text-xs">✕</button></div>}
-                  <input ref={b2Ref} type="file" accept="image/*" className="hidden" onChange={async e=>{if(!e.target.files[0])return;const url=await uploadImage(e.target.files[0],`vart_after_${idx}`);const s=[...data.vart_slides];s[idx]={...s[idx],after:url};set("vart_slides",s);}}/>
-                  <button onClick={()=>b2Ref.current.click()} className="inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2 py-1 text-xs hover:border-slate-400"><Upload size={10}/> {slide.after?"Byt":"Ladda upp"}</button>
+                  <input id={`vart-after-${idx}`} type="file" accept="image/*" className="hidden" onChange={async e=>{if(!e.target.files[0])return;const url=await uploadImage(e.target.files[0],`vart_after_${idx}`);const s=[...data.vart_slides];s[idx]={...s[idx],after:url};set("vart_slides",s);}}/>
+                  <button onClick={()=>document.getElementById(`vart-after-${idx}`).click()} className="inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2 py-1 text-xs hover:border-slate-400"><Upload size={10}/> {slide.after?"Byt":"Ladda upp"}</button>
                 </div>
               </div>
             </div>
-            );
-          })}
+          ))}
           <button onClick={()=>set("vart_slides",[...(data.vart_slides||[]),{before:"",after:"",alt:""}])}
             className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
             <Plus size={14}/> Lägg till bild
