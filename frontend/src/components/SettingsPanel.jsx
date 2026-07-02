@@ -855,7 +855,7 @@ export default function SettingsPanel() {
               </button>
             </div>
               <input value={data.testimonials_label||""} onChange={e=>set("testimonials_label",e.target.value)} placeholder="Omdömen" className={inp}/>
-              <TextColorPicker label="Text färg" colorKey="testimonials_label_color" data={data} set={set}/>
+              <TextColorPicker label="Text färg" colorKey="testimonials_label_color" defaultColor="#141414" data={data} set={set}/>
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
@@ -866,7 +866,7 @@ export default function SettingsPanel() {
               </button>
             </div>
               <input value={data.testimonials_title||""} onChange={e=>set("testimonials_title",e.target.value)} placeholder="Vad våra kunder säger" className={inp}/>
-              <TextColorPicker label="Text färg" colorKey="testimonials_title_color" data={data} set={set}/>
+              <TextColorPicker label="Text färg" colorKey="testimonials_title_color" defaultColor="#141414" data={data} set={set}/>
             </div>
           </div>
           <hr className="border-slate-100"/>
