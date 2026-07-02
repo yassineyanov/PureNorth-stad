@@ -14,7 +14,6 @@ const SECTIONS = [
   { id: "services", label: "Tjänster", icon: Layers },
   { id: "navbar", label: "Navbar", icon: Menu },
   { id: "seo", label: "SEO", icon: Search },
-  { id: "colors", label: "Färger", icon: Palette },
   { id: "testimonials", label: "Omdömen", icon: Star },
 ];
 
@@ -826,63 +825,7 @@ export default function SettingsPanel() {
           )}
         </>}
 
-        {section === "colors" && <>
-          <h3 className="font-semibold text-slate-800">Färger</h3>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 mb-2">
-            ⚠️ Färgändringar påverkar hela webbplatsen. Spara och ladda om sidan för att se ändringarna.
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <label className={lbl}>Primärfärg (grön)</label>
-              <div className="flex items-center gap-3 mt-1">
-                <CircleColor value={data.primary_color||"#166534"} onChange={e=>set("primary_color",e.target.value)}/>
-                <input value={data.primary_color||"#166534"}
-                  onChange={e=>set("primary_color",e.target.value)}
-                  placeholder="#166534" className={inp}/>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {["#166534","#0f766e","#1d4ed8","#7c3aed","#be123c","#b45309","#0369a1","#64748b"].map(c => (
-                  <button key={c} onClick={()=>set("primary_color",c)}
-                    className="h-7 w-7 rounded-full border-2 transition-all"
-                    style={{backgroundColor:c, borderColor: data.primary_color===c ? "#141414":"transparent"}}/>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className={lbl}>Sekundärfärg (svart)</label>
-              <div className="flex items-center gap-3 mt-1">
-                <CircleColor value={data.secondary_color||"#141414"} onChange={e=>set("secondary_color",e.target.value)}/>
-                <input value={data.secondary_color||"#141414"}
-                  onChange={e=>set("secondary_color",e.target.value)}
-                  placeholder="#141414" className={inp}/>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {["#141414","#1e293b","#0f172a","#18181b","#1c1917","#292524"].map(c => (
-                  <button key={c} onClick={()=>set("secondary_color",c)}
-                    className="h-7 w-7 rounded-full border-2 transition-all"
-                    style={{backgroundColor:c, borderColor: data.secondary_color===c ? "#64748b":"transparent"}}/>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 p-4 rounded-xl border border-slate-200">
-            <p className="text-xs font-medium text-slate-600 mb-3">Förhandsgranskning:</p>
-            <div className="flex gap-3 flex-wrap">
-              <button className="rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors"
-                style={{backgroundColor: data.secondary_color||"#141414"}}>
-                Boka tid online
-              </button>
-              <span className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold"
-                style={{backgroundColor:(data.primary_color||"#166534")+"1a", color: data.primary_color||"#166534"}}>
-                Svanenmärkt & miljöcertifierat
-              </span>
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center"
-                style={{backgroundColor: data.primary_color||"#166534"}}>
-                <span className="text-white text-xs font-bold">50%</span>
-              </div>
-            </div>
-          </div>
-        </>}
+
 
         {section === "testimonials" && <>
           <h3 className="font-semibold text-slate-800">Omdömen</h3>
