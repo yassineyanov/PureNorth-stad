@@ -62,12 +62,7 @@ export const BookingForm = () => {
 
   const toggleService = (s, closeDropdown = true) => {
     setServices((prev) => {
-      if (s === "Annat") {
-        return prev.includes(s) ? [] : ["Annat"];
-      } else {
-        const without = prev.filter((x) => x !== "Annat");
-        return without.includes(s) ? without.filter((x) => x !== s) : [...without, s];
-      }
+      return prev.includes(s) ? [] : [s];
     });
     if (closeDropdown) setServiceDropdownOpen(false);
   };
