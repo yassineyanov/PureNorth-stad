@@ -61,7 +61,7 @@ export default function Home() {
         <Hero />
         {ws.show_tjanster_in_navbar !== false && <Services />}
         {ws.show_vart_in_navbar !== false && <BeforeAfter />}
-        <WhyUs />
+        {ws.show_whyus_in_navbar !== false && <WhyUs />}
         <Testimonials />
         <BookingForm />
         {ws.show_kontakt_in_navbar !== false && <Contact ws={ws} />}
