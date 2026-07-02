@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Check, Clock, Award } from "lucide-react";
+import { Check, Clock, Award, ShieldCheck, Star, Leaf, Heart, Zap, Home, Sparkles } from "lucide-react";
+const IconMap = { Check, Clock, Award, ShieldCheck, Star, Leaf, Heart, Zap, Home, Sparkles };
+function MalIcon({ name, size=18 }) { const Icon = IconMap[name]; return Icon ? <Icon size={size}/> : null; }
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Contact";
 import { useWebsite } from "@/context/WebsiteContext";
@@ -55,10 +57,10 @@ export default function Malsattning() {
 
           <div className="grid sm:grid-cols-2 gap-6 mb-20">
             <div className="rounded-3xl border border-slate-200 p-8 flex items-start gap-4" style={{backgroundColor: ws.mal_check_card_bg || "#ffffff"}}>
-              <span className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
+              {ws.mal_check1_icon !== "none" && <span className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
                 style={{backgroundColor: ws.mal_check_icon_bg || "#141414", color: ws.mal_check_icon_color || "#ffffff"}}>
-                <Check size={18}/>
-              </span>
+                <MalIcon name={ws.mal_check1_icon || "Check"} size={18}/>
+              </span>}
               <div>
                 <h3 className="font-display font-semibold text-xl mb-2" style={{color: ws.mal_check_title_color || "#141414"}}>
                   {ws.mal_check1_title || "Hög kvalité"}
@@ -69,10 +71,10 @@ export default function Malsattning() {
               </div>
             </div>
             <div className="rounded-3xl border border-slate-200 p-8 flex items-start gap-4" style={{backgroundColor: ws.mal_check_card_bg || "#ffffff"}}>
-              <span className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
+              {ws.mal_check2_icon !== "none" && <span className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
                 style={{backgroundColor: ws.mal_check_icon_bg || "#141414", color: ws.mal_check_icon_color || "#ffffff"}}>
-                <Clock size={18}/>
-              </span>
+                <MalIcon name={ws.mal_check2_icon || "Clock"} size={18}/>
+              </span>}
               <div>
                 <h3 className="font-display font-semibold text-xl mb-2" style={{color: ws.mal_check_title_color || "#141414"}}>
                   {ws.mal_check2_title || "Klart inom 24 timmar"}
@@ -85,10 +87,10 @@ export default function Malsattning() {
           </div>
 
           <div className="rounded-3xl p-9 sm:p-11" style={{backgroundColor: ws.mal_sry_bg || "#141414"}}>
-            <div className="h-12 w-12 rounded-2xl flex items-center justify-center mb-6"
+            {ws.mal_sry_icon !== "none" && <div className="h-12 w-12 rounded-2xl flex items-center justify-center mb-6"
               style={{backgroundColor: ws.mal_sry_icon_bg ? ws.mal_sry_icon_bg+"1a" : "rgba(255,255,255,0.1)", color: ws.mal_sry_icon_color || "#ffffff"}}>
-              <Award size={24}/>
-            </div>
+              <MalIcon name={ws.mal_sry_icon || "Award"} size={24}/>
+            </div>}
             <h2 className="font-display font-bold text-3xl mb-4" style={{color: ws.mal_sry_title_color || "#ffffff"}}>
               {ws.mal_sry_title || "SRY-kvalifikation"}
             </h2>

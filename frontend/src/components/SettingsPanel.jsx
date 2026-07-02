@@ -1407,12 +1407,44 @@ export default function SettingsPanel() {
             <CircleColor value={data.mal_check_text_color||"#475569"} onChange={e=>set("mal_check_text_color",e.target.value)}/>
           </div>
           <div>
+            <label className={lbl}>Check 1 ikon</label>
+            <select value={data.mal_check1_icon||"Check"} onChange={e=>set("mal_check1_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+                  <option value="Check">✅ Check</option>
+                  <option value="Clock">🕐 Clock</option>
+                  <option value="Award">🏆 Award</option>
+                  <option value="ShieldCheck">🛡️ ShieldCheck</option>
+                  <option value="Star">⭐ Star</option>
+                  <option value="Leaf">🌿 Leaf</option>
+                  <option value="Heart">❤️ Heart</option>
+                  <option value="Zap">⚡ Zap</option>
+                  <option value="Home">🏠 Home</option>
+                  <option value="Sparkles">✨ Sparkles</option>
+            </select>
+          </div>
+          <div>
             <label className={lbl}>Check 1 titel</label>
             <input value={data.mal_check1_title||""} onChange={e=>set("mal_check1_title",e.target.value)} placeholder="Hög kvalité" className={inp}/>
           </div>
           <div>
             <label className={lbl}>Check 1 text</label>
             <textarea value={data.mal_check1_text||""} onChange={e=>set("mal_check1_text",e.target.value)} rows={2} className={inp+" resize-none"}/>
+          </div>
+          <div>
+            <label className={lbl}>Check 2 ikon</label>
+            <select value={data.mal_check2_icon||"Clock"} onChange={e=>set("mal_check2_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+                  <option value="Check">✅ Check</option>
+                  <option value="Clock">🕐 Clock</option>
+                  <option value="Award">🏆 Award</option>
+                  <option value="ShieldCheck">🛡️ ShieldCheck</option>
+                  <option value="Star">⭐ Star</option>
+                  <option value="Leaf">🌿 Leaf</option>
+                  <option value="Heart">❤️ Heart</option>
+                  <option value="Zap">⚡ Zap</option>
+                  <option value="Home">🏠 Home</option>
+                  <option value="Sparkles">✨ Sparkles</option>
+            </select>
           </div>
           <div>
             <label className={lbl}>Check 2 titel</label>
@@ -1435,6 +1467,22 @@ export default function SettingsPanel() {
             <CircleColor value={data.mal_sry_icon_bg||"#ffffff"} onChange={e=>set("mal_sry_icon_bg",e.target.value)}/>
             <span className="text-xs text-slate-500">Ikon</span>
             <CircleColor value={data.mal_sry_icon_color||"#141414"} onChange={e=>set("mal_sry_icon_color",e.target.value)}/>
+          </div>
+          <div>
+            <label className={lbl}>SRY ikon</label>
+            <select value={data.mal_sry_icon||"Award"} onChange={e=>set("mal_sry_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+                  <option value="Check">✅ Check</option>
+                  <option value="Clock">🕐 Clock</option>
+                  <option value="Award">🏆 Award</option>
+                  <option value="ShieldCheck">🛡️ ShieldCheck</option>
+                  <option value="Star">⭐ Star</option>
+                  <option value="Leaf">🌿 Leaf</option>
+                  <option value="Heart">❤️ Heart</option>
+                  <option value="Zap">⚡ Zap</option>
+                  <option value="Home">🏠 Home</option>
+                  <option value="Sparkles">✨ Sparkles</option>
+            </select>
           </div>
           <div>
             <label className={lbl}>SRY rubrik</label>
