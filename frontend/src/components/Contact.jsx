@@ -113,7 +113,6 @@ export const Footer = () => {
           {ws.show_footer_varderingar !== false && <Link to="/varderingar" className="text-sm font-medium hover:opacity-70 transition-colors" style={{color: ws.footer_varderingar_color || "#475569"}}>Värderingar</Link>}
           {ws.show_footer_malsattning !== false && <Link to="/malsattning" className="text-sm font-medium hover:opacity-70 transition-colors" style={{color: ws.footer_malsattning_color || "#475569"}}>Målsättning</Link>}
           {ws.show_footer_integritet !== false && <Link to="/integritetspolicy" className="text-sm font-medium hover:opacity-70 transition-colors" style={{color: ws.footer_integritet_color || "#475569"}}>GDPR-Integritetspolicy</Link>}
-          <Link to="/admin" className="text-sm font-medium text-slate-400 hover:text-[#141414] transition-colors">Admin</Link>
         </div>
       </div>
       {(ws.instagram_url || ws.facebook_url) && (
