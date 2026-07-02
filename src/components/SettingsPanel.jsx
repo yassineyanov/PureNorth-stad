@@ -163,6 +163,11 @@ export default function SettingsPanel() {
               testimonials_name_color: "",
               testimonials_role_color: "",
               testimonials_icon_color: "",
+              kundavtal_sections: [
+                {"heading":"Bokningsvillkor","items":["Bokningen behöver ske via mail.","Vi behöver ett fullständigt personnummer för RUT-ansökan.","Vår städgaranti innebär att ni inom 14 dagar efter utförd tjänst ska kontakta oss."]},
+                {"heading":"Betalningsvillkor","items":["Fakturering och betalning hanteras endast elektroniskt.","Betalningsvillkor är 10 dagar."]},
+                {"heading":"Avbokningsvillkor","items":["Avbokning sker kostnadsfritt fram till och med två veckor innan avtalad städdag.","Vid avbeställning 8 dagar före, erläggs 25%.","Sker avbeställningen inom 3 dagar, erläggs full kostnad."]}
+              ],
               nav_links: [{"label":"Tjänster","href":"/#tjanster"},{"label":"Om oss","href":"/om-oss"},{"label":"Vårt arbete","href":"/#vart-arbete"},{"label":"Kontakt","href":"/#kontakt"}],
               navbar_bg: "",
               navbar_company_color: "",
