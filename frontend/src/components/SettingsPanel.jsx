@@ -991,26 +991,6 @@ export default function SettingsPanel() {
             <TextColorPicker label="Färg" colorKey="faq_box_text_color" defaultColor="#ffffff" data={data} set={set}/>
           </div>
           <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700 mb-2">Frågor (FAQ items)</h4>
-          {(data.faq_items||[]).map((item, idx) => (
-            <div key={idx} className="border border-slate-200 rounded-xl p-3 space-y-2 relative">
-              <button onClick={()=>set("faq_items", data.faq_items.filter((_,i)=>i!==idx))}
-                className="absolute top-2 right-2 text-slate-400 hover:text-red-500"><Trash2 size={14}/></button>
-              <div>
-                <label className={lbl}>Fråga</label>
-                <input value={item.q||""} onChange={e=>{const s=[...data.faq_items];s[idx]={...s[idx],q:e.target.value};set("faq_items",s);}} placeholder="Hur gör jag en bokning?" className={inp}/>
-              </div>
-              <div>
-                <label className={lbl}>Svar</label>
-                <textarea value={item.a||""} onChange={e=>{const s=[...data.faq_items];s[idx]={...s[idx],a:e.target.value};set("faq_items",s);}} rows={2} className={inp+" resize-none"}/>
-              </div>
-            </div>
-          ))}
-          <button onClick={()=>set("faq_items",[...(data.faq_items||[]),{q:"",a:""}])}
-            className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
-            <Plus size={14}/> Lägg till fråga
-          </button>
-          <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700">Ring oss knapp</h4>
           <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Visa Ring oss</label>
@@ -1065,6 +1045,26 @@ export default function SettingsPanel() {
             </select>
           </div>
         </>}
+          <h4 className="font-medium text-slate-700 mb-2">Frågor (FAQ items)</h4>
+          {(data.faq_items||[]).map((item, idx) => (
+            <div key={idx} className="border border-slate-200 rounded-xl p-3 space-y-2 relative">
+              <button onClick={()=>set("faq_items", data.faq_items.filter((_,i)=>i!==idx))}
+                className="absolute top-2 right-2 text-slate-400 hover:text-red-500"><Trash2 size={14}/></button>
+              <div>
+                <label className={lbl}>Fråga</label>
+                <input value={item.q||""} onChange={e=>{const s=[...data.faq_items];s[idx]={...s[idx],q:e.target.value};set("faq_items",s);}} placeholder="Hur gör jag en bokning?" className={inp}/>
+              </div>
+              <div>
+                <label className={lbl}>Svar</label>
+                <textarea value={item.a||""} onChange={e=>{const s=[...data.faq_items];s[idx]={...s[idx],a:e.target.value};set("faq_items",s);}} rows={2} className={inp+" resize-none"}/>
+              </div>
+            </div>
+          ))}
+          <button onClick={()=>set("faq_items",[...(data.faq_items||[]),{q:"",a:""}])}
+            className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
+            <Plus size={14}/> Lägg till fråga
+          </button>
+          <hr className="border-slate-100"/>
 
         {section === "seo" && <>
           <h3 className="font-semibold text-slate-800">SEO — Sökmotoroptimering</h3>
