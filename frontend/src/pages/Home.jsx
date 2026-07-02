@@ -59,12 +59,12 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <Services />
-        <BeforeAfter />
+        {ws.show_tjanster_in_navbar !== false && <Services />}
+        {ws.show_vart_in_navbar !== false && <BeforeAfter />}
         <WhyUs />
         <Testimonials />
         <BookingForm />
-        <Contact ws={ws} />
+        {ws.show_kontakt_in_navbar !== false && <Contact ws={ws} />}
       </main>
       <Footer ws={ws} />
     </div>
