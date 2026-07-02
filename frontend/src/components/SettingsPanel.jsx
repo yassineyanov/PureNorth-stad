@@ -276,7 +276,7 @@ export default function SettingsPanel() {
           </button>
           <a href="https://purenorth-stad.vercel.app" target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 border border-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-full hover:border-slate-400 transition-colors">
-            <ExternalLink size={16}/> Förhandsgranska
+            <ExternalLink size={16}/> Visa
           </a>
           <button onClick={save} disabled={saving}
             className="inline-flex items-center gap-2 bg-[#141414] hover:bg-black text-white font-semibold px-5 py-2.5 rounded-full transition-colors disabled:opacity-50">
