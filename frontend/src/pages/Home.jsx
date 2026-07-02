@@ -62,7 +62,7 @@ export default function Home() {
         {ws.show_tjanster_in_navbar !== false && <Services />}
         {ws.show_vart_in_navbar !== false && <BeforeAfter />}
         {ws.show_whyus_in_navbar !== false && <WhyUs />}
-        <Testimonials />
+        {ws.show_omdomen !== false && <Testimonials />}
         <BookingForm />
         {ws.show_kontakt_in_navbar !== false && <Contact ws={ws} />}
       </main>

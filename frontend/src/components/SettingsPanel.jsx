@@ -1849,6 +1849,13 @@ export default function SettingsPanel() {
 
         {section === "testimonials" && <>
           <h3 className="font-semibold text-slate-800">Omdömen</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa Omdömen</label>
+            <button type="button" onClick={()=>set("show_omdomen", data.show_omdomen === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_omdomen !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_omdomen !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="flex items-center justify-between mb-1">
