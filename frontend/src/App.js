@@ -1,3 +1,4 @@
+import React from "react";
 import "@/App.css";
 import { WebsiteProvider } from "@/context/WebsiteContext";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -14,6 +15,11 @@ import Malsattning from "@/pages/Malsattning";
 import OmOss from "@/pages/OmOss";
 
 function App() {
+  React.useEffect(() => {
+    if (window.location.hostname.includes("purenorth-admin") && window.location.pathname === "/") {
+      window.location.replace("/admin");
+    }
+  }, []);
   return (
     <div className="App">
       <AuthProvider>
