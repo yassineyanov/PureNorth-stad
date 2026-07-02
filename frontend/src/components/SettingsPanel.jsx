@@ -840,12 +840,50 @@ export default function SettingsPanel() {
           <h3 className="font-semibold text-slate-800">Omdömen</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
+              <div className="flex items-center justify-between mb-1">
               <label className={lbl}>Etikett</label>
+              <button type="button" onClick={()=>set("show_testimonials_label", data.show_testimonials_label === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_testimonials_label !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_testimonials_label !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
               <input value={data.testimonials_label||""} onChange={e=>set("testimonials_label",e.target.value)} placeholder="Omdömen" className={inp}/>
+              <TextColorPicker label="Text färg" colorKey="testimonials_label_color" data={data} set={set}/>
             </div>
             <div>
+              <div className="flex items-center justify-between mb-1">
               <label className={lbl}>Rubrik</label>
+              <button type="button" onClick={()=>set("show_testimonials_title", data.show_testimonials_title === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_testimonials_title !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_testimonials_title !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
               <input value={data.testimonials_title||""} onChange={e=>set("testimonials_title",e.target.value)} placeholder="Vad våra kunder säger" className={inp}/>
+              <TextColorPicker label="Text färg" colorKey="testimonials_title_color" data={data} set={set}/>
+            </div>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700 mb-2">Kort färger</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">Kort BG</span>
+              <CircleColor value={data.testimonials_card_bg||"#ffffff"} onChange={e=>set("testimonials_card_bg",e.target.value)}/>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">Ikon</span>
+              <CircleColor value={data.testimonials_icon_color||"#141414"} onChange={e=>set("testimonials_icon_color",e.target.value)}/>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">Text</span>
+              <CircleColor value={data.testimonials_text_color||"#334155"} onChange={e=>set("testimonials_text_color",e.target.value)}/>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">Namn</span>
+              <CircleColor value={data.testimonials_name_color||"#0f172a"} onChange={e=>set("testimonials_name_color",e.target.value)}/>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">Roll</span>
+              <CircleColor value={data.testimonials_role_color||"#64748b"} onChange={e=>set("testimonials_role_color",e.target.value)}/>
             </div>
           </div>
           <hr className="border-slate-100"/>
