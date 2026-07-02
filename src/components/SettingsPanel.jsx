@@ -900,21 +900,6 @@ export default function SettingsPanel() {
             </div>
           </div>
           <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700 mb-2">Footer länkar</h4>
-          {[
-            {key:"faq", label:"Vanliga frågor"},
-            {key:"kundavtal", label:"Kundavtal"},
-            {key:"nojd", label:"Nöjd kundgaranti"},
-            {key:"varderingar", label:"Värderingar"},
-            {key:"malsattning", label:"Målsättning"},
-            {key:"integritet", label:"Integritetspolicy"},
-          ].map(({key, label}) => (
-            <div key={key} className="flex items-center justify-between py-2 border-b border-slate-100">
-              <span className="text-sm text-slate-700">{label}</span>
-              <CircleColor value={data[`footer_${key}_color`]||"#475569"} onChange={e=>set(`footer_${key}_color`,e.target.value)}/>
-            </div>
-          ))}
-          <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700 mb-2">Sidinnehåll</h4>
           {[
             {key:"faq", label:"FAQ"},
@@ -924,11 +909,17 @@ export default function SettingsPanel() {
             {key:"malsattning", label:"Målsättning"},
             {key:"integritet", label:"Integritetspolicy"},
           ].map(({key, label}) => (
-            <button key={key} onClick={()=>setSection(`footer_${key}`)}
-              className="w-full flex items-center justify-between px-4 py-3 border border-slate-200 rounded-xl hover:border-slate-400 transition-colors">
-              <span className="text-sm font-medium text-slate-700">{label}</span>
-              <span className="text-slate-400">→</span>
-            </button>
+            <div key={key} className="flex items-center justify-between border border-slate-200 rounded-xl px-4 py-3 hover:border-slate-300 transition-colors">
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={()=>set(`show_footer_${key}`, data[`show_footer_${key}`] === false ? true : false)}
+                  className={`w-10 h-5 rounded-full transition-colors shrink-0 ${data[`show_footer_${key}`] !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                  <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data[`show_footer_${key}`] !== false ? "translate-x-5" : "translate-x-0"}`}/>
+                </button>
+                <span className="text-sm font-medium text-slate-700">{label}</span>
+                <CircleColor value={data[`footer_${key}_color`]||"#475569"} onChange={e=>set(`footer_${key}_color`,e.target.value)}/>
+              </div>
+              <button onClick={()=>setSection(`footer_${key}`)} className="text-slate-400 hover:text-slate-700 text-sm">→</button>
+            </div>
           ))}
         </>}
 
