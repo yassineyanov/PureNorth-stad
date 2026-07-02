@@ -498,6 +498,13 @@ export default function SettingsPanel() {
 
         {section === "contact" && <>
           <h3 className="font-semibold text-slate-800">Kontaktuppgifter</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa Kontaktuppgifter</label>
+            <button type="button" onClick={()=>set("show_kontaktuppgifter", data.show_kontaktuppgifter === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_kontaktuppgifter !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_kontaktuppgifter !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
           <div>
             <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Företagsnamn</label>
