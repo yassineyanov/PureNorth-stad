@@ -5740,6 +5740,9 @@ class WebsiteSettings(BaseModel):
     show_hero_badge1: Optional[bool] = True
     show_hero_badge2: Optional[bool] = True
     show_hero_image: Optional[bool] = True
+    show_hero_phone: Optional[bool] = True
+    hero_phone_color: Optional[str] = ""
+    hero_phone_icon_color: Optional[str] = ""
     hero_badge_color: Optional[str] = ""
     hero_badge_bg: Optional[str] = ""
     hero_title_color: Optional[str] = ""
