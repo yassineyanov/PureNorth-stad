@@ -22,7 +22,10 @@ export const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const links = ws.nav_links?.length > 0 ? ws.nav_links : DEFAULT_LINKS;
+  const baseLinks = ws.nav_links?.length > 0 ? ws.nav_links : DEFAULT_LINKS;
+  const links = ws.show_about_in_navbar === false 
+    ? baseLinks.filter(l => l.href !== "/om-oss")
+    : baseLinks;
   const companyName = ws.company_name || ws.nav_company || "PureNorth Städ";
   const bokaText = ws.nav_boka_text || "Boka tid";
 
