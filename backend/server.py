@@ -5794,6 +5794,17 @@ class WebsiteSettings(BaseModel):
     faq_mail_bg: Optional[str] = ""
     faq_mail_icon: Optional[str] = "Mail"
     faq_mail_icon_color: Optional[str] = ""
+    kundavtal_eyebrow: Optional[str] = ""
+    kundavtal_title: Optional[str] = ""
+    kundavtal_intro: Optional[str] = ""
+    kundavtal_bg: Optional[str] = ""
+    kundavtal_eyebrow_color: Optional[str] = ""
+    kundavtal_title_color: Optional[str] = ""
+    kundavtal_intro_color: Optional[str] = ""
+    kundavtal_heading_color: Optional[str] = ""
+    kundavtal_text_color: Optional[str] = ""
+    kundavtal_bullet_color: Optional[str] = ""
+    kundavtal_sections: Optional[list] = None
     show_navbar_links: Optional[bool] = True
     show_navbar_btn: Optional[bool] = True
     show_navbar_company: Optional[bool] = True
