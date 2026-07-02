@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, Plus, Trash2, Menu, Search, Palette, Star } from "lucide-react";
+import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, Plus, Trash2, Menu, Search, Palette, Star, ExternalLink } from "lucide-react";
 
 const SECTIONS = [
   { id: "hero", label: "Hero", icon: Type },
@@ -274,6 +274,10 @@ export default function SettingsPanel() {
           }} className="inline-flex items-center gap-2 border border-slate-300 text-slate-600 font-semibold px-5 py-2.5 rounded-full hover:bg-slate-100 transition-colors">
             Återställ
           </button>
+          <a href="https://purenorth-stad.vercel.app" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 border border-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-full hover:border-slate-400 transition-colors">
+            <ExternalLink size={16}/> Förhandsgranska
+          </a>
           <button onClick={save} disabled={saving}
             className="inline-flex items-center gap-2 bg-[#141414] hover:bg-black text-white font-semibold px-5 py-2.5 rounded-full transition-colors disabled:opacity-50">
             <Save size={16}/> {saving ? "Sparar..." : "Spara"}
