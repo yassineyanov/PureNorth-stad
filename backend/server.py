@@ -6067,6 +6067,8 @@ class WebsiteSettings(BaseModel):
     show_whyus_in_navbar: Optional[bool] = True
     show_kontaktuppgifter: Optional[bool] = True
     show_omdomen: Optional[bool] = True
+    show_hero_section: Optional[bool] = True
+    show_logo: Optional[bool] = True
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
