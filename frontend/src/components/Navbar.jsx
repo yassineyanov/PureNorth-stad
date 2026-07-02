@@ -27,6 +27,7 @@ export const Navbar = () => {
     if (l.href === "/om-oss" && ws.show_about_in_navbar === false) return false;
     if (l.href === "/#tjanster" && ws.show_tjanster_in_navbar === false) return false;
     if (l.href === "/#vart-arbete" && ws.show_vart_in_navbar === false) return false;
+    if (l.href === "/#kontakt" && ws.show_kontakt_in_navbar === false) return false;
     return true;
   });
   const companyName = ws.company_name || ws.nav_company || "PureNorth Städ";

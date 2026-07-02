@@ -613,6 +613,13 @@ export default function SettingsPanel() {
 
         {section === "kontaktsektion" && <>
           <h3 className="font-semibold text-slate-800">Kontaktsektion</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa Kontakt i Navbar</label>
+            <button type="button" onClick={()=>set("show_kontakt_in_navbar", data.show_kontakt_in_navbar === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_kontakt_in_navbar !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_kontakt_in_navbar !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
           <div>
             <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Etikett (liten text ovan rubrik)</label>
