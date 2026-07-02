@@ -1123,6 +1123,24 @@ export default function SettingsPanel() {
             className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
             <Plus size={14}/> Lägg till sektion
           </button>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Kontakttext (längst ner)</h4>
+          <div>
+            <label className={lbl}>Text</label>
+            <input value={data.kundavtal_footer_text||""} onChange={e=>set("kundavtal_footer_text",e.target.value)} placeholder="Har du fler frågor så är du välkommen att kontakta vår kundtjänst på" className={inp}/>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-slate-500">Text färg</span>
+              <CircleColor value={data.kundavtal_footer_color||"#475569"} onChange={e=>set("kundavtal_footer_color",e.target.value)}/>
+            </div>
+          </div>
+          <div>
+            <label className={lbl}>E-post länk</label>
+            <input value={data.kundavtal_footer_email||""} onChange={e=>set("kundavtal_footer_email",e.target.value)} placeholder="kundtjanst@purenorthstad.se" className={inp}/>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-slate-500">Länk färg</span>
+              <CircleColor value={data.kundavtal_footer_link_color||"#141414"} onChange={e=>set("kundavtal_footer_link_color",e.target.value)}/>
+            </div>
+          </div>
         </>}
 
         {section === "seo" && <>

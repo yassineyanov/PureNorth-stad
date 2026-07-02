@@ -42,10 +42,10 @@ export default function Kundavtal() {
           <Bullets items={sec.items||[]} textColor={ws.kundavtal_text_color} bulletColor={ws.kundavtal_bullet_color}/>
         </LegalSection>
       ))}
-      <LegalSection textColor={ws.kundavtal_text_color}>
-        <p>Har du fler frågor så är du välkommen att kontakta vår kundtjänst på{" "}
-          <a href="mailto:kundtjanst@purenorthstad.se" className="font-semibold underline" style={{color: ws.kundavtal_heading_color || "#141414"}}>
-            kundtjanst@purenorthstad.se
+      <LegalSection textColor={ws.kundavtal_footer_color || ws.kundavtal_text_color}>
+        <p>{ws.kundavtal_footer_text || "Har du fler frågor så är du välkommen att kontakta vår kundtjänst på"}{" "}
+          <a href={`mailto:${ws.kundavtal_footer_email || "kundtjanst@purenorthstad.se"}`} className="font-semibold underline" style={{color: ws.kundavtal_footer_link_color || "#141414"}}>
+            {ws.kundavtal_footer_email || "kundtjanst@purenorthstad.se"}
           </a>.
         </p>
       </LegalSection>
