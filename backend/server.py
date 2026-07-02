@@ -5805,6 +5805,10 @@ class WebsiteSettings(BaseModel):
     kundavtal_text_color: Optional[str] = ""
     kundavtal_bullet_color: Optional[str] = ""
     kundavtal_sections: Optional[list] = None
+    kundavtal_footer_text: Optional[str] = ""
+    kundavtal_footer_email: Optional[str] = ""
+    kundavtal_footer_color: Optional[str] = ""
+    kundavtal_footer_link_color: Optional[str] = ""
     show_navbar_links: Optional[bool] = True
     show_navbar_btn: Optional[bool] = True
     show_navbar_company: Optional[bool] = True
