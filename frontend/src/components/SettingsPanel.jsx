@@ -299,6 +299,13 @@ export default function SettingsPanel() {
 
         {section === "hero" && <>
           <h3 className="font-semibold text-slate-800">Hero-sektion</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa Hero</label>
+            <button type="button" onClick={()=>set("show_hero_section", data.show_hero_section === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_section !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_section !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
           <div>
             <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Badge-text (grön etikett)</label>
@@ -580,6 +587,13 @@ export default function SettingsPanel() {
 
         {section === "media" && <>
           <h3 className="font-semibold text-slate-800">Bilder & Logotyp</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa Logotyp</label>
+            <button type="button" onClick={()=>set("show_logo", data.show_logo === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_logo !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_logo !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
           <div>
             <label className={lbl}>Logotyp</label>
             {data.logo_url && <img src={data.logo_url} alt="Logo" className="h-16 mb-3 rounded-xl border border-slate-100 p-2"/>}

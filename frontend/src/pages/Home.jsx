@@ -58,7 +58,7 @@ export default function Home() {
     <div className="bg-white">
       <Navbar />
       <main>
-        <Hero />
+        {ws.show_hero_section !== false && <Hero />}
         {ws.show_tjanster_in_navbar !== false && <Services />}
         {ws.show_vart_in_navbar !== false && <BeforeAfter />}
         {ws.show_whyus_in_navbar !== false && <WhyUs />}
