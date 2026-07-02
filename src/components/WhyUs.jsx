@@ -1,6 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Award, Leaf, Percent, Check } from "lucide-react";
+import { Award, Leaf, Percent, Check, ShieldCheck, Star, Heart, Zap, CheckCircle, Sparkles } from "lucide-react";
+
+const IconMap = { Award, Leaf, Percent, ShieldCheck, Star, Heart, Zap, CheckCircle, Sparkles };
+function CardIcon({ name, size=24 }) {
+  const Icon = IconMap[name] || Award;
+  return <Icon size={size}/>;
+}
 import { useWebsite } from "@/context/WebsiteContext";
 
 export const WhyUs = () => {
@@ -28,7 +34,7 @@ export const WhyUs = () => {
             style={{backgroundColor: ws.sry_bg || "#141414"}}>
             <div className="relative z-10">
               <div className="h-12 w-12 rounded-2xl bg-[#166534] flex items-center justify-center mb-6" style={{color: ws.sry_icon_color || "#ffffff"}}>
-                <Award size={24} />
+                <CardIcon name={ws.sry_icon || "Award"} size={24}/>
               </div>
               <h3 className="font-display font-bold text-3xl mb-4" style={{color: ws.sry_title_color || "#ffffff"}}>{ws.sry_title || "SRY-kvalifikation"}</h3>
               <p className="text-lg leading-relaxed max-w-lg" style={{color: ws.sry_text_color || "rgba(255,255,255,0.75)"}}>
@@ -52,7 +58,7 @@ export const WhyUs = () => {
             className="rounded-3xl border border-slate-200 p-8"
             style={{backgroundColor: ws.eco_card_bg || "#ffffff"}}>
             <div className="h-12 w-12 rounded-2xl flex items-center justify-center mb-5" style={{backgroundColor: (ws.eco_icon_color||"#166534")+"1a", color: ws.eco_icon_color||"#166534"}}>
-              <Leaf size={22} />
+              <CardIcon name={ws.eco_icon || "Leaf"} size={22}/>
             </div>
             <h3 className="font-display font-semibold text-2xl mb-3" style={{color: ws.eco_title_color || "#141414"}}>
               {ws.eco_title || "Svanenmärkt & miljöcertifierat"}
@@ -69,7 +75,7 @@ export const WhyUs = () => {
             className="rounded-3xl border border-slate-200 p-8"
             style={{backgroundColor: ws.rut_card_bg || "#ffffff"}}>
             <div className="h-12 w-12 rounded-2xl flex items-center justify-center mb-5" style={{backgroundColor: (ws.rut_icon_color||"#166534")+"1a", color: ws.rut_icon_color||"#166534"}}>
-              <Percent size={22} />
+              <CardIcon name={ws.rut_icon || "Percent"} size={22}/>
             </div>
             <h3 className="font-display font-semibold text-2xl mb-3" style={{color: ws.rut_title_color || "#141414"}}>
               {ws.rut_title || "50% RUT-avdrag"}
