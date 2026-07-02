@@ -664,12 +664,26 @@ export default function SettingsPanel() {
           <h3 className="font-semibold text-slate-800">Tjänster</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={lbl}>Etikett</label>
+              <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Etikett</label>
+            <button type="button" onClick={()=>set("show_services_label", data.show_services_label === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_services_label !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_services_label !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
               <input value={data.services_label||""} onChange={e=>set("services_label",e.target.value)} placeholder="Våra tjänster" className={inp}/>
+              <TextColorPicker label="Text färg" colorKey="services_label_color" data={data} set={set}/>
             </div>
             <div>
-              <label className={lbl}>Rubrik</label>
+              <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Rubrik</label>
+            <button type="button" onClick={()=>set("show_services_title", data.show_services_title === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_services_title !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_services_title !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
               <input value={data.services_title||""} onChange={e=>set("services_title",e.target.value)} placeholder="Städtjänster för hem och företag" className={inp}/>
+              <TextColorPicker label="Text färg" colorKey="services_title_color" data={data} set={set}/>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 mt-2">
