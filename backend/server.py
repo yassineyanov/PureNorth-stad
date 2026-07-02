@@ -5743,6 +5743,7 @@ class WebsiteSettings(BaseModel):
     show_hero_phone: Optional[bool] = True
     hero_phone_color: Optional[str] = ""
     hero_phone_icon_color: Optional[str] = ""
+    hero_phone_bg: Optional[str] = ""
     hero_badge_color: Optional[str] = ""
     hero_badge_bg: Optional[str] = ""
     hero_title_color: Optional[str] = ""
