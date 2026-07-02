@@ -90,13 +90,19 @@ export const Hero = () => {
               alt="Städning"
               className="rounded-3xl w-full h-[540px] object-cover shadow-2xl"
             />
-            <div className="absolute bottom-6 right-6 bg-white rounded-2xl shadow-lg px-5 py-4 flex items-center gap-3">
-              <span className="h-10 w-10 rounded-full bg-[#166534]/10 flex items-center justify-center text-[#166534] font-bold text-sm">50%</span>
+            {ws.show_hero_rut !== false && (
+            <div className="absolute bottom-6 right-6 rounded-2xl shadow-lg px-5 py-4 flex items-center gap-3"
+              style={{backgroundColor: ws.hero_rut_bg || "#ffffff"}}>
+              <span className="h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm"
+                style={{backgroundColor: (ws.hero_rut_circle_bg||"#166534")+"1a", color: ws.hero_rut_circle_color||"#166534"}}>
+                {ws.hero_rut_percent || "50%"}
+              </span>
               <div>
-                <p className="font-semibold text-slate-900 text-sm">RUT-avdrag</p>
-                <p className="text-xs text-slate-500">Dras direkt på fakturan</p>
+                <p className="font-semibold text-sm" style={{color: ws.hero_rut_title_color||"#0f172a"}}>{ws.hero_rut_title || "RUT-avdrag"}</p>
+                <p className="text-xs" style={{color: ws.hero_rut_text_color||"#64748b"}}>{ws.hero_rut_text || "Dras direkt på fakturan"}</p>
               </div>
             </div>
+            )}
           </motion.div>
         )}
       </div>

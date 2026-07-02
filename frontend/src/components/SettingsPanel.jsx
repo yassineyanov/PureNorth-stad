@@ -324,6 +324,41 @@ export default function SettingsPanel() {
               <CircleColor value={data.hero_phone_bg||"transparent"} onChange={e=>set("hero_phone_bg",e.target.value)}/>
             </div>
           </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>RUT-avdrag badge</label>
+              <button type="button" onClick={()=>set("show_hero_rut", data.show_hero_rut === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_rut !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_rut !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className={lbl}>Procent text</label>
+                <input value={data.hero_rut_percent||""} onChange={e=>set("hero_rut_percent",e.target.value)} placeholder="50%" className={inp}/>
+              </div>
+              <div>
+                <label className={lbl}>Rubrik</label>
+                <input value={data.hero_rut_title||""} onChange={e=>set("hero_rut_title",e.target.value)} placeholder="RUT-avdrag" className={inp}/>
+              </div>
+            </div>
+            <div>
+              <label className={lbl}>Undertext</label>
+              <input value={data.hero_rut_text||""} onChange={e=>set("hero_rut_text",e.target.value)} placeholder="Dras direkt på fakturan" className={inp}/>
+            </div>
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
+              <span className="text-xs text-slate-500">BG</span>
+              <CircleColor value={data.hero_rut_bg||"#ffffff"} onChange={e=>set("hero_rut_bg",e.target.value)}/>
+              <span className="text-xs text-slate-500">Cirkel BG</span>
+              <CircleColor value={data.hero_rut_circle_bg||"#166534"} onChange={e=>set("hero_rut_circle_bg",e.target.value)}/>
+              <span className="text-xs text-slate-500">Cirkel text</span>
+              <CircleColor value={data.hero_rut_circle_color||"#166534"} onChange={e=>set("hero_rut_circle_color",e.target.value)}/>
+              <span className="text-xs text-slate-500">Titel</span>
+              <CircleColor value={data.hero_rut_title_color||"#0f172a"} onChange={e=>set("hero_rut_title_color",e.target.value)}/>
+              <span className="text-xs text-slate-500">Text</span>
+              <CircleColor value={data.hero_rut_text_color||"#64748b"} onChange={e=>set("hero_rut_text_color",e.target.value)}/>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="flex items-center justify-between mb-1">
