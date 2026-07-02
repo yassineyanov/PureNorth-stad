@@ -847,8 +847,30 @@ export default function SettingsPanel() {
             <div key={idx} className="flex items-center gap-2">
               <input value={link.label||""} onChange={e=>{const l=[...data.nav_links];l[idx]={...l[idx],label:e.target.value};set("nav_links",l);}}
                 placeholder="Länktext" className={inp}/>
-              <input value={link.href||""} onChange={e=>{const l=[...data.nav_links];l[idx]={...l[idx],href:e.target.value};set("nav_links",l);}}
-                placeholder="/#tjanster" className={inp}/>
+              <select value={link.href||""} onChange={e=>{
+                const l=[...data.nav_links];
+                l[idx]={...l[idx],href:e.target.value==="custom" ? "" : e.target.value};
+                set("nav_links",l);
+              }} className={inp}>
+                <optgroup label="— Samma sida —">
+                  <option value="/#tjanster">Tjänster (/#tjanster)</option>
+                  <option value="/#kontakt">Kontakt (/#kontakt)</option>
+                  <option value="/#boka">Boka (/#boka)</option>
+                  <option value="/#vart-arbete">Vårt arbete (/#vart-arbete)</option>
+                  <option value="/#omdomen">Omdömen (/#omdomen)</option>
+                  <option value="/#varfor-oss">Varför oss (/#varfor-oss)</option>
+                </optgroup>
+                <optgroup label="— Annan sida —">
+                  <option value="/om-oss">Om oss (/om-oss)</option>
+                  <option value="/faq">FAQ (/faq)</option>
+                  <option value="/kundavtal">Kundavtal</option>
+                  <option value="custom">✏️ Anpassad länk...</option>
+                </optgroup>
+              </select>
+              {(!link.href || !["/#tjanster","/#kontakt","/#boka","/#vart-arbete","/#omdomen","/#varfor-oss","/om-oss","/faq","/kundavtal"].includes(link.href)) && (
+                <input value={link.href||""} onChange={e=>{const l=[...data.nav_links];l[idx]={...l[idx],href:e.target.value};set("nav_links",l);}}
+                  placeholder="https://..." className={inp}/>
+              )}
               <button onClick={()=>set("nav_links",data.nav_links.filter((_,i)=>i!==idx))}
                 className="text-slate-400 hover:text-red-500 shrink-0"><Trash2 size={14}/></button>
             </div>
