@@ -736,6 +736,7 @@ export default function SettingsPanel() {
                 <button onClick={()=>document.getElementById(`svc-img-${idx}`).click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2 text-xs hover:border-slate-400">
                   <Upload size={12}/> {svc.img ? "Byt bild" : "Ladda upp bild"}
                 </button>
+                <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 940×650px</p>
               </div>
             </div>
           ))}
