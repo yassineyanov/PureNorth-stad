@@ -1296,6 +1296,7 @@ export default function SettingsPanel() {
               <div>
                 <label className={lbl}>Ikon</label>
                 <select value={v.icon||"Tag"} onChange={e=>{const s=[...data.varderingar_values];s[idx]={...s[idx],icon:e.target.value};set("varderingar_values",s);}} className={inp}>
+                  <option value="none">— Ingen ikon</option>
                   <option value="Tag">🏷️ Tag</option>
                   <option value="HeartHandshake">🤝 HeartHandshake</option>
                   <option value="ShieldCheck">🛡️ ShieldCheck</option>

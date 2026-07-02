@@ -38,16 +38,18 @@ export default function Varderingar() {
           </motion.div>
           <div className="grid sm:grid-cols-2 gap-6">
             {values.map((v, i) => {
-              const Icon = IconMap[v.icon] || Tag;
+              const Icon = IconMap[v.icon];
               return (
                 <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }} transition={{ duration: 0.45, delay: (i % 2) * 0.08 }}
                   className="rounded-3xl border border-slate-200 p-8 hover:shadow-lg transition-shadow"
                   style={{backgroundColor: ws.varderingar_card_bg || "#ffffff"}}>
+                  {v.icon !== "none" && Icon && (
                   <div className="h-12 w-12 rounded-2xl flex items-center justify-center mb-5"
                     style={{backgroundColor: ws.varderingar_icon_bg || "#141414", color: ws.varderingar_icon_color || "#ffffff"}}>
                     <Icon size={22}/>
                   </div>
+                  )}
                   <h3 className="font-display font-semibold text-2xl mb-3" style={{color: ws.varderingar_card_title_color || "#141414"}}>{v.title}</h3>
                   <p className="text-[15px] leading-relaxed" style={{color: ws.varderingar_card_text_color || "#475569"}}>{v.text}</p>
                 </motion.div>
