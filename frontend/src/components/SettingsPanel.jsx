@@ -191,6 +191,10 @@ export default function SettingsPanel() {
                 {"heading":"13. Ändring av integritetspolicy","text":"PureNorth Städ har rätt att när som helst ändra integritetspolicyn."},
                 {"heading":"14. Kontaktinformation","text":"Har du frågor kring denna policy kan du kontakta oss på kundtjanst@purenorthstad.se."}
               ],
+              vart_slides: [
+                {"before":"/before-1.png","after":"/after-1.png","alt":"Sovrum","testid":"before-after-1","show":true,"mode":"slider"},
+                {"before":"/before-2.png","after":"/after-2.png","alt":"Kontor","testid":"before-after-2","show":true,"mode":"slider"}
+              ],
               mal_card1_img: "/svanen-new.png",
               mal_card2_img: "https://images.pexels.com/photos/4239146/pexels-photo-4239146.jpeg?auto=compress&cs=tinysrgb&w=900",
               kundavtal_sections: [
