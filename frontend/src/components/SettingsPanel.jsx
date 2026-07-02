@@ -191,6 +191,12 @@ export default function SettingsPanel() {
                 {"heading":"13. Ändring av integritetspolicy","text":"PureNorth Städ har rätt att när som helst ändra integritetspolicyn."},
                 {"heading":"14. Kontaktinformation","text":"Har du frågor kring denna policy kan du kontakta oss på kundtjanst@purenorthstad.se."}
               ],
+              nav_links: [{"label":"Tjänster","href":"/#tjanster"},{"label":"Om oss","href":"/om-oss"},{"label":"Vårt arbete","href":"/#vart-arbete"},{"label":"Kontakt","href":"/#kontakt"}],
+              navbar_bg: "",
+              navbar_company_color: "",
+              navbar_link_color: "",
+              navbar_btn_color: "",
+              navbar_btn_bg: "",
               services_label_color: "",
               services_title_color: "",
               services: [
