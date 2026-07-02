@@ -14,6 +14,7 @@ const SECTIONS = [
   { id: "services", label: "Tjänster", icon: Layers },
   { id: "navbar", label: "Navbar", icon: Menu },
   { id: "seo", label: "SEO", icon: Search },
+  { id: "footer", label: "Footer", icon: Layers },
   { id: "testimonials", label: "Omdömen", icon: Star },
 ];
 
@@ -879,6 +880,62 @@ export default function SettingsPanel() {
             className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
             <Plus size={14}/> Lägg till länk
           </button>
+        </>}
+
+        {section === "footer" && <>
+          <h3 className="font-semibold text-slate-800">Footer</h3>
+          <div>
+            <label className={lbl}>Footer BG färg</label>
+            <div className="flex items-center gap-2 mt-1">
+              <CircleColor value={data.footer_bg||"#ffffff"} onChange={e=>set("footer_bg",e.target.value)}/>
+              <span className="text-xs text-slate-400">Bakgrundsfärg</span>
+            </div>
+          </div>
+          <div>
+            <label className={lbl}>Copyright text</label>
+            <input value={data.footer_copyright||""} onChange={e=>set("footer_copyright",e.target.value)} placeholder="© 2026 PureNorth Städ · Umeå" className={inp}/>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-slate-500">Färg</span>
+              <CircleColor value={data.footer_copyright_color||"#64748b"} onChange={e=>set("footer_copyright_color",e.target.value)}/>
+            </div>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700 mb-2">Footer länkar</h4>
+          {[
+            {key:"faq", label:"Vanliga frågor", href:"/faq"},
+            {key:"kundavtal", label:"Kundavtal", href:"/kundavtal"},
+            {key:"nojd", label:"Nöjd kundgaranti", href:"/nojd-kundgaranti"},
+            {key:"varderingar", label:"Värderingar", href:"/varderingar"},
+            {key:"malsattning", label:"Målsättning", href:"/malsattning"},
+            {key:"integritet", label:"Integritetspolicy", href:"/integritetspolicy"},
+          ].map(({key, label}) => (
+            <div key={key} className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={()=>set(`show_footer_${key}`, data[`show_footer_${key}`] === false ? true : false)}
+                  className={`w-10 h-5 rounded-full transition-colors ${data[`show_footer_${key}`] !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                  <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data[`show_footer_${key}`] !== false ? "translate-x-5" : "translate-x-0"}`}/>
+                </button>
+                <span className="text-sm text-slate-700">{label}</span>
+              </div>
+              <CircleColor value={data[`footer_${key}_color`]||"#475569"} onChange={e=>set(`footer_${key}_color`,e.target.value)}/>
+            </div>
+          ))}
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700 mb-2">Sidinnehåll</h4>
+          {[
+            {key:"faq", label:"FAQ"},
+            {key:"kundavtal", label:"Kundavtal"},
+            {key:"nojd", label:"Nöjd kundgaranti"},
+            {key:"varderingar", label:"Värderingar"},
+            {key:"malsattning", label:"Målsättning"},
+            {key:"integritet", label:"Integritetspolicy"},
+          ].map(({key, label}) => (
+            <button key={key} onClick={()=>setSection(`footer_${key}`)}
+              className="w-full flex items-center justify-between px-4 py-3 border border-slate-200 rounded-xl hover:border-slate-400 transition-colors">
+              <span className="text-sm font-medium text-slate-700">{label}</span>
+              <span className="text-slate-400">→</span>
+            </button>
+          ))}
         </>}
 
         {section === "seo" && <>
