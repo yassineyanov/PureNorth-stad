@@ -686,14 +686,7 @@ export default function SettingsPanel() {
               <TextColorPicker label="Text färg" colorKey="services_title_color" data={data} set={set}/>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 mt-2">
-            <div>
-              <TextColorPicker label="Etikett färg" colorKey="services_label_color" data={data} set={set}/>
-            </div>
-            <div>
-              <TextColorPicker label="Rubrik färg" colorKey="services_title_color" data={data} set={set}/>
-            </div>
-          </div>
+
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700 mb-2">Tjänstekort</h4>
           {(data.services||[]).map((svc, idx) => (
