@@ -902,21 +902,15 @@ export default function SettingsPanel() {
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700 mb-2">Footer länkar</h4>
           {[
-            {key:"faq", label:"Vanliga frågor", href:"/faq"},
-            {key:"kundavtal", label:"Kundavtal", href:"/kundavtal"},
-            {key:"nojd", label:"Nöjd kundgaranti", href:"/nojd-kundgaranti"},
-            {key:"varderingar", label:"Värderingar", href:"/varderingar"},
-            {key:"malsattning", label:"Målsättning", href:"/malsattning"},
-            {key:"integritet", label:"Integritetspolicy", href:"/integritetspolicy"},
+            {key:"faq", label:"Vanliga frågor"},
+            {key:"kundavtal", label:"Kundavtal"},
+            {key:"nojd", label:"Nöjd kundgaranti"},
+            {key:"varderingar", label:"Värderingar"},
+            {key:"malsattning", label:"Målsättning"},
+            {key:"integritet", label:"Integritetspolicy"},
           ].map(({key, label}) => (
             <div key={key} className="flex items-center justify-between py-2 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={()=>set(`show_footer_${key}`, data[`show_footer_${key}`] === false ? true : false)}
-                  className={`w-10 h-5 rounded-full transition-colors ${data[`show_footer_${key}`] !== false ? "bg-blue-500" : "bg-slate-200"}`}>
-                  <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data[`show_footer_${key}`] !== false ? "translate-x-5" : "translate-x-0"}`}/>
-                </button>
-                <span className="text-sm text-slate-700">{label}</span>
-              </div>
+              <span className="text-sm text-slate-700">{label}</span>
               <CircleColor value={data[`footer_${key}_color`]||"#475569"} onChange={e=>set(`footer_${key}_color`,e.target.value)}/>
             </div>
           ))}
@@ -945,6 +939,13 @@ export default function SettingsPanel() {
             <span className="text-sm font-medium text-slate-800">FAQ</span>
           </div>
           <h3 className="font-semibold text-slate-800">FAQ – Vanliga frågor</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa FAQ sidan</label>
+            <button type="button" onClick={()=>set("show_faq_page", data.show_faq_page === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_faq_page !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_faq_page !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
           <div>
             <label className={lbl}>Sida BG</label>
             <div className="flex items-center gap-2 mt-1">
@@ -1018,6 +1019,60 @@ export default function SettingsPanel() {
             className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
             <Plus size={14}/> Lägg till fråga
           </button>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Ring oss knapp</h4>
+          <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Visa Ring oss</label>
+            <button type="button" onClick={()=>set("show_faq_ring_btn", data.show_faq_ring_btn === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_faq_ring_btn !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_faq_ring_btn !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+          <input value={data.faq_ring_text||""} onChange={e=>set("faq_ring_text",e.target.value)} placeholder="Ring oss" className={inp}/>
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            <span className="text-xs text-slate-500">Text</span>
+            <CircleColor value={data.faq_ring_color||"#141414"} onChange={e=>set("faq_ring_color",e.target.value)}/>
+            <span className="text-xs text-slate-500">BG</span>
+            <CircleColor value={data.faq_ring_bg||"#ffffff"} onChange={e=>set("faq_ring_bg",e.target.value)}/>
+            <span className="text-xs text-slate-500">Ikon färg</span>
+            <CircleColor value={data.faq_ring_icon_color||"#141414"} onChange={e=>set("faq_ring_icon_color",e.target.value)}/>
+          </div>
+          <div>
+            <label className={lbl}>Ikon</label>
+            <select value={data.faq_ring_icon||"Phone"} onChange={e=>set("faq_ring_icon",e.target.value)} className={inp}>
+              <option value="Phone">📞 Phone</option>
+              <option value="Smartphone">📱 Smartphone</option>
+              <option value="MessageCircle">💬 MessageCircle</option>
+              <option value="none">— Ingen ikon</option>
+            </select>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Mejla oss knapp</h4>
+          <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Visa Mejla oss</label>
+            <button type="button" onClick={()=>set("show_faq_mail_btn", data.show_faq_mail_btn === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_faq_mail_btn !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_faq_mail_btn !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+          <input value={data.faq_mail_text||""} onChange={e=>set("faq_mail_text",e.target.value)} placeholder="Mejla oss" className={inp}/>
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            <span className="text-xs text-slate-500">Text</span>
+            <CircleColor value={data.faq_mail_color||"#ffffff"} onChange={e=>set("faq_mail_color",e.target.value)}/>
+            <span className="text-xs text-slate-500">BG</span>
+            <CircleColor value={data.faq_mail_bg||"transparent"} onChange={e=>set("faq_mail_bg",e.target.value)}/>
+            <span className="text-xs text-slate-500">Ikon färg</span>
+            <CircleColor value={data.faq_mail_icon_color||"#ffffff"} onChange={e=>set("faq_mail_icon_color",e.target.value)}/>
+          </div>
+          <div>
+            <label className={lbl}>Ikon</label>
+            <select value={data.faq_mail_icon||"Mail"} onChange={e=>set("faq_mail_icon",e.target.value)} className={inp}>
+              <option value="Mail">✉️ Mail</option>
+              <option value="MessageCircle">💬 MessageCircle</option>
+              <option value="Send">📤 Send</option>
+              <option value="none">— Ingen ikon</option>
+            </select>
+          </div>
         </>}
 
         {section === "seo" && <>
