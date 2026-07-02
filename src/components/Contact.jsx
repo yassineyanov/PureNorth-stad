@@ -107,12 +107,12 @@ export const Footer = () => {
           </span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-          <Link to="/faq" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">Vanliga frågor</Link>
-          <Link to="/kundavtal" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">Kundavtal</Link>
-          <Link to="/nojd-kundgaranti" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">Nöjd kundgaranti</Link>
-          <Link to="/varderingar" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">Värderingar</Link>
-          <Link to="/malsattning" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">Målsättning</Link>
-          <Link to="/integritetspolicy" className="text-sm font-medium text-slate-600 hover:text-[#141414] transition-colors">GDPR-Integritetspolicy</Link>
+          {ws.show_footer_faq !== false && <Link to="/faq" className="text-sm font-medium hover:opacity-70 transition-colors" style={{color: ws.footer_faq_color || "#475569"}}>Vanliga frågor</Link>}
+          {ws.show_footer_kundavtal !== false && <Link to="/kundavtal" className="text-sm font-medium hover:opacity-70 transition-colors" style={{color: ws.footer_kundavtal_color || "#475569"}}>Kundavtal</Link>}
+          {ws.show_footer_nojd !== false && <Link to="/nojd-kundgaranti" className="text-sm font-medium hover:opacity-70 transition-colors" style={{color: ws.footer_nojd_color || "#475569"}}>Nöjd kundgaranti</Link>}
+          {ws.show_footer_varderingar !== false && <Link to="/varderingar" className="text-sm font-medium hover:opacity-70 transition-colors" style={{color: ws.footer_varderingar_color || "#475569"}}>Värderingar</Link>}
+          {ws.show_footer_malsattning !== false && <Link to="/malsattning" className="text-sm font-medium hover:opacity-70 transition-colors" style={{color: ws.footer_malsattning_color || "#475569"}}>Målsättning</Link>}
+          {ws.show_footer_integritet !== false && <Link to="/integritetspolicy" className="text-sm font-medium hover:opacity-70 transition-colors" style={{color: ws.footer_integritet_color || "#475569"}}>GDPR-Integritetspolicy</Link>}
           <Link to="/admin" className="text-sm font-medium text-slate-400 hover:text-[#141414] transition-colors">Admin</Link>
         </div>
       </div>
