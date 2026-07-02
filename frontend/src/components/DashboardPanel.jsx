@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Calendar, Users, FileText, AlertCircle, Clock, TrendingUp, TrendingDown, Phone, Mail, RefreshCw, CalendarClock, ClipboardList, CalendarDays, Wallet, Landmark, Banknote, Receipt } from "lucide-react";
+import { Calendar, Users, FileText, AlertCircle, Clock, TrendingUp, TrendingDown, Phone, Mail, RefreshCw, CalendarClock, ClipboardList, CalendarDays, Wallet, Landmark, Banknote, Receipt, ExternalLink } from "lucide-react";
 import { api } from "@/lib/api";
 
 function kr(v) { return `${(v||0).toLocaleString("sv-SE",{minimumFractionDigits:2,maximumFractionDigits:2})} kr`; }
@@ -91,6 +91,10 @@ export default function DashboardPanel({ onNavigate, onRefresh }) {
         </div>
         <div className="flex items-center gap-2">
           {lastUpdated && <span className="text-xs text-slate-400">Uppdaterad {lastUpdated.toLocaleTimeString("sv-SE", {hour:"2-digit", minute:"2-digit"})}</span>}
+          <a href="https://purenorth-stad.vercel.app" target="_blank" rel="noopener noreferrer"
+            className="h-9 px-3 rounded-full border border-slate-200 flex items-center gap-1.5 text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors text-xs font-medium">
+            <ExternalLink size={13}/> Förhandsgranska
+          </a>
           <button onClick={()=>{load();if(onRefresh)onRefresh();}} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-[#141414] hover:text-[#141414] transition-colors">
             <RefreshCw size={15}/>
           </button>
