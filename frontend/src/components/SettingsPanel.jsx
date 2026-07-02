@@ -930,13 +930,7 @@ export default function SettingsPanel() {
             <span className="text-sm font-medium text-slate-800">FAQ</span>
           </div>
           <h3 className="font-semibold text-slate-800">FAQ – Vanliga frågor</h3>
-          <div className="flex items-center justify-between mb-2">
-            <label className={lbl}>Visa FAQ i footer</label>
-            <button type="button" onClick={()=>set("show_footer_faq", data.show_footer_faq === false ? true : false)}
-              className={`w-10 h-5 rounded-full transition-colors ${data.show_footer_faq !== false ? "bg-blue-500" : "bg-slate-200"}`}>
-              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_footer_faq !== false ? "translate-x-5" : "translate-x-0"}`}/>
-            </button>
-          </div>
+
           <div>
             <label className={lbl}>Sida BG</label>
             <div className="flex items-center gap-2 mt-1">
