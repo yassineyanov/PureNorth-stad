@@ -165,6 +165,8 @@ export default function SettingsPanel() {
               testimonials_name_color: "",
               testimonials_role_color: "",
               testimonials_icon_color: "",
+              mal_card1_img: "/svanen-new.png",
+              mal_card2_img: "https://images.pexels.com/photos/4239146/pexels-photo-4239146.jpeg?auto=compress&cs=tinysrgb&w=900",
               kundavtal_sections: [
                 {"heading":"Bokningsvillkor","items":["Bokningen behöver ske via mail.","Vi behöver ett fullständigt personnummer för RUT-ansökan.","Vår städgaranti innebär att ni inom 14 dagar efter utförd tjänst ska kontakta oss."]},
                 {"heading":"Betalningsvillkor","items":["Fakturering och betalning hanteras endast elektroniskt.","Betalningsvillkor är 10 dagar."]},
