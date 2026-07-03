@@ -107,12 +107,11 @@ export const BookingForm = () => {
           <p className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-3">
             Boka tid
           </p>
-          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-white leading-tight">
+          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight leading-tight" style={{color: ws.booking_title_color||"#ffffff"}}>
             {ws.booking_title || "Boka online eller ring oss"}
           </h2>
-          <p className="mt-5 text-lg text-white/70 leading-relaxed">
-            Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata
-            med oss direkt? Slå en signal.
+          <p className="mt-5 text-lg leading-relaxed" style={{color: ws.booking_subtitle_color ? ws.booking_subtitle_color+"b3" : "rgba(255,255,255,0.7)"}}>
+            {ws.booking_subtitle || "Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata med oss direkt? Slå en signal."}
           </p>
           <a
             href={`tel:${(ws.phone || "070-624 04 03").replace(/[^0-9]/g, "")}`}
