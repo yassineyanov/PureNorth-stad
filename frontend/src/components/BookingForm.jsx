@@ -193,18 +193,7 @@ export const BookingForm = () => {
                     </span>
                     {serviceDropdownOpen ? <ChevronUp size={18} className="text-white/60 shrink-0" /> : <ChevronDown size={18} className="text-white/60 shrink-0" />}
                   </button>
-                  {services.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {services.map(s => (
-                        <span key={s} className="inline-flex items-center gap-1.5 bg-white/15 border border-white/30 text-white text-xs font-medium px-3 py-1.5 rounded-full">
-                          {s}
-                          <button type="button" onClick={(e) => { e.stopPropagation(); toggleService(s, false); }} className="text-white/60 hover:text-white transition-colors ml-0.5">
-                            <X size={12}/>
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+
                   {serviceDropdownOpen && (
                     <motion.div
                       initial={{ opacity: 0, y: -4 }}
