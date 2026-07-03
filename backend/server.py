@@ -6069,6 +6069,20 @@ class WebsiteSettings(BaseModel):
     show_omdomen: Optional[bool] = True
     show_hero_section: Optional[bool] = True
     show_logo: Optional[bool] = True
+    show_booking_form: Optional[bool] = True
+    booking_title: Optional[str] = ""
+    booking_subtitle: Optional[str] = ""
+    booking_btn_text: Optional[str] = ""
+    booking_success_title: Optional[str] = ""
+    booking_success_text: Optional[str] = ""
+    booking_bg: Optional[str] = ""
+    booking_title_color: Optional[str] = ""
+    booking_subtitle_color: Optional[str] = ""
+    booking_btn_color: Optional[str] = ""
+    booking_btn_bg: Optional[str] = ""
+    booking_input_bg: Optional[str] = ""
+    booking_label_color: Optional[str] = ""
+    booking_services: Optional[list] = None
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
