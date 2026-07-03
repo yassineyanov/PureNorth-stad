@@ -26,7 +26,6 @@ const darkInput =
 
 export const BookingForm = () => {
   const ws = useWebsite();
-  if (ws.show_booking === false) return null;
   const [form, setForm] = useState(initialForm);
   const [services, setServices] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -103,6 +102,7 @@ export const BookingForm = () => {
     }
   };
 
+  if (ws.show_booking === false) return null;
   return (
     <section id="boka" className="py-24 sm:py-32 text-white" style={{backgroundColor: ws.booking_bg || "#141414"}}>
       <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-5 gap-12">
