@@ -157,19 +157,19 @@ export const BookingForm = () => {
             >
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
-                  <Label htmlFor="name" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Namn eller företagsnamn *</Label>
-                  <Input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                  <label htmlFor="name" className="text-sm font-medium" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Namn eller företagsnamn *</label>
+                  <input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
                 <div>
-                  <Label htmlFor="email" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>E-post *</Label>
+                  <label htmlFor="email" className="text-sm font-medium" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>E-post *</label>
                   <input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
                 <div>
-                  <Label htmlFor="phone" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Telefonnummer *</Label>
+                  <label htmlFor="phone" className="text-sm font-medium" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Telefonnummer *</label>
                   <input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
                 <div>
-                  <Label htmlFor="address" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Adress (städobjekt)</Label>
+                  <label htmlFor="address" className="text-sm font-medium" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Adress (städobjekt)</label>
                   <input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
               </div>
