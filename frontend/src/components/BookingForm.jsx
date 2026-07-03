@@ -259,7 +259,8 @@ export const BookingForm = () => {
                 type="submit"
                 disabled={submitting}
                 data-testid="booking-submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white hover:bg-white/90 disabled:opacity-60 text-[#141414] px-8 py-4 text-base font-semibold transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full disabled:opacity-60 px-8 py-4 text-base font-semibold transition-colors"
+                style={{backgroundColor: ws.booking_btn_bg||"#ffffff", color: ws.booking_btn_color||"#141414"}}
               >
                 {submitting ? "Skickar..." : <>Skicka bokningsförfrågan <Send size={17} /></>}
               </button>
