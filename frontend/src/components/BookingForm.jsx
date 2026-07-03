@@ -95,6 +95,7 @@ export const BookingForm = () => {
   };
 
   if (ws.show_booking === false) return null;
+  console.log("WS booking:", ws.booking_form_label_color, ws.booking_form_input_bg);
   return (
     <section id="boka" className="py-24 sm:py-32 text-white" style={{backgroundColor: ws.booking_bg || "#141414"}}>
       <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-5 gap-12">
