@@ -21,8 +21,7 @@ const initialForm = {
   other_description: "",
 };
 
-const darkInput =
-  "mt-1.5 bg-white/[0.06] border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30";
+const darkInput = "mt-1.5 border-white/20 placeholder:text-white/40 focus-visible:ring-white/30";
 
 export const BookingForm = () => {
   const ws = useWebsite();
