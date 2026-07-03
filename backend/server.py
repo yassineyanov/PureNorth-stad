@@ -6097,6 +6097,7 @@ class WebsiteSettings(BaseModel):
     booking_success_text: Optional[str] = ""
     booking_success_color: Optional[str] = ""
     booking_services: Optional[list] = None
+    booking_form_bg: Optional[str] = ""
     show_booking_form: Optional[bool] = True
     booking_title: Optional[str] = ""
     booking_subtitle: Optional[str] = ""
@@ -6111,6 +6112,7 @@ class WebsiteSettings(BaseModel):
     booking_input_bg: Optional[str] = ""
     booking_label_color: Optional[str] = ""
     booking_services: Optional[list] = None
+    booking_form_bg: Optional[str] = ""
     show_booking_phone: Optional[bool] = True
     booking_phone_icon: Optional[str] = "Phone"
     booking_phone_icon_color: Optional[str] = ""
