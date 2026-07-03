@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useWebsite } from "@/context/WebsiteContext";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Phone, Send, CheckCircle2, ChevronDown, ChevronUp, Check, X } from "lucide-react";
+import { Phone, Send, CheckCircle2, ChevronDown, ChevronUp, Check, X, Smartphone, MessageCircle } from "lucide-react";
+const PhoneIconMap = { Phone, Smartphone, MessageCircle };
+function BookingPhoneIcon({ name, size=18 }) { const Icon = PhoneIconMap[name] || Phone; return <Icon size={size}/>; }
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
