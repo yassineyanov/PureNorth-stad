@@ -31,7 +31,7 @@ export const BookingForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
-  const [serviceOptions, setServiceOptions] = useState(["Hemstädning", "Flyttstädning", "Kontorsstädning", "Storstädning", "Annat"]);
+  const [serviceOptions, setServiceOptions] = useState(ws.booking_services?.length > 0 ? ws.booking_services : ["Hemstädning", "Flyttstädning", "Kontorsstädning", "Storstädning", "Annat"]);
   const [priceItems, setPriceItems] = useState([]);
   const KVM_SERVICES = ["Hemstädning", "Flyttstädning", "Storstädning", "Byggstädning"];
   const needsKvm = services.some(s => KVM_SERVICES.includes(s));
@@ -98,7 +98,7 @@ export const BookingForm = () => {
   };
 
   return (
-    <section id="boka" className="py-24 sm:py-32 bg-[#141414] text-white">
+    <section id="boka" className="py-24 sm:py-32 text-white" style={{backgroundColor: ws.booking_bg || "#141414"}}>
       <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-5 gap-12">
         {/* Left intro */}
         <div className="lg:col-span-2">
@@ -106,7 +106,7 @@ export const BookingForm = () => {
             Boka tid
           </p>
           <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-white leading-tight">
-            Boka online eller ring oss
+            {ws.booking_title || "Boka online eller ring oss"}
           </h2>
           <p className="mt-5 text-lg text-white/70 leading-relaxed">
             Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata
@@ -138,7 +138,7 @@ export const BookingForm = () => {
             >
               <CheckCircle2 size={48} className="text-[#4ade80] mx-auto mb-4" />
               <h3 className="font-display font-bold text-2xl text-white mb-2">
-                Tack för din förfrågan!
+                {ws.booking_success_title || "Tack för din förfrågan!"}
               </h3>
               <p className="text-white/70">
                 Vi har tagit emot din bokning och återkommer så snart vi kan.

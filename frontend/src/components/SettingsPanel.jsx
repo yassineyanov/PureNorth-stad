@@ -15,6 +15,7 @@ const SECTIONS = [
   { id: "navbar", label: "Navbar", icon: Menu },
   { id: "seo", label: "SEO", icon: Search },
   { id: "vartarbete", label: "Vårt arbete", icon: Image },
+  { id: "booking", label: "Bokningsformulär", icon: ClipboardList },
   { id: "footer", label: "Footer", icon: Layers },
   { id: "testimonials", label: "Omdömen", icon: Star },
 ];
@@ -1819,6 +1820,69 @@ export default function SettingsPanel() {
           <button onClick={()=>set("vart_slides",[...(data.vart_slides||[]),{before:"",after:"",alt:""}])}
             className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
             <Plus size={14}/> Lägg till bild
+          </button>
+        </>}
+
+        {section === "booking" && <>
+          <h3 className="font-semibold text-slate-800">Bokningsformulär</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa bokningsformulär</label>
+            <button type="button" onClick={()=>set("show_booking_form", data.show_booking_form === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_booking_form !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_booking_form !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Texter</h4>
+          <div>
+            <label className={lbl}>Rubrik (vänster)</label>
+            <input value={data.booking_title||""} onChange={e=>set("booking_title",e.target.value)} placeholder="Boka online eller ring oss" className={inp}/>
+            <TextColorPicker label="Färg" colorKey="booking_title_color" defaultColor="#ffffff" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Undertext</label>
+            <textarea value={data.booking_subtitle||""} onChange={e=>set("booking_subtitle",e.target.value)} rows={2} placeholder="Fyll i formuläret så återkommer vi..." className={inp+" resize-none"}/>
+            <TextColorPicker label="Färg" colorKey="booking_subtitle_color" defaultColor="#ffffff" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Skicka-knapp text</label>
+            <input value={data.booking_btn_text||""} onChange={e=>set("booking_btn_text",e.target.value)} placeholder="Skicka förfrågan" className={inp}/>
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
+              <span className="text-xs text-slate-500">Text</span>
+              <CircleColor value={data.booking_btn_color||"#ffffff"} onChange={e=>set("booking_btn_color",e.target.value)}/>
+              <span className="text-xs text-slate-500">BG</span>
+              <CircleColor value={data.booking_btn_bg||"#166534"} onChange={e=>set("booking_btn_bg",e.target.value)}/>
+            </div>
+          </div>
+          <div>
+            <label className={lbl}>Success rubrik</label>
+            <input value={data.booking_success_title||""} onChange={e=>set("booking_success_title",e.target.value)} placeholder="Tack för din förfrågan!" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Success text</label>
+            <input value={data.booking_success_text||""} onChange={e=>set("booking_success_text",e.target.value)} placeholder="Vi återkommer inom 24 timmar." className={inp}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Färger</h4>
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            <span className="text-xs text-slate-500">BG</span>
+            <CircleColor value={data.booking_bg||"#141414"} onChange={e=>set("booking_bg",e.target.value)}/>
+            <span className="text-xs text-slate-500">Label</span>
+            <CircleColor value={data.booking_label_color||"#ffffff"} onChange={e=>set("booking_label_color",e.target.value)}/>
+            <span className="text-xs text-slate-500">Input BG</span>
+            <CircleColor value={data.booking_input_bg||"#ffffff"} onChange={e=>set("booking_input_bg",e.target.value)}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700 mb-2">Tjänster i formuläret</h4>
+          {(data.booking_services||[]).map((s, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <input value={s||""} onChange={e=>{const arr=[...data.booking_services];arr[idx]=e.target.value;set("booking_services",arr);}} placeholder="Hemstädning" className={inp}/>
+              <button onClick={()=>set("booking_services",data.booking_services.filter((_,i)=>i!==idx))} className="text-slate-400 hover:text-red-500 shrink-0"><Trash2 size={14}/></button>
+            </div>
+          ))}
+          <button onClick={()=>set("booking_services",[...(data.booking_services||[]),""])}
+            className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
+            <Plus size={14}/> Lägg till tjänst
           </button>
         </>}
 
