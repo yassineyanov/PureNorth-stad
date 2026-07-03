@@ -61,14 +61,7 @@ export const BookingForm = () => {
   const annatSelected = services.includes("Annat") || services.some((s) => !serviceOptions.slice(0, -1).includes(s));
 
   const toggleService = (s, closeDropdown = true) => {
-    setServices((prev) => {
-      if (s === "Annat") {
-        return prev.includes(s) ? [] : ["Annat"];
-      } else {
-        const without = prev.filter((x) => x !== "Annat");
-        return without.includes(s) ? without.filter((x) => x !== s) : [...without, s];
-      }
-    });
+    setServices((prev) => prev.includes(s) ? [] : [s]);
     if (closeDropdown) setServiceDropdownOpen(false);
   };
 
