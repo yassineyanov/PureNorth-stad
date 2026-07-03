@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useWebsite } from "@/context/WebsiteContext";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Phone, Send, CheckCircle2, ChevronDown, ChevronUp, Check, X } from "lucide-react";
@@ -24,6 +25,8 @@ const darkInput =
   "mt-1.5 bg-white/[0.06] border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30";
 
 export const BookingForm = () => {
+  const ws = useWebsite();
+  if (ws.show_booking === false) return null;
   const [form, setForm] = useState(initialForm);
   const [services, setServices] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -101,22 +104,21 @@ export const BookingForm = () => {
   };
 
   return (
-    <section id="boka" className="py-24 sm:py-32 bg-[#141414] text-white">
+    <section id="boka" className="py-24 sm:py-32 text-white" style={{backgroundColor: ws.booking_bg || "#141414"}}>
       <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-5 gap-12">
         {/* Left intro */}
         <div className="lg:col-span-2">
           <p className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-3">
-            Boka tid
+            {ws.booking_left_label || "Boka tid"}
           </p>
-          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-white leading-tight">
-            Boka online eller ring oss
+          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight leading-tight" style={{color: ws.booking_left_title_color || "#ffffff"}}>
+            {ws.booking_left_title || "Boka online eller ring oss"}
           </h2>
           <p className="mt-5 text-lg text-white/70 leading-relaxed">
-            Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata
-            med oss direkt? Slå en signal.
+            {ws.booking_left_subtitle || "Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata med oss direkt? Slå en signal."}
           </p>
           <a
-            href="tel:0706240403"
+            href={`tel:${(ws.phone || "070-624 04 03").replace(/[^0-9]/g, "")}`}
             data-testid="booking-call-btn"
             className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.06] px-6 py-4 hover:border-white/40 transition-colors"
           >
@@ -125,7 +127,7 @@ export const BookingForm = () => {
             </span>
             <span>
               <span className="block text-xs text-white/50">Ring oss</span>
-              <span className="block font-semibold text-white">070-624 04 03</span>
+              <span className="block font-semibold text-white">{ws.phone || "070-624 04 03"}</span>
             </span>
           </a>
         </div>
@@ -271,7 +273,7 @@ export const BookingForm = () => {
                 type="submit"
                 disabled={submitting}
                 data-testid="booking-submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white hover:bg-white/90 disabled:opacity-60 text-[#141414] px-8 py-4 text-base font-semibold transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full disabled:opacity-60 px-8 py-4 text-base font-semibold transition-colors" style={{backgroundColor: ws.booking_submit_bg || "#ffffff", color: ws.booking_submit_color || "#141414"}}
               >
                 {submitting ? "Skickar..." : <>Skicka bokningsförfrågan <Send size={17} /></>}
               </button>
