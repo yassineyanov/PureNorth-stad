@@ -87,7 +87,7 @@ export const WebsiteProvider = ({ children }) => {
     const base = process.env.REACT_APP_BACKEND_URL || "";
     fetch(`${base}/api/settings/website`)
       .then(r => r.json())
-      .then(d => { setWs(prev => ({...prev, ...Object.fromEntries(Object.entries(d).filter(([,v]) => v !== "" && v !== null))})); setReady(true); })
+      .then(d => { setWs(prev => ({...prev, ...Object.fromEntries(Object.entries(d).filter(([,v]) => v !== null))})); setReady(true); })
       .catch(() => setReady(true));
   }, []);
   return (
