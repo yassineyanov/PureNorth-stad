@@ -139,7 +139,7 @@ export const BookingForm = () => {
               <h3 className="font-display font-bold text-2xl text-white mb-2">
                 Tack för din förfrågan!
               </h3>
-              <p className="text-white/70">
+              <p style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>
                 Vi har tagit emot din bokning och återkommer så snart vi kan.
               </p>
               <button
@@ -158,25 +158,25 @@ export const BookingForm = () => {
             >
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
-                  <Label htmlFor="name" className="text-white/70">Namn eller företagsnamn *</Label>
-                  <Input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className={darkInput} />
+                  <Label htmlFor="name" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Namn eller företagsnamn *</Label>
+                  <Input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
                 <div>
-                  <Label htmlFor="email" className="text-white/70">E-post *</Label>
-                  <Input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className={darkInput} />
+                  <Label htmlFor="email" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>E-post *</Label>
+                  <Input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
                 <div>
-                  <Label htmlFor="phone" className="text-white/70">Telefonnummer *</Label>
-                  <Input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} />
+                  <Label htmlFor="phone" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Telefonnummer *</Label>
+                  <Input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
                 <div>
-                  <Label htmlFor="address" className="text-white/70">Adress (städobjekt)</Label>
-                  <Input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" className={darkInput} />
+                  <Label htmlFor="address" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Adress (städobjekt)</Label>
+                  <Input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
               </div>
 
               <div>
-                <Label className="text-white/70">Vilka tjänster? *</Label>
+                <Label style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Vilka tjänster? *</Label>
                 <div className="mt-2 relative">
                   <button
                     type="button"
@@ -225,7 +225,7 @@ export const BookingForm = () => {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                 >
-                  <Label htmlFor="other" className="text-white/70">
+                  <Label htmlFor="other" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>
                     Beskriv vilken tjänst du önskar *
                   </Label>
                   <Textarea
@@ -241,13 +241,13 @@ export const BookingForm = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className={quantityInfo ? "" : "col-span-2"}>
-                  <Label htmlFor="date" className="text-white/70">Önskat datum för bokning</Label>
-                  <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} min={new Date().toISOString().split("T")[0]} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
+                  <Label htmlFor="date" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Önskat datum för bokning</Label>
+                  <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}} min={new Date().toISOString().split("T")[0]} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
                 </div>
                 {quantityInfo && (
                   <div>
-                    <Label htmlFor="kvm" className="text-white/70">{quantityInfo.label}</Label>
-                    <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} />
+                    <Label htmlFor="kvm" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>{quantityInfo.label}</Label>
+                    <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                   </div>
                 )}
               </div>
