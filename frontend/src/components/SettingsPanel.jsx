@@ -28,15 +28,13 @@ function CircleColor({ value, onChange }) {
   );
 }
 
-function TextColorPicker({ label, colorKey, data, set }) {
+function TextColorPicker({ label, colorKey, defaultColor, data, set }) {
+  const hasChanged = data[colorKey] && data[colorKey] !== (defaultColor || "");
   return (
     <div className="flex items-center gap-3 mt-2">
       <span className="text-xs text-slate-500">{label}</span>
-      <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
-        Text
-        <CircleColor value={data[colorKey] || "#141414"} onChange={e => set(colorKey, e.target.value)}/>
-      </label>
-      {data[colorKey] && <button onClick={() => set(colorKey, "")} className="text-xs text-red-400 hover:text-red-600">↺</button>}
+      <CircleColor value={data[colorKey] || defaultColor || "#141414"} onChange={e => set(colorKey, e.target.value)}/>
+      {hasChanged && <button onClick={() => set(colorKey, defaultColor || "")} className="text-xs text-red-400 hover:text-red-600">↺</button>}
     </div>
   );
 }
