@@ -123,7 +123,7 @@ export const BookingForm = () => {
               <span className="block text-xs" style={{color: ws.booking_phone_btn_label_color||"rgba(255,255,255,0.5)"}}>{ws.booking_phone_btn_label||"Ring oss"}</span>
               <span className="block font-semibold" style={{color: ws.booking_phone_btn_number_color||"#ffffff"}}>{ws.phone || "070-624 04 03"}</span>
             </span>
-          </a>
+          </a>}
         </div>
 
         {/* Form */}
