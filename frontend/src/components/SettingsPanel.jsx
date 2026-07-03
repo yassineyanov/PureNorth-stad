@@ -1916,6 +1916,10 @@ export default function SettingsPanel() {
           </div>
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700">Höger sida (formulär)</h4>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-slate-500">Form BG</span>
+            <CircleColor value={data.booking_form_bg||"rgba(255,255,255,0.04)"} onChange={e=>set("booking_form_bg",e.target.value)}/>
+          </div>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             <span className="text-xs text-slate-500">Label</span><CircleColor value={data.booking_form_label_color||"rgba(255,255,255,0.7)"} onChange={e=>set("booking_form_label_color",e.target.value)}/>
             <span className="text-xs text-slate-500">Input BG</span><CircleColor value={data.booking_form_input_bg||"rgba(255,255,255,0.06)"} onChange={e=>set("booking_form_input_bg",e.target.value)}/>

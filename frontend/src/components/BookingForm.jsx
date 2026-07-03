@@ -154,7 +154,7 @@ export const BookingForm = () => {
             <form
               onSubmit={submit}
               data-testid="booking-form"
-              className="rounded-3xl border border-white/10 bg-white/[0.04] p-7 sm:p-9 space-y-5"
+              className="rounded-3xl border border-white/10 p-7 sm:p-9 space-y-5" style={{backgroundColor: ws.booking_form_bg||"rgba(255,255,255,0.04)"}}
             >
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
