@@ -6083,6 +6083,13 @@ class WebsiteSettings(BaseModel):
     booking_input_bg: Optional[str] = ""
     booking_label_color: Optional[str] = ""
     booking_services: Optional[list] = None
+    show_booking_phone: Optional[bool] = True
+    booking_phone_icon: Optional[str] = "Phone"
+    booking_phone_icon_color: Optional[str] = ""
+    booking_phone_icon_bg: Optional[str] = ""
+    booking_phone_text_color: Optional[str] = ""
+    booking_phone_label_color: Optional[str] = ""
+    booking_phone_border_color: Optional[str] = ""
     # Sociala medier
     facebook_url: Optional[str] = ""
     instagram_url: Optional[str] = ""
