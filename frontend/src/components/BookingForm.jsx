@@ -163,15 +163,15 @@ export const BookingForm = () => {
                 </div>
                 <div>
                   <Label htmlFor="email" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>E-post *</Label>
-                  <Input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                  <input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
                 <div>
                   <Label htmlFor="phone" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Telefonnummer *</Label>
-                  <Input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                  <input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
                 <div>
                   <Label htmlFor="address" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Adress (städobjekt)</Label>
-                  <Input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                  <input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                 </div>
               </div>
 
@@ -247,7 +247,7 @@ export const BookingForm = () => {
                 {quantityInfo && (
                   <div>
                     <Label htmlFor="kvm" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>{quantityInfo.label}</Label>
-                    <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                    <input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
                   </div>
                 )}
               </div>
