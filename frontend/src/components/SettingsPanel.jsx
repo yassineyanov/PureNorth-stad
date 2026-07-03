@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, Plus, Trash2, Menu, Search, Palette, Star, ExternalLink } from "lucide-react";
+import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, Plus, Trash2, Menu, Search, Palette, Star, ExternalLink, ClipboardList } from "lucide-react";
 
 const SECTIONS = [
   { id: "hero", label: "Hero", icon: Type },
