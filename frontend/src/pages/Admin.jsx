@@ -805,6 +805,7 @@ function ReviewsPanel() {
 }
 function Dashboard() {
   const ws = useWebsite();
+  React.useEffect(() => { document.title = "PureNorth | Adminpanel"; }, []);
   const { logout, user } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
   const [notifs, setNotifs] = useState(() => {
