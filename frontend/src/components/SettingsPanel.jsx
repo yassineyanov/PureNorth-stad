@@ -582,6 +582,10 @@ export default function SettingsPanel() {
           </div>
 
           <div>
+            <label className={lbl}>Företagsnamn (Navbar, Footer & Kontakt-box)</label>
+            <input value={data.company_name||""} onChange={e=>set("company_name",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
+          </div>
+          <div>
             <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Hero-bild (stor bild på startsidan)</label>
             <button type="button" onClick={()=>set("show_hero_image", !data.show_hero_image)}
