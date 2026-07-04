@@ -2008,10 +2008,7 @@ export default function SettingsPanel() {
             <Upload size={14}/> Ladda upp logotyp
           </button>
           <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 200×200px · PNG med transparent bakgrund</p>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-xs text-slate-500">Logo färg</span>
-            <CircleColor value={data.logo_color||"#141414"} onChange={e=>set("logo_color",e.target.value)}/>
-          </div>
+
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700">Företagsnamn (i Admin header)</h4>
           <input value={data.admin_company_name||""} onChange={e=>set("admin_company_name",e.target.value)} placeholder="PureNorth" className={inp}/>
