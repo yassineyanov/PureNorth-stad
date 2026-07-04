@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, Plus, Trash2, Menu, Search, Palette, Star, ExternalLink, ClipboardList } from "lucide-react";
 
 const SECTIONS = [
+  { id: "admin", label: "Admin", icon: Menu },
   { id: "hero", label: "Hero", icon: Type },
   { id: "tjanster", label: "Tjänster", icon: Globe },
   { id: "booking", label: "Bokningsformulär", icon: ClipboardList },
@@ -1984,6 +1985,28 @@ export default function SettingsPanel() {
             className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
             <Plus size={14}/> Lägg till tjänst
           </button>
+        </>}
+
+        {section === "admin" && <>
+          <h3 className="font-semibold text-slate-800">Admin-panel</h3>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Logotyp</h4>
+          {data.logo_url && <img src={data.logo_url} alt="Logo" className="h-16 mb-3 rounded-xl border border-slate-100 p-2"/>}
+          <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "logo_url")}/>
+          <button onClick={() => logoRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-2.5 text-sm hover:border-slate-400 transition-colors">
+            <Upload size={14}/> Ladda upp logotyp
+          </button>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs text-slate-500">Logo färg</span>
+            <CircleColor value={data.logo_color||"#141414"} onChange={e=>set("logo_color",e.target.value)}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Företagsnamn</h4>
+          <input value={data.admin_company_name||""} onChange={e=>set("admin_company_name",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Flik-titel (webbläsaren)</h4>
+          <input value={data.seo_title||""} onChange={e=>set("seo_title",e.target.value)} placeholder="PureNorth Städ | Miljövänlig städning i Umeå" className={inp}/>
+          <p className="text-xs text-slate-400 mt-1">Visas i webbläsarens flik och Google ({(data.seo_title||"").length}/60 tecken)</p>
         </>}
 
         {section === "seo" && <>
