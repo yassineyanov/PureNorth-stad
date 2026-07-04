@@ -74,7 +74,7 @@ function LoginScreen({ onLogin }) {
       {!forgotMode && <form onSubmit={submit} data-testid="admin-login-form" className="w-full max-w-sm bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
         <div className="flex items-center gap-3 mb-7">
           <Logo className="h-10 w-10" />
-          <span className="font-display font-bold text-xl text-slate-900">PureNorth</span>
+          <span className="font-display font-bold text-xl text-slate-900">PureNorth Städ</span>
         </div>
         <h1 className="font-display font-bold text-2xl text-slate-900 mb-1">Admin-inloggning</h1>
         <p className="text-sm text-slate-500 mb-6">Logga in för att hantera bokningar och omdömen.</p>
@@ -1001,7 +1001,7 @@ function Dashboard() {
           <div className="flex items-center gap-3">
             <Logo className="h-9 w-9" />
             <div>
-              <span className="font-display font-bold text-base sm:text-lg block leading-tight" style={{color: ws.admin_header_text_color||"#0f172a"}}>PureNorth</span>
+              <span className="font-display font-bold text-base sm:text-lg block leading-tight" style={{color: ws.admin_header_text_color||"#0f172a"}}>PureNorth Städ</span>
               <span className="text-xs hidden sm:block" style={{color: ws.admin_header_text_color ? ws.admin_header_text_color+"80" : "#64748b"}}>{ws.admin_panel_label||"Adminpanel"}</span>
             </div>
           </div>
