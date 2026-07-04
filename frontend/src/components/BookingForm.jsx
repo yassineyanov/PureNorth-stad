@@ -21,7 +21,7 @@ const initialForm = {
   other_description: "",
 };
 
-const darkInput = "mt-1.5 border-white/20 placeholder:text-white/40 focus-visible:ring-white/30";
+const darkInput = "w-full mt-1.5 rounded-md border border-white/20 px-3 py-2 text-sm placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-white/30";
 
 export const BookingForm = () => {
   const ws = useWebsite();
@@ -156,7 +156,7 @@ export const BookingForm = () => {
               data-testid="booking-form"
               className="rounded-3xl border border-white/10 p-7 sm:p-9 space-y-5" style={{backgroundColor: ws.booking_form_bg||"rgba(255,255,255,0.04)"}}
             >
-              <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid gap-5">
                 <div>
                   <label htmlFor="name" className="text-sm font-medium" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Namn eller företagsnamn *</label>
                   <input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
