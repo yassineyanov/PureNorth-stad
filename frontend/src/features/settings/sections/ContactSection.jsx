@@ -13,17 +13,7 @@ export function ContactSection({ data, set, inp, lbl }) {
               <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_kontaktuppgifter !== false ? "translate-x-5" : "translate-x-0"}`}/>
             </button>
           </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-            <label className={lbl}>Företagsnamn</label>
-            <button type="button" onClick={()=>set("show_company_name", data.show_company_name === false ? true : false)}
-              className={`w-10 h-5 rounded-full transition-colors ${data.show_company_name !== false ? "bg-blue-500" : "bg-slate-200"}`}>
-              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_company_name !== false ? "translate-x-5" : "translate-x-0"}`}/>
-            </button>
-          </div>
-            <input value={data.company_name} onChange={e => set("company_name", e.target.value)} placeholder="PureNorth Städ" className={inp}/>
-            <TextColorPicker label="Text färg" colorKey="company_name_color" data={data} set={set}/>
-          </div>
+
           <div>
             <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Telefonnummer</label>
