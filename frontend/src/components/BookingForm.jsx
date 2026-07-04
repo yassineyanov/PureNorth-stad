@@ -21,7 +21,8 @@ const initialForm = {
   other_description: "",
 };
 
-const darkInput = "w-full mt-1.5 rounded-md border border-white/20 px-3 py-2 text-sm placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-white/30";
+const darkInput =
+  "mt-1.5 bg-white/[0.06] border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30";
 
 export const BookingForm = () => {
   const ws = useWebsite();
@@ -60,7 +61,14 @@ export const BookingForm = () => {
   const annatSelected = services.includes("Annat") || services.some((s) => !serviceOptions.slice(0, -1).includes(s));
 
   const toggleService = (s, closeDropdown = true) => {
-    setServices((prev) => prev.includes(s) ? [] : [s]);
+    setServices((prev) => {
+      if (s === "Annat") {
+        return prev.includes(s) ? [] : ["Annat"];
+      } else {
+        const without = prev.filter((x) => x !== "Annat");
+        return without.includes(s) ? without.filter((x) => x !== s) : [...without, s];
+      }
+    });
     if (closeDropdown) setServiceDropdownOpen(false);
   };
 
@@ -95,35 +103,34 @@ export const BookingForm = () => {
   };
 
   if (ws.show_booking === false) return null;
-  console.log("WS booking:", ws.booking_form_label_color, ws.booking_form_input_bg);
   return (
-    <section id="boka" className="py-24 sm:py-32 text-white" style={{backgroundColor: ws.booking_bg || "#141414"}}>
+    <section id="boka" className="py-24 sm:py-32 text-white" style={{backgroundColor: ws.booking_bg||"#141414"}}>
       <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-5 gap-12">
         {/* Left intro */}
         <div className="lg:col-span-2">
-          <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{color: ws.booking_left_label_color || "rgba(255,255,255,0.5)"}}>
-            {ws.booking_left_label || "Boka tid"}
+          <p className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-3">
+            Boka tid
           </p>
-          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight leading-tight" style={{color: ws.booking_left_title_color || "#ffffff"}}>
-            {ws.booking_left_title || "Boka online eller ring oss"}
+          <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-white leading-tight">
+            Boka online eller ring oss
           </h2>
-          <p className="mt-5 text-lg leading-relaxed" style={{color: ws.booking_left_subtitle_color || "rgba(255,255,255,0.7)"}}>
-            {ws.booking_left_subtitle || "Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata med oss direkt? Slå en signal."}
+          <p className="mt-5 text-lg text-white/70 leading-relaxed">
+            Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata
+            med oss direkt? Slå en signal.
           </p>
-          {ws.show_booking_phone_btn !== false && <a
-            href={`tel:${(ws.phone || "070-624 04 03").replace(/[^0-9]/g, "")}`}
+          <a
+            href={`tel:${(ws.phone||"070-624 04 03").replace(/[^0-9]/g,"")}`}
             data-testid="booking-call-btn"
-            className="mt-7 inline-flex items-center gap-3 rounded-2xl border px-6 py-4 hover:opacity-80 transition-colors"
-            style={{borderColor: "rgba(255,255,255,0.15)", backgroundColor: ws.booking_phone_btn_bg||"rgba(255,255,255,0.06)"}}
+            className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.06] px-6 py-4 hover:border-white/40 transition-colors"
           >
-            <span className="h-11 w-11 rounded-full flex items-center justify-center" style={{backgroundColor: ws.booking_phone_btn_icon_bg||"#ffffff", color: ws.booking_phone_btn_icon_color||"#141414"}}>
+            <span className="h-11 w-11 rounded-full bg-white text-[#141414] flex items-center justify-center">
               <Phone size={18} />
             </span>
             <span>
-              <span className="block text-xs" style={{color: ws.booking_phone_btn_label_color||"rgba(255,255,255,0.5)"}}>{ws.booking_phone_btn_label||"Ring oss"}</span>
-              <span className="block font-semibold" style={{color: ws.booking_phone_btn_number_color||"#ffffff"}}>{ws.phone || "070-624 04 03"}</span>
+              <span className="block text-xs text-white/50">Ring oss</span>
+              <span className="block font-semibold text-white">{ws.phone||"070-624 04 03"}</span>
             </span>
-          </a>}
+          </a>
         </div>
 
         {/* Form */}
@@ -139,7 +146,7 @@ export const BookingForm = () => {
               <h3 className="font-display font-bold text-2xl text-white mb-2">
                 Tack för din förfrågan!
               </h3>
-              <p style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>
+              <p className="text-white/70">
                 Vi har tagit emot din bokning och återkommer så snart vi kan.
               </p>
               <button
@@ -154,29 +161,29 @@ export const BookingForm = () => {
             <form
               onSubmit={submit}
               data-testid="booking-form"
-              className="rounded-3xl border border-white/10 p-7 sm:p-9 space-y-5" style={{backgroundColor: ws.booking_form_bg||"rgba(255,255,255,0.04)"}}
+              className="rounded-3xl border border-white/10 bg-white/[0.04] p-7 sm:p-9 space-y-5"
             >
-              <div className="grid gap-5">
+              <div className="grid sm:grid-cols-2 gap-5">
                 <div>
-                  <label htmlFor="name" className="text-sm font-medium" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Namn eller företagsnamn *</label>
-                  <input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                  <Label htmlFor="name" className="text-white/70">Namn eller företagsnamn *</Label>
+                  <Input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson / Företag AB" className={darkInput} />
                 </div>
                 <div>
-                  <label htmlFor="email" className="text-sm font-medium" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>E-post *</label>
-                  <input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                  <Label htmlFor="email" className="text-white/70">E-post *</Label>
+                  <Input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" className={darkInput} />
                 </div>
                 <div>
-                  <label htmlFor="phone" className="text-sm font-medium" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Telefonnummer *</label>
-                  <input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                  <Label htmlFor="phone" className="text-white/70">Telefonnummer *</Label>
+                  <Input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" className={darkInput} />
                 </div>
                 <div>
-                  <label htmlFor="address" className="text-sm font-medium" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Adress (städobjekt)</label>
-                  <input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                  <Label htmlFor="address" className="text-white/70">Adress (städobjekt)</Label>
+                  <Input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" className={darkInput} />
                 </div>
               </div>
 
               <div>
-                <Label style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Vilka tjänster? *</Label>
+                <Label className="text-white/70">Vilka tjänster? *</Label>
                 <div className="mt-2 relative">
                   <button
                     type="button"
@@ -192,7 +199,18 @@ export const BookingForm = () => {
                     </span>
                     {serviceDropdownOpen ? <ChevronUp size={18} className="text-white/60 shrink-0" /> : <ChevronDown size={18} className="text-white/60 shrink-0" />}
                   </button>
-
+                  {services.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {services.map(s => (
+                        <span key={s} className="inline-flex items-center gap-1.5 bg-white/15 border border-white/30 text-white text-xs font-medium px-3 py-1.5 rounded-full">
+                          {s}
+                          <button type="button" onClick={(e) => { e.stopPropagation(); toggleService(s, false); }} className="text-white/60 hover:text-white transition-colors ml-0.5">
+                            <X size={12}/>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {serviceDropdownOpen && (
                     <motion.div
                       initial={{ opacity: 0, y: -4 }}
@@ -225,7 +243,7 @@ export const BookingForm = () => {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                 >
-                  <Label htmlFor="other" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>
+                  <Label htmlFor="other" className="text-white/70">
                     Beskriv vilken tjänst du önskar *
                   </Label>
                   <Textarea
@@ -241,13 +259,13 @@ export const BookingForm = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className={quantityInfo ? "" : "col-span-2"}>
-                  <Label htmlFor="date" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>Önskat datum för bokning</Label>
-                  <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}} min={new Date().toISOString().split("T")[0]} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
+                  <Label htmlFor="date" className="text-white/70">Önskat datum för bokning</Label>
+                  <Input id="date" type="date" data-testid="booking-date" value={form.preferred_date} onChange={update("preferred_date")} className={`${darkInput} [color-scheme:dark]`} min={new Date().toISOString().split("T")[0]} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
                 </div>
                 {quantityInfo && (
                   <div>
-                    <Label htmlFor="kvm" style={{color: ws.booking_form_label_color||"rgba(255,255,255,0.7)"}}>{quantityInfo.label}</Label>
-                    <input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} style={{backgroundColor: ws.booking_form_input_bg||"rgba(255,255,255,0.06)", color: ws.booking_form_input_text||"#ffffff"}}/>
+                    <Label htmlFor="kvm" className="text-white/70">{quantityInfo.label}</Label>
+                    <Input id="kvm" data-testid="booking-kvm" value={form.kvm} onChange={update("kvm")} placeholder={quantityInfo.placeholder} className={darkInput} />
                   </div>
                 )}
               </div>
@@ -256,7 +274,7 @@ export const BookingForm = () => {
                 type="submit"
                 disabled={submitting}
                 data-testid="booking-submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full disabled:opacity-60 px-8 py-4 text-base font-semibold transition-colors" style={{backgroundColor: ws.booking_submit_bg || "#ffffff", color: ws.booking_submit_color || "#141414"}}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full disabled:opacity-60 px-8 py-4 text-base font-semibold transition-colors" style={{backgroundColor: ws.booking_submit_bg||"#ffffff", color: ws.booking_submit_color||"#141414"}}
               >
                 {submitting ? "Skickar..." : <>Skicka bokningsförfrågan <Send size={17} /></>}
               </button>
@@ -269,4 +287,3 @@ export const BookingForm = () => {
 };
 
 
-// debug Fri Jul  3 11:40:58 UTC 2026
