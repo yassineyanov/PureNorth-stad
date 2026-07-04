@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
+import { SocialSection } from "@/features/settings/sections/SocialSection";
 import { toast } from "sonner";
 import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, Plus, Trash2, Menu, Search, Palette, Star, ExternalLink, ClipboardList } from "lucide-react";
 
@@ -678,17 +679,7 @@ export default function SettingsPanel() {
           </div>
         </>}
 
-        {section === "social" && <>
-          <h3 className="font-semibold text-slate-800">Sociala medier</h3>
-          <div>
-            <label className={lbl}>Facebook URL</label>
-            <input value={data.facebook_url} onChange={e => set("facebook_url", e.target.value)} placeholder="https://facebook.com/purenorth" className={inp}/>
-          </div>
-          <div>
-            <label className={lbl}>Instagram URL</label>
-            <input value={data.instagram_url} onChange={e => set("instagram_url", e.target.value)} placeholder="https://instagram.com/purenorth" className={inp}/>
-          </div>
-        </>}
+        {section === "social" && <SocialSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
         {section === "kontaktsektion" && <>
           <h3 className="font-semibold text-slate-800">Kontaktsektion</h3>
