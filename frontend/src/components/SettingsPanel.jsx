@@ -7,10 +7,6 @@ import { NavbarSection } from "@/features/settings/sections/NavbarSection";
 import { TestimonialsSection } from "@/features/settings/sections/TestimonialsSection";
 import { VartArbeteSection } from "@/features/settings/sections/VartArbeteSection";
 import { ContactSection } from "@/features/settings/sections/ContactSection";
-import { KontaktsektionSection } from "@/features/settings/sections/KontaktsektionSection";
-import { WhyUsSection } from "@/features/settings/sections/WhyUsSection";
-import { AboutSection } from "@/features/settings/sections/AboutSection";
-import { MediaSection } from "@/features/settings/sections/MediaSection";
 import { toast } from "sonner";
 import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, Plus, Trash2, Menu, Search, Palette, Star, ExternalLink, ClipboardList } from "lucide-react";
 
@@ -565,13 +561,271 @@ export default function SettingsPanel() {
 
         {section === "contact" && <ContactSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
-        {section === "media" && <MediaSection data={data} set={set} inp={inp} lbl={lbl} logoRef={logoRef} heroImgRef={heroImgRef} uploadImage={uploadImage}/>}
+        {section === "media" && <>
+          <h3 className="font-semibold text-slate-800">Bilder & Logotyp</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa Logotyp</label>
+            <button type="button" onClick={()=>set("show_logo", data.show_logo === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_logo !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_logo !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+          <div>
+            <label className={lbl}>Logotyp</label>
+            {data.logo_url && <img src={data.logo_url} alt="Logo" className="h-16 mb-3 rounded-xl border border-slate-100 p-2"/>}
+            <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "logo_url")}/>
+            <button onClick={() => logoRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-2.5 text-sm hover:border-slate-400 transition-colors">
+              <Upload size={14}/> Ladda upp logotyp
+            </button>
+            <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 200×200px · PNG med transparent bakgrund</p>
+
+          </div>
+          <div>
+            <label className={lbl}>Företagsnamn (i Navbar & Footer)</label>
+            <input value={data.company_name||""} onChange={e=>set("company_name",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-xs text-slate-500">Färg i footer</span>
+              <CircleColor value={data.company_name_color||"#141414"} onChange={e=>set("company_name_color",e.target.value)}/>
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Hero-bild (stor bild på startsidan)</label>
+            <button type="button" onClick={()=>set("show_hero_image", !data.show_hero_image)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_hero_image !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_hero_image !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+            {data.hero_image && <img src={data.hero_image} alt="Hero" className="w-full h-32 object-cover rounded-xl mb-3"/>}
+            <input ref={heroImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "hero_image")}/>
+            <button onClick={() => heroImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-2.5 text-sm hover:border-slate-400 transition-colors">
+              <Upload size={14}/> Ladda upp hero-bild
+            </button>
+            <p className="text-xs text-slate-400 mt-2">Rekommenderad storlek: 1200×600px</p>
+          </div>
+        </>}
 
         {section === "social" && <SocialSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
-        {section === "kontaktsektion" && <KontaktsektionSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        {section === "kontaktsektion" && <>
+          <h3 className="font-semibold text-slate-800">Kontaktsektion</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa Kontakt i Navbar</label>
+            <button type="button" onClick={()=>set("show_kontakt_in_navbar", data.show_kontakt_in_navbar === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_kontakt_in_navbar !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_kontakt_in_navbar !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Etikett (liten text ovan rubrik)</label>
+            <button type="button" onClick={()=>set("show_contact_title", data.show_contact_title === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_contact_title !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_contact_title !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+            <input value={data.contact_title||""} onChange={e=>set("contact_title",e.target.value)} placeholder="Kontakt" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="contact_title_color" data={data} set={set}/>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Rubrik</label>
+            <button type="button" onClick={()=>set("show_contact_subtitle", data.show_contact_subtitle === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_contact_subtitle !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_contact_subtitle !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+            <input value={data.contact_subtitle||""} onChange={e=>set("contact_subtitle",e.target.value)} placeholder="Vi finns i Umeå" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="contact_subtitle_color" data={data} set={set}/>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Undertext</label>
+            <button type="button" onClick={()=>set("show_contact_description", data.show_contact_description === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_contact_description !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_contact_description !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+            <textarea value={data.contact_description||""} onChange={e=>set("contact_description",e.target.value)} rows={3} placeholder="Har du frågor eller vill boka en städning?" className={inp+" resize-none"}/>
+            <TextColorPicker label="Text färg" colorKey="contact_description_color" data={data} set={set}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">Svart box (höger)</h4>
+          <div>
+            <div className="flex items-center justify-between mb-1"><label className={lbl}>Svart box (visa/göm)</label><button type="button" onClick={()=>set("show_contact_box", data.show_contact_box === false ? true : false)} className={`w-10 h-5 rounded-full transition-colors ${data.show_contact_box !== false ? "bg-blue-500" : "bg-slate-200"}`}><span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_contact_box !== false ? "translate-x-5" : "translate-x-0"}`}/></button></div>
+            <label className={lbl}>Box rubrik</label>
+            <input value={data.contact_box_title||""} onChange={e=>set("contact_box_title",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="contact_box_title_color" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Box text</label>
+            <textarea value={data.contact_box_text||""} onChange={e=>set("contact_box_text",e.target.value)} rows={3} placeholder="Miljövänlig städning med SRY-utbildad personal..." className={inp+" resize-none"}/>
+            <ColorPicker label="Box BG" colorKey="contact_box_text_color" bgKey="contact_box_bg" defaultColor="rgba(255,255,255,0.75)" defaultBg="#141414" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Box knapp text</label>
+            <input value={data.contact_box_btn||""} onChange={e=>set("contact_box_btn",e.target.value)} placeholder="Boka tid nu" className={inp}/>
+            <ColorPicker label="Knapp färger" colorKey="contact_box_btn_color" bgKey="contact_box_btn_bg" defaultColor="#141414" defaultBg="#ffffff" data={data} set={set}/>
+          </div>
+        </>}
 
-        {section === "whyus" && <WhyUsSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        {section === "whyus" && <>
+          <h3 className="font-semibold text-slate-800">Varför välja oss?</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa i Navbar & sidan</label>
+            <button type="button" onClick={()=>set("show_whyus_in_navbar", data.show_whyus_in_navbar === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_whyus_in_navbar !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_whyus_in_navbar !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Etikett</label>
+            <button type="button" onClick={()=>set("show_whyus_label", data.show_whyus_label === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_whyus_label !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_whyus_label !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+            <input value={data.whyus_label||""} onChange={e=>set("whyus_label",e.target.value)} placeholder="Varför välja oss?" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="whyus_label_color" data={data} set={set}/>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Rubrik</label>
+            <button type="button" onClick={()=>set("show_whyus_title", data.show_whyus_title === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_whyus_title !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_whyus_title !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+            <textarea value={data.whyus_title||""} onChange={e=>set("whyus_title",e.target.value)} rows={2} placeholder="Kvalitet du känner och naturen tackar för" className={inp+" resize-none"}/>
+            <TextColorPicker label="Text färg" colorKey="whyus_title_color" data={data} set={set}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">🏆 Stort svart kort (SRY)</h4>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Visa SRY-kort</label>
+            <button type="button" onClick={()=>set("show_sry_card", data.show_sry_card === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_sry_card !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_sry_card !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+            <label className={lbl}>Rubrik</label>
+            <input value={data.sry_title||""} onChange={e=>set("sry_title",e.target.value)} placeholder="SRY-kvalifikation" className={inp}/>
+            <TextColorPicker label="Rubrik färg" colorKey="sry_title_color" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Text</label>
+            <textarea value={data.sry_text||""} onChange={e=>set("sry_text",e.target.value)} rows={3} placeholder="Med kvalifikation från Servicebranschens..." className={inp+" resize-none"}/>
+            <TextColorPicker label="Text färg" colorKey="sry_text_color" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Taggar (kommaseparerade)</label>
+            <input value={data.sry_tags||""} onChange={e=>set("sry_tags",e.target.value)} placeholder="SRY-utbildad personal, Hög standard, Trygg & försäkrad" className={inp}/>
+          </div>
+          <div>
+            <label className={lbl}>Ikon</label>
+            <select value={data.sry_icon||"Award"} onChange={e=>set("sry_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="Award">🏆 Award</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Percent">% Percent</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-xs text-slate-500">Ikon färg</span>
+            <CircleColor value={data.sry_icon_color||"#ffffff"} onChange={e=>set("sry_icon_color",e.target.value)}/>
+            <span className="text-xs text-slate-500 ml-2">Kort BG</span>
+            <CircleColor value={data.sry_bg||"#141414"} onChange={e=>set("sry_bg",e.target.value)}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">🌿 Eco-kort</h4>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Visa Eco-kort</label>
+            <button type="button" onClick={()=>set("show_eco_card", data.show_eco_card === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_eco_card !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_eco_card !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+            <label className={lbl}>Rubrik</label>
+            <input value={data.eco_title||""} onChange={e=>set("eco_title",e.target.value)} placeholder="Svanenmärkt & miljöcertifierat" className={inp}/>
+            <TextColorPicker label="Rubrik färg" colorKey="eco_title_color" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Text</label>
+            <textarea value={data.eco_text||""} onChange={e=>set("eco_text",e.target.value)} rows={3} className={inp+" resize-none"}/>
+            <TextColorPicker label="Text färg" colorKey="eco_text_color" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Ikon</label>
+            <select value={data.eco_icon||"Leaf"} onChange={e=>set("eco_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="Award">🏆 Award</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Percent">% Percent</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-xs text-slate-500">Ikon färg</span>
+            <CircleColor value={data.eco_icon_color||"#166534"} onChange={e=>set("eco_icon_color",e.target.value)}/>
+            <span className="text-xs text-slate-500 ml-2">Kort BG</span>
+            <CircleColor value={data.eco_card_bg||"#ffffff"} onChange={e=>set("eco_card_bg",e.target.value)}/>
+          </div>
+          <hr className="border-slate-100"/>
+          <h4 className="font-medium text-slate-700">💰 RUT-kort</h4>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+            <label className={lbl}>Visa RUT-kort</label>
+            <button type="button" onClick={()=>set("show_rut_card", data.show_rut_card === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_rut_card !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_rut_card !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+            <label className={lbl}>Rubrik</label>
+            <input value={data.rut_title||""} onChange={e=>set("rut_title",e.target.value)} placeholder="50% RUT-avdrag" className={inp}/>
+            <TextColorPicker label="Rubrik färg" colorKey="rut_title_color" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Text</label>
+            <textarea value={data.rut_text||""} onChange={e=>set("rut_text",e.target.value)} rows={3} className={inp+" resize-none"}/>
+            <TextColorPicker label="Text färg" colorKey="rut_text_color" data={data} set={set}/>
+          </div>
+          <div>
+            <label className={lbl}>Ikon</label>
+            <select value={data.rut_icon||"Percent"} onChange={e=>set("rut_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="Award">🏆 Award</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Percent">% Percent</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-xs text-slate-500">Ikon färg</span>
+            <CircleColor value={data.rut_icon_color||"#166534"} onChange={e=>set("rut_icon_color",e.target.value)}/>
+            <span className="text-xs text-slate-500 ml-2">Kort BG</span>
+            <CircleColor value={data.rut_card_bg||"#ffffff"} onChange={e=>set("rut_card_bg",e.target.value)}/>
+          </div>
+        </>}
 
         {section === "services" && <>
           <h3 className="font-semibold text-slate-800">Tjänster</h3>
@@ -1465,7 +1719,207 @@ export default function SettingsPanel() {
 
         {section === "testimonials" && <TestimonialsSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
-        {section === "about" && <AboutSection data={data} set={set} inp={inp} lbl={lbl} aboutImgRef={aboutImgRef} uploadImage={uploadImage}/>}
+        {section === "about" && <>
+          <h3 className="font-semibold text-slate-800">Om oss</h3>
+          <div className="flex items-center justify-between mb-2">
+            <label className={lbl}>Visa i Navbar</label>
+            <button type="button" onClick={()=>set("show_about_in_navbar", data.show_about_in_navbar === false ? true : false)}
+              className={`w-10 h-5 rounded-full transition-colors ${data.show_about_in_navbar !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_in_navbar !== false ? "translate-x-5" : "translate-x-0"}`}/>
+            </button>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Etikett (liten grön text)</label>
+              <button type="button" onClick={()=>set("show_about_label", data.show_about_label === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_label !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_label !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Etikett färg</label>
+              <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Färg<CircleColor value={data.about_label_color||"#166534"} onChange={e=>set("about_label_color",e.target.value)}/></label>
+            </div>
+            <input value={data.about_label||""} onChange={e=>set("about_label",e.target.value)} placeholder="Om oss" className={inp}/>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Rubrik</label>
+              <button type="button" onClick={()=>set("show_about_title", data.show_about_title === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_title !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_title !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <input value={data.about_title||""} onChange={e=>set("about_title",e.target.value)} placeholder="Städning med hjärta & precision" className={inp}/>
+            <TextColorPicker label="Text färg" colorKey="about_title_color" data={data} set={set}/>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Beskrivningstext</label>
+              <button type="button" onClick={()=>set("show_about_text", data.show_about_text === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_text !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_text !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <textarea value={data.about_text||""} onChange={e => set("about_text", e.target.value)} rows={6} placeholder="Berätta om ditt företag..." className={inp + " resize-none"}/>
+            <TextColorPicker label="Text färg" colorKey="about_text_color" data={data} set={set}/>
+          </div>
+          <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Statistik (3 siffror)</label>
+              <button type="button" onClick={()=>set("show_about_stats", data.show_about_stats === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_stats !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_stats !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+          <h4 className="font-medium text-slate-700 mt-2">Statistik (3 siffror)</h4>
+          <TextColorPicker label="Siffror färg" colorKey="about_stat_color" data={data} set={set}/>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={lbl}>Siffra 1</label>
+              <input value={data.about_stat1_number||""} onChange={e=>set("about_stat1_number",e.target.value)} placeholder="100+" className={inp}/>
+              <label className={lbl+" mt-1"}>Etikett 1</label>
+              <input value={data.about_stat1_label||""} onChange={e=>set("about_stat1_label",e.target.value)} placeholder="Nöjda kunder" className={inp}/>
+            </div>
+            <div>
+              <label className={lbl}>Siffra 2</label>
+              <input value={data.about_stat2_number||""} onChange={e=>set("about_stat2_number",e.target.value)} placeholder="5 (stjärna läggs till automatiskt)" className={inp}/>
+              <label className={lbl+" mt-1"}>Etikett 2</label>
+              <input value={data.about_stat2_label||""} onChange={e=>set("about_stat2_label",e.target.value)} placeholder="Betyg" className={inp}/>
+            </div>
+            <div>
+              <label className={lbl}>Siffra 3</label>
+              <input value={data.about_stat3_number||""} onChange={e=>set("about_stat3_number",e.target.value)} placeholder="3 år" className={inp}/>
+              <label className={lbl+" mt-1"}>Etikett 3</label>
+              <input value={data.about_stat3_label||""} onChange={e=>set("about_stat3_label",e.target.value)} placeholder="Erfarenhet" className={inp}/>
+            </div>
+          </div>
+          <h4 className="font-medium text-slate-700 mt-2">Punkter (3 fördelar)</h4>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Punkt 1</label>
+              <button type="button" onClick={()=>set("show_about_point1", data.show_about_point1 === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_point1 !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_point1 !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Punkt 1 färger</label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<CircleColor value={data.about_point1_color||"#374151"} onChange={e=>set("about_point1_color",e.target.value)}/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<CircleColor value={data.about_point1_icon_color||"#166534"} onChange={e=>set("about_point1_icon_color",e.target.value)}/></label>
+              </div>
+            </div>
+            <select value={data.about_point1_icon||"ShieldCheck"} onChange={e=>set("about_point1_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="Award">🏆 Award</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
+            <input value={data.about_point1||""} onChange={e=>set("about_point1",e.target.value)} placeholder="SRY-certifierad personal" className={inp}/>
+
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Punkt 2</label>
+              <button type="button" onClick={()=>set("show_about_point2", data.show_about_point2 === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_point2 !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_point2 !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Punkt 2 färger</label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<CircleColor value={data.about_point2_color||"#374151"} onChange={e=>set("about_point2_color",e.target.value)}/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<CircleColor value={data.about_point2_icon_color||"#166534"} onChange={e=>set("about_point2_icon_color",e.target.value)}/></label>
+              </div>
+            </div>
+            <select value={data.about_point2_icon||"Leaf"} onChange={e=>set("about_point2_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="Award">🏆 Award</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
+            <input value={data.about_point2||""} onChange={e=>set("about_point2",e.target.value)} placeholder="Svanenmärkta Pur-Eco produkter" className={inp}/>
+
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Punkt 3</label>
+              <button type="button" onClick={()=>set("show_about_point3", data.show_about_point3 === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_point3 !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_point3 !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Punkt 3 färger</label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<CircleColor value={data.about_point3_color||"#374151"} onChange={e=>set("about_point3_color",e.target.value)}/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Ikon<CircleColor value={data.about_point3_icon_color||"#166534"} onChange={e=>set("about_point3_icon_color",e.target.value)}/></label>
+              </div>
+            </div>
+            <select value={data.about_point3_icon||"Star"} onChange={e=>set("about_point3_icon",e.target.value)} className={inp}>
+              <option value="none">— Ingen ikon</option>
+              <option value="ShieldCheck">🛡️ ShieldCheck</option>
+              <option value="Leaf">🌿 Leaf</option>
+              <option value="Star">⭐ Star</option>
+              <option value="Heart">❤️ Heart</option>
+              <option value="Zap">⚡ Zap</option>
+              <option value="Award">🏆 Award</option>
+              <option value="CheckCircle">✅ CheckCircle</option>
+              <option value="Sparkles">✨ Sparkles</option>
+            </select>
+            <input value={data.about_point3||""} onChange={e=>set("about_point3",e.target.value)} placeholder="50% RUT-avdrag på arbetskostnaden" className={inp}/>
+
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Knapp (Boka städning)</label>
+              <button type="button" onClick={()=>set("show_about_btn", data.show_about_btn === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_btn !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_btn !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={lbl}>Knapp färger</label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">Text<CircleColor value={data.about_btn_color||"#ffffff"} onChange={e=>set("about_btn_color",e.target.value)}/></label>
+                <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer">BG<CircleColor value={data.about_btn_bg||"#141414"} onChange={e=>set("about_btn_bg",e.target.value)}/></label>
+              </div>
+            </div>
+            <input value={data.about_btn_text||""} onChange={e=>set("about_btn_text",e.target.value)} placeholder="Boka städning" className={inp}/>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={lbl}>Bild</label>
+              <button type="button" onClick={()=>set("show_about_image", data.show_about_image === false ? true : false)}
+                className={`w-10 h-5 rounded-full transition-colors ${data.show_about_image !== false ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_about_image !== false ? "translate-x-5" : "translate-x-0"}`}/>
+              </button>
+            </div>
+            <label className={lbl}>Bild på Om oss-sidan</label>
+            {data.about_image && (
+              <div className="relative mb-3">
+                <img src={data.about_image} alt="Om oss" className="w-full h-48 object-cover rounded-xl border border-slate-100"/>
+                <button onClick={()=>set("about_image","")} className="absolute top-2 right-2 bg-red-500 text-white rounded-full h-7 w-7 flex items-center justify-center text-xs hover:bg-red-600">✕</button>
+              </div>
+            )}
+            <input ref={aboutImgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "about_image")}/>
+            <button onClick={() => aboutImgRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-2.5 text-sm hover:border-slate-400 transition-colors">
+              <Upload size={14}/> {data.about_image ? "Byt bild" : "Ladda upp bild"}
+            </button>
+            <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 1200×800px</p>
+          </div>
+        </>}
 
         </div>
       </div>
