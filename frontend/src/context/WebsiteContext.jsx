@@ -48,7 +48,7 @@ const DEFAULTS = {
   badge1_image: "",
   badge2_icon: "Zap",
   badge2_image: "",
-  admin_company_name: "PureNorth Städ",
+  admin_company_name: "",
   admin_panel_label: "Adminpanel",
   admin_header_bg: "#ffffff",
   admin_header_text_color: "#0f172a",
