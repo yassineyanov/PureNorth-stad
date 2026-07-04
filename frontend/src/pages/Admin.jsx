@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/lib/api";
 import { Logo } from "@/components/Logo";
+import { useWebsite } from "@/context/WebsiteContext";
 import { StarRating } from "@/components/StarRating";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
