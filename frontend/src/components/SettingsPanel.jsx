@@ -580,14 +580,7 @@ export default function SettingsPanel() {
             <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 200×200px · PNG med transparent bakgrund</p>
 
           </div>
-          <div>
-            <label className={lbl}>Företagsnamn (i Navbar & Footer)</label>
-            <input value={data.company_name||""} onChange={e=>set("company_name",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-xs text-slate-500">Färg i footer</span>
-              <CircleColor value={data.company_name_color||"#141414"} onChange={e=>set("company_name_color",e.target.value)}/>
-            </div>
-          </div>
+
           <div>
             <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Hero-bild (stor bild på startsidan)</label>

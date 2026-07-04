@@ -14,20 +14,7 @@ export function NavbarSection({ data, set, inp, lbl }) {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-            <label className={lbl}>Företagsnamn</label>
-            <button type="button" onClick={()=>set("show_navbar_company", data.show_navbar_company === false ? true : false)}
-              className={`w-10 h-5 rounded-full transition-colors ${data.show_navbar_company !== false ? "bg-blue-500" : "bg-slate-200"}`}>
-              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_navbar_company !== false ? "translate-x-5" : "translate-x-0"}`}/>
-            </button>
-          </div>
-              <input value={data.nav_company||""} onChange={e=>set("nav_company",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-slate-500">Färg</span>
-                <CircleColor value={data.navbar_company_color||"#0f172a"} onChange={e=>set("navbar_company_color",e.target.value)}/>
-              </div>
-            </div>
+
             <div>
               <div className="flex items-center justify-between mb-1">
             <label className={lbl}>Boka-knapp</label>
