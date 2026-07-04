@@ -6069,6 +6069,11 @@ class WebsiteSettings(BaseModel):
     show_omdomen: Optional[bool] = True
     show_hero_section: Optional[bool] = True
     show_logo: Optional[bool] = True
+    logo_color: Optional[str] = ""
+    admin_company_name: Optional[str] = ""
+    admin_panel_label: Optional[str] = ""
+    admin_header_bg: Optional[str] = ""
+    admin_header_text_color: Optional[str] = ""
     show_booking: Optional[bool] = True
     booking_bg: Optional[str] = ""
     booking_left_label: Optional[str] = ""
