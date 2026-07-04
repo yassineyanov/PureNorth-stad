@@ -804,6 +804,7 @@ function ReviewsPanel() {
   );
 }
 function Dashboard() {
+  const ws = useWebsite();
   const { logout, user } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
   const [notifs, setNotifs] = useState(() => {
