@@ -651,10 +651,7 @@ export default function SettingsPanel() {
               <Upload size={14}/> Ladda upp logotyp
             </button>
             <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 200×200px · PNG med transparent bakgrund</p>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="text-xs text-slate-500">Logo färg</span>
-              <CircleColor value={data.logo_color||"#141414"} onChange={e=>set("logo_color",e.target.value)}/>
-            </div>
+
           </div>
           <div>
             <label className={lbl}>Företagsnamn (i Navbar & Footer)</label>
