@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { api } from "@/lib/api";
 import { SocialSection } from "@/features/settings/sections/SocialSection";
 import { SeoSection } from "@/features/settings/sections/SeoSection";
+import { AdminSection } from "@/features/settings/sections/AdminSection";
 import { toast } from "sonner";
 import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, Plus, Trash2, Menu, Search, Palette, Star, ExternalLink, ClipboardList } from "lucide-react";
 
@@ -1976,40 +1977,7 @@ export default function SettingsPanel() {
           </button>
         </>}
 
-        {section === "admin" && <>
-          <h3 className="font-semibold text-slate-800">Admin-panel</h3>
-          <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700">Fönster-titel (webbläsaren)</h4>
-          <input value={data.admin_window_title||""} onChange={e=>set("admin_window_title",e.target.value)} placeholder="PureNorth | Adminpanel" className={inp}/>
-          <p className="text-xs text-slate-400 mt-1">Visas i webbläsarens flik</p>
-          <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700">Logotyp</h4>
-          <div className="flex items-center justify-between mb-1">
-            <label className={lbl}>Visa logotyp</label>
-            <button type="button" onClick={()=>set("show_logo", data.show_logo === false ? true : false)}
-              className={`w-10 h-5 rounded-full transition-colors ${data.show_logo !== false ? "bg-blue-500" : "bg-slate-200"}`}>
-              <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data.show_logo !== false ? "translate-x-5" : "translate-x-0"}`}/>
-            </button>
-          </div>
-          {data.logo_url && <div className="relative mb-2"><img src={data.logo_url} alt="Logo" className="h-16 rounded-xl border border-slate-100 p-2"/><button onClick={()=>set("logo_url","")} className="absolute top-0 right-0 bg-red-500 text-white rounded-full h-5 w-5 text-xs">✕</button></div>}
-          <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && uploadImage(e.target.files[0], "logo_url")}/>
-          <button onClick={() => logoRef.current.click()} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-2.5 text-sm hover:border-slate-400 transition-colors">
-            <Upload size={14}/> Ladda upp logotyp
-          </button>
-          <p className="text-xs text-slate-400 mt-1">Rekommenderad storlek: 200×200px · PNG med transparent bakgrund</p>
-
-          <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700">Företagsnamn (i Admin header)</h4>
-          <input value={data.admin_company_name||""} onChange={e=>set("admin_company_name",e.target.value)} placeholder="PureNorth" className={inp}/>
-          <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700">Header färger</h4>
-          <div className="flex items-center gap-3 mt-1 flex-wrap">
-            <span className="text-xs text-slate-500">BG</span>
-            <CircleColor value={data.admin_header_bg||"#ffffff"} onChange={e=>set("admin_header_bg",e.target.value)}/>
-            <span className="text-xs text-slate-500">Text</span>
-            <CircleColor value={data.admin_header_text_color||"#0f172a"} onChange={e=>set("admin_header_text_color",e.target.value)}/>
-          </div>
-        </>}
+        {section === "admin" && <AdminSection data={data} set={set} inp={inp} lbl={lbl} logoRef={logoRef} uploadImage={uploadImage}/>}
 
         {section === "seo" && <SeoSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
