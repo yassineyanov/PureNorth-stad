@@ -18,7 +18,6 @@ const SECTIONS = [
   { id: "media", label: "Bilder & Logo", icon: Image },
   { id: "social", label: "Sociala medier", icon: Globe },
   { id: "seo", label: "SEO", icon: Search },
-  { id: "admin", label: "Admin", icon: Menu },
 ];
 
 function CircleColor({ value, onChange }) {
@@ -1109,26 +1108,6 @@ export default function SettingsPanel() {
             className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
             <Plus size={14}/> Lägg till länk
           </button>
-        </>}
-
-        {section === "admin" && <>
-          <h3 className="font-semibold text-slate-800">Admin-panel</h3>
-          <div>
-            <label className={lbl}>Företagsnamn i Admin</label>
-            <input value={data.admin_company_name||""} onChange={e=>set("admin_company_name",e.target.value)} placeholder="PureNorth Städ" className={inp}/>
-          </div>
-          <div>
-            <label className={lbl}>Panel label (under namnet)</label>
-            <input value={data.admin_panel_label||""} onChange={e=>set("admin_panel_label",e.target.value)} placeholder="Adminpanel" className={inp}/>
-          </div>
-          <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700">Header färger</h4>
-          <div className="flex items-center gap-3 mt-1 flex-wrap">
-            <span className="text-xs text-slate-500">BG</span>
-            <CircleColor value={data.admin_header_bg||"#ffffff"} onChange={e=>set("admin_header_bg",e.target.value)}/>
-            <span className="text-xs text-slate-500">Text</span>
-            <CircleColor value={data.admin_header_text_color||"#0f172a"} onChange={e=>set("admin_header_text_color",e.target.value)}/>
-          </div>
         </>}
 
         {section === "footer" && <>
