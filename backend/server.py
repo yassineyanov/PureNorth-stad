@@ -6074,6 +6074,9 @@ class WebsiteSettings(BaseModel):
     admin_panel_label: Optional[str] = ""
     admin_header_bg: Optional[str] = ""
     admin_header_text_color: Optional[str] = ""
+    admin_window_title: Optional[str] = ""
+    admin_company_name: Optional[str] = ""
+    logo_color: Optional[str] = ""
     show_booking: Optional[bool] = True
     booking_bg: Optional[str] = ""
     booking_left_label: Optional[str] = ""

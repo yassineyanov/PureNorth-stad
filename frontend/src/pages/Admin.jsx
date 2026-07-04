@@ -805,7 +805,7 @@ function ReviewsPanel() {
 }
 function Dashboard() {
   const ws = useWebsite();
-  React.useEffect(() => { document.title = "PureNorth | Adminpanel"; }, []);
+  React.useEffect(() => { document.title = ws.admin_window_title || "PureNorth | Adminpanel"; }, [ws.admin_window_title]);
   const { logout, user } = useAuth();
   const [lang, setLang] = useState(localStorage.getItem("pn_language") || "sv");
   const [notifs, setNotifs] = useState(() => {
@@ -1001,7 +1001,7 @@ function Dashboard() {
           <div className="flex items-center gap-3">
             <Logo className="h-9 w-9" />
             <div>
-              <span className="font-display font-bold text-base sm:text-lg block leading-tight" style={{color: ws.admin_header_text_color||"#0f172a"}}>PureNorth</span>
+              <span className="font-display font-bold text-base sm:text-lg block leading-tight" style={{color: ws.admin_header_text_color||"#0f172a"}}>{ws.admin_company_name || "PureNorth"}</span>
               <span className="text-xs hidden sm:block" style={{color: ws.admin_header_text_color ? ws.admin_header_text_color+"80" : "#64748b"}}>{ws.admin_panel_label||"Adminpanel"}</span>
             </div>
           </div>
