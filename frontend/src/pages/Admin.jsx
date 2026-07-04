@@ -993,13 +993,13 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
-      <header className="bg-white border-b border-slate-100">
+      <header className="border-b border-slate-100" style={{backgroundColor: ws.admin_header_bg||"#ffffff"}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <Logo className="h-9 w-9" />
             <div>
-              <span className="font-display font-bold text-base sm:text-lg text-slate-900 block leading-tight">PureNorth Städ</span>
-              <span className="text-xs text-slate-500 hidden sm:block">Adminpanel</span>
+              <span className="font-display font-bold text-base sm:text-lg block leading-tight" style={{color: ws.admin_header_text_color||"#0f172a"}}>{ws.admin_company_name||ws.company_name||"PureNorth Städ"}</span>
+              <span className="text-xs hidden sm:block" style={{color: ws.admin_header_text_color ? ws.admin_header_text_color+"80" : "#64748b"}}>{ws.admin_panel_label||"Adminpanel"}</span>
             </div>
           </div>
           {/* Global Search */}
