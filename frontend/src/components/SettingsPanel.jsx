@@ -5,20 +5,20 @@ import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, P
 
 const SECTIONS = [
   { id: "hero", label: "Hero", icon: Type },
-  { id: "contact", label: "Kontakt", icon: Phone },
+  { id: "tjanster", label: "Tjänster", icon: Globe },
+  { id: "booking", label: "Bokningsformulär", icon: ClipboardList },
+  { id: "testimonials", label: "Omdömen", icon: Star },
+  { id: "vartarbete", label: "Vårt arbete", icon: Image },
+  { id: "omoss", label: "Om oss", icon: Info },
+  { id: "whyus", label: "Varför oss", icon: Award },
+  { id: "contact", label: "Kontaktsektion", icon: Phone },
+  { id: "kontaktuppgifter", label: "Kontaktuppgifter", icon: MapPin },
+  { id: "navbar", label: "Navbar", icon: Menu },
+  { id: "footer", label: "Footer", icon: Layers },
   { id: "media", label: "Bilder & Logo", icon: Image },
   { id: "social", label: "Sociala medier", icon: Globe },
-  { id: "about", label: "Om oss", icon: Info },
-  { id: "kontaktsektion", label: "Kontaktsektion", icon: MapPin },
-  { id: "whyus", label: "Varför oss", icon: Award },
-  { id: "services", label: "Tjänster", icon: Layers },
-  { id: "navbar", label: "Navbar", icon: Menu },
   { id: "seo", label: "SEO", icon: Search },
   { id: "admin", label: "Admin", icon: Menu },
-  { id: "vartarbete", label: "Vårt arbete", icon: Image },
-  { id: "booking", label: "Bokningsformulär", icon: ClipboardList },
-  { id: "footer", label: "Footer", icon: Layers },
-  { id: "testimonials", label: "Omdömen", icon: Star },
 ];
 
 function CircleColor({ value, onChange }) {
