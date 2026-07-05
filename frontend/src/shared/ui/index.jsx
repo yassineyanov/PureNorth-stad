@@ -51,3 +51,28 @@ export function ColorDot({ label, value, defaultValue, onChange }) {
     </>
   );
 }
+
+// ColorPicker with Text + BG colors and reset arrow
+export function ColorPicker({ label, colorKey, bgKey, defaultColor, defaultBg, data, set }) {
+  const colorChanged = data[colorKey] && data[colorKey] !== defaultColor;
+  const bgChanged = data[bgKey] && data[bgKey] !== defaultBg;
+  return (
+    <div className="flex items-center gap-3 mt-2">
+      <span className="text-xs text-slate-500">{label}</span>
+      <div className="flex items-center gap-2">
+        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          Text
+          <CircleColor value={data[colorKey] || defaultColor || "#141414"} onChange={e => set(colorKey, e.target.value)}/>
+        </label>
+        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+          BG
+          <CircleColor value={data[bgKey] || defaultBg || "#ffffff"} onChange={e => set(bgKey, e.target.value)}/>
+        </label>
+        {(colorChanged || bgChanged) && (
+          <button onClick={() => { set(colorKey, defaultColor || ""); set(bgKey, defaultBg || ""); }}
+            className="text-xs text-red-400 hover:text-red-600">↺</button>
+        )}
+      </div>
+    </div>
+  );
+}
