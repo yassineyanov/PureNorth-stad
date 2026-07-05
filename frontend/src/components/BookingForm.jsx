@@ -162,6 +162,25 @@ export const BookingForm = () => {
               className="rounded-3xl border border-white/10 p-7 sm:p-9 space-y-5"
               style={{backgroundColor: formBg}}>
 
+              <div className="grid sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-sm font-medium" style={{color: formLabelColor}}>Namn eller företagsnamn *</label>
+                  <input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson" style={inp}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium" style={{color: formLabelColor}}>E-post *</label>
+                  <input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" style={inp}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium" style={{color: formLabelColor}}>Telefonnummer *</label>
+                  <input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" style={inp}/>
+                </div>
+                <div>
+                  <label className="text-sm font-medium" style={{color: formLabelColor}}>Adress (städobjekt)</label>
+                  <input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" style={inp}/>
+                </div>
+              </div>
+
               {/* Service dropdown */}
               <div>
                 <label className="text-sm font-medium" style={{color: formLabelColor}}>Vilka tjänster? *</label>
@@ -201,24 +220,6 @@ export const BookingForm = () => {
                 </motion.div>
               )}
 
-              <div className="grid sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-sm font-medium" style={{color: formLabelColor}}>Namn eller företagsnamn *</label>
-                  <input id="name" data-testid="booking-name" value={form.name} onChange={update("name")} placeholder="Anna Andersson" style={inp}/>
-                </div>
-                <div>
-                  <label className="text-sm font-medium" style={{color: formLabelColor}}>E-post *</label>
-                  <input id="email" type="email" data-testid="booking-email" value={form.email} onChange={update("email")} placeholder="namn@exempel.se" style={inp}/>
-                </div>
-                <div>
-                  <label className="text-sm font-medium" style={{color: formLabelColor}}>Telefonnummer *</label>
-                  <input id="phone" data-testid="booking-phone" value={form.phone} onChange={update("phone")} placeholder="070-123 45 67" style={inp}/>
-                </div>
-                <div>
-                  <label className="text-sm font-medium" style={{color: formLabelColor}}>Adress (städobjekt)</label>
-                  <input id="address" value={form.address} onChange={update("address")} placeholder="Storgatan 1, Umeå" style={inp}/>
-                </div>
-              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className={quantityInfo ? "" : "col-span-2"}>
@@ -234,7 +235,7 @@ export const BookingForm = () => {
                 )}
               </div>
 
-              <button type="submit" disabled={submitting} data-testid="booking-submit"
+                            <button type="submit" disabled={submitting} data-testid="booking-submit"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-full disabled:opacity-60 px-8 py-4 text-base font-semibold transition-colors"
                 style={{backgroundColor: submitBg, color: submitColor}}>
                 {submitting ? "Skickar..." : <>{ws.booking_submit_text || "Skicka bokningsförfrågan"} <Send size={17}/></>}
