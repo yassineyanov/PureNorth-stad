@@ -2,7 +2,7 @@ import React from "react";
 import { Trash2, Plus, Upload } from "lucide-react";
 import { CircleColor, TextColorPicker, Toggle } from "@/shared/ui";
 
-export function FooterVarderigarSection({ data, set, inp, lbl }) {
+export function FooterVarderigarSection({ data, set, inp, lbl, setSection }) {
   return (
     <>
           <div className="flex items-center gap-2 mb-4">
