@@ -378,7 +378,7 @@ export default function SettingsPanel() {
         {/* Content */}
         <div className="flex-1 bg-white rounded-2xl border border-slate-100 p-6 space-y-5">
 
-        {section === "hero" && <HeroSection data={data} set={set} inp={inp} lbl={lbl} heroImgRef={heroImgRef} uploadImage={uploadImage}/>}
+        {section === "hero" && <HeroSection data={data} set={set} inp={inp} lbl={lbl} heroImgRef={heroImgRef} badgeImgRef={badgeImgRef} badge1ImgRef={badge1ImgRef} badge2ImgRef={badge2ImgRef} uploadImage={uploadImage}/>}
 
         {section === "contact" && <ContactSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
