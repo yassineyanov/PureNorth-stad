@@ -578,3 +578,4 @@ export function BookingsPanel({ selectedBooking: initialSelected, setSelectedBoo
     </>
   );
 }
+// Sun Jul  5 17:54:04 UTC 2026
