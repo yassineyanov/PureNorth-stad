@@ -2,7 +2,7 @@ import React from "react";
 import { Trash2, Plus, Upload } from "lucide-react";
 import { CircleColor, TextColorPicker, Toggle } from "@/shared/ui";
 
-export function FooterSection({ data, set, inp, lbl }) {
+export function FooterSection({ data, set, inp, lbl, setSection }) {
   return (
     <>
           <h3 className="font-semibold text-slate-800">Footer</h3>

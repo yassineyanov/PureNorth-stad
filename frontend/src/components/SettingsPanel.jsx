@@ -494,18 +494,18 @@ export default function SettingsPanel() {
           </button>
         </>}
 
-        {section === "footer" && <FooterSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        {section === "footer" && <FooterSection data={data} set={set} inp={inp} lbl={lbl} setSection={setSection}/>}
 
-        {section === "footer_faq" && <FooterFaqSection data={data} set={set} inp={inp} lbl={lbl}/>}
-        {section === "footer_kundavtal" && <FooterKundavtalSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        {section === "footer_faq" && <FooterFaqSection data={data} set={set} inp={inp} lbl={lbl} setSection={setSection}/>}
+        {section === "footer_kundavtal" && <FooterKundavtalSection data={data} set={set} inp={inp} lbl={lbl} setSection={setSection}/>}
 
-        {section === "footer_nojd" && <FooterNojdSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        {section === "footer_nojd" && <FooterNojdSection data={data} set={set} inp={inp} lbl={lbl} setSection={setSection}/>}
 
-        {section === "footer_varderingar" && <FooterVarderigarSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        {section === "footer_varderingar" && <FooterVarderigarSection data={data} set={set} inp={inp} lbl={lbl} setSection={setSection}/>}
 
-        {section === "footer_malsattning" && <FooterMalsattningSection data={data} set={set} inp={inp} lbl={lbl} mal1ImgRef={mal1ImgRef} mal2ImgRef={mal2ImgRef} uploadImage={uploadImage}/>}
+        {section === "footer_malsattning" && <FooterMalsattningSection data={data} set={set} inp={inp} lbl={lbl} mal1ImgRef={mal1ImgRef} mal2ImgRef={mal2ImgRef} uploadImage={uploadImage} setSection={setSection}/>}
 
-        {section === "footer_integritet" && <FooterIntegritetSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        {section === "footer_integritet" && <FooterIntegritetSection data={data} set={set} inp={inp} lbl={lbl} setSection={setSection}/>}
 
         {section === "vartarbete" && <VartArbeteSection data={data} set={set} inp={inp} lbl={lbl}/>}
 

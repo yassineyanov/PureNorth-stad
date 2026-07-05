@@ -2,7 +2,7 @@ import React from "react";
 import { Trash2, Plus, Upload } from "lucide-react";
 import { CircleColor, TextColorPicker, Toggle } from "@/shared/ui";
 
-export function FooterMalsattningSection({ data, set, inp, lbl, mal1ImgRef, mal2ImgRef, uploadImage }) {
+export function FooterMalsattningSection({ data, set, inp, lbl, mal1ImgRef, mal2ImgRef, uploadImage, setSection }) {
   return (
     <>
           <div className="flex items-center gap-2 mb-4">
