@@ -98,7 +98,7 @@ export const Footer = () => {
   const ws = useWebsite();
 
   return (
-    <footer className="bg-white border-t border-slate-100 py-12">
+    <footer className="border-t border-slate-100 py-12" style={{backgroundColor: ws.footer_bg||"#ffffff"}}>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-3">
           <Logo className="h-9 w-9" />
