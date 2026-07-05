@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useWebsite } from "@/context/WebsiteContext";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
+import { BookingsPanel } from "@/pages/admin/BookingsPanel";
+import { ReviewsPanel } from "@/pages/admin/ReviewsPanel";
 import { Logo } from "@/components/Logo";
 import { Banknote, BarChart2, Bell, Calendar, CalendarDays, CalendarRange, FileText, LayoutDashboard, LogOut, Receipt, Search, Settings, Star, Tag, Trash2, TrendingDown, TrendingUp, UserMinus, Users } from "lucide-react";
 import { api } from "@/lib/api";
