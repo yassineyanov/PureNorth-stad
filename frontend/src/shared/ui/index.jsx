@@ -23,9 +23,11 @@ export function ToggleRow({ label, value, onChange, className = "" }) {
 
 // Circular color picker
 export function CircleColor({ value, onChange }) {
+  const safeValue = value && value.startsWith("#") && value.length >= 4 ? value : "#141414";
   return (
-    <div className="relative h-6 w-6 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 cursor-pointer" style={{backgroundColor: value}}>
-      <input type="color" value={value?.startsWith("#") ? value : "#141414"} onChange={onChange} className="absolute opacity-0 inset-0 w-8 h-8 cursor-pointer" style={{margin: "-4px"}}/>
+    <div className="relative h-6 w-6 rounded-full border-2 border-slate-200 shrink-0 cursor-pointer" style={{backgroundColor: value}}>
+      <input type="color" value={safeValue} onChange={onChange}
+        style={{position:"absolute", opacity:0, top:0, left:0, width:"100%", height:"100%", cursor:"pointer", padding:0, border:"none"}}/>
     </div>
   );
 }
