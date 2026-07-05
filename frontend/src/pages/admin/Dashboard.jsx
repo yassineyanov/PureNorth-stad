@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useWebsite } from "@/context/WebsiteContext";
 import { Logo } from "@/components/Logo";
-import { AbsencePanel, Banknote, BarChart2, Bell, Calendar, CalendarDays, CalendarPanel, CalendarRange, CostsPanel, CustomerPanel, EconomyPanel, ExpensePanel, FileText, InvoicePanel, LayoutDashboard, LogOut, PayrollPanel, PriceListPanel, Receipt, ReviewsPanel, SchedulePanel, Search, Settings, Star, StatsPanel, Tag, Trash2, TrendingDown, TrendingUp, UserMinus, Users, UsersPanel } from "lucide-react";
+import { Banknote, BarChart2, Bell, Calendar, CalendarDays, CalendarRange, FileText, LayoutDashboard, LogOut, Receipt, Search, Settings, Star, Tag, Trash2, TrendingDown, TrendingUp, UserMinus, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { SettingsPanel } from "@/components/SettingsPanel";
