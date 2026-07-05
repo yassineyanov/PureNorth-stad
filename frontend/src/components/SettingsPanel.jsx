@@ -271,6 +271,25 @@ export default function SettingsPanel() {
               ],
               mal_card1_img: "/svanen-new.png",
               mal_card2_img: "https://images.pexels.com/photos/4239146/pexels-photo-4239146.jpeg?auto=compress&cs=tinysrgb&w=900",
+              faq_items: [
+                {"q":"Hur gör jag en bokning?","a":"Om du är intresserad av att göra en bokning hos oss börjar du med att gå in på vårt bokningsformulär och fyller i det."},
+                {"q":"Hur kontaktar jag er?","a":"Du kan kontakta oss via telefon eller mejl. Telefon: 0706240403."},
+                {"q":"Har ni städgaranti?","a":"Vi lämnar 14 dagars städgaranti."},
+                {"q":"Vad gör jag om jag inte är nöjd?","a":"Kontakta oss inom 14 dagar från städdagen."},
+                {"q":"Behöver jag ha något städmaterial hemma?","a":"Nej, vi tar med oss allt vi behöver."},
+                {"q":"Vad har ni för avbokningsregler?","a":"Du kan avboka kostnadsfritt fram till två veckor innan avtalat datum."},
+                {"q":"Måste jag själv göra något för att få RUT-avdrag?","a":"Nej, vi sköter allt administrativt för RUT-avdraget."},
+                {"q":"Vad händer om något går sönder?","a":"PureNorth Städ har ansvarsförsäkring som täcker eventuella skador."}
+              ],
+              nojd_guarantees: ["92% av kunder ger oss topp betyg","Vi följer mäklarsamfundets rekommendationer","Klart inom 24 timmar"],
+              nojd_steps: ["Kontakta oss snarast möjligt via telefon eller e-post om du är missnöjd.","Vi tar fram en lösning och åtgärdar problemet så snabbt som möjligt.","Reklamera tjänsten inom tre arbetsdagar efter servicetillfället."],
+              varderingar_values: [
+                {"icon":"Tag","title":"Priser","text":"För både er och vår personals trygghet matchar vi priset till kvalitén som erbjuds."},
+                {"icon":"HeartHandshake","title":"Service","text":"Vi är kända för att alltid bemöta kunder på ett bra sätt."},
+                {"icon":"ShieldCheck","title":"Kvalitetssäkring","text":"Vår målsättning är att leverera tjänster av toppkvalité."},
+                {"icon":"Ear","title":"Respekt & lyhördhet","text":"Att respektera våra kunder, hem och medarbetare är grunden till en bra vardag."}
+              ],
+              booking_services: ["Hemstädning","Flyttstädning","Kontorsstädning","Storstädning","Annat"],
               kundavtal_sections: [
                 {"heading":"Bokningsvillkor","items":["Bokningen behöver ske via mail.","Vi behöver ett fullständigt personnummer för RUT-ansökan.","Vår städgaranti innebär att ni inom 14 dagar efter utförd tjänst ska kontakta oss."]},
                 {"heading":"Betalningsvillkor","items":["Fakturering och betalning hanteras endast elektroniskt.","Betalningsvillkor är 10 dagar."]},
