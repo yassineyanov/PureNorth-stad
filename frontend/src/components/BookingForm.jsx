@@ -101,8 +101,8 @@ export const BookingForm = () => {
       <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-5 gap-12">
         {/* Left intro */}
         <div className="lg:col-span-2">
-          <p className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-3">
-            Boka tid
+          <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{color: ws.booking_left_label_color||"#808080"}}>
+            {ws.booking_left_label||"Boka tid"}
           </p>
           <h2 className="font-display font-bold text-4xl sm:text-5xl tracking-tight leading-tight" style={{color: ws.booking_left_title_color||"#ffffff"}}>
             Boka online eller ring oss
