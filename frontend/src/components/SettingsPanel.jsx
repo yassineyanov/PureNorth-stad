@@ -338,7 +338,6 @@ export default function SettingsPanel() {
               testimonials_name_color: "",
               testimonials_role_color: "",
               testimonials_icon_color: "",
-              nav_links: [{"label":"Tjänster","href":"/#tjanster"},{"label":"Om oss","href":"/om-oss"},{"label":"Vårt arbete","href":"/#vart-arbete"},{"label":"Kontakt","href":"/#kontakt"}],
               navbar_bg: "",
               navbar_company_color: "",
               navbar_link_color: "",
