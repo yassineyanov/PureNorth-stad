@@ -111,7 +111,6 @@ export const BookingForm = () => {
             Fyll i formuläret så återkommer vi med ett förslag. Vill du hellre prata
             med oss direkt? Slå en signal.
           </p>
-          <a
           {ws.show_booking_phone_btn !== false && (
           
             href={`tel:${(ws.phone||"070-624 04 03").replace(/[^0-9]/g,"")}`}
@@ -131,6 +130,8 @@ export const BookingForm = () => {
                 {ws.phone||"070-624 04 03"}
               </span>
             </span>
+          </a>
+          )}
           </a>
           )}
         </div>
