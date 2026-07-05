@@ -22,7 +22,7 @@ export function BookingSection({ data, set, inp, lbl }) {
           <div>
             <label className={lbl}>Etikett (liten text)</label>
             <input value={data.booking_left_label||""} onChange={e=>set("booking_left_label",e.target.value)} placeholder="Boka tid" className={inp}/>
-            <div className="flex items-center gap-2 mt-1"><span className="text-xs text-slate-500">Färg</span><CircleColor value={data.booking_left_label_color||"rgba(255,255,255,0.5)"} onChange={e=>set("booking_left_label_color",e.target.value)}/></div>
+            <div className="flex items-center gap-2 mt-1"><span className="text-xs text-slate-500">Färg</span><CircleColor value={data.booking_left_label_color||"#808080"} onChange={e=>set("booking_left_label_color",e.target.value)}/></div>
           </div>
           <div>
             <label className={lbl}>Rubrik</label>
@@ -32,7 +32,7 @@ export function BookingSection({ data, set, inp, lbl }) {
           <div>
             <label className={lbl}>Undertext</label>
             <textarea value={data.booking_left_subtitle||""} onChange={e=>set("booking_left_subtitle",e.target.value)} rows={2} placeholder="Fyll i formuläret..." className={inp+" resize-none"}/>
-            <div className="flex items-center gap-2 mt-1"><span className="text-xs text-slate-500">Färg</span><CircleColor value={data.booking_left_subtitle_color||"rgba(255,255,255,0.7)"} onChange={e=>set("booking_left_subtitle_color",e.target.value)}/></div>
+            <div className="flex items-center gap-2 mt-1"><span className="text-xs text-slate-500">Färg</span><CircleColor value={data.booking_left_subtitle_color||"#b3b3b3"} onChange={e=>set("booking_left_subtitle_color",e.target.value)}/></div>
           </div>
           <hr className="border-slate-100"/>
           <h4 className="font-medium text-slate-700">Ring oss knapp</h4>
@@ -59,9 +59,9 @@ export function BookingSection({ data, set, inp, lbl }) {
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             <span className="text-xs text-slate-500">Ikon BG</span><CircleColor value={data.booking_phone_btn_icon_bg||"#ffffff"} onChange={e=>set("booking_phone_btn_icon_bg",e.target.value)}/>
             <span className="text-xs text-slate-500">Ikon</span><CircleColor value={data.booking_phone_btn_icon_color||"#141414"} onChange={e=>set("booking_phone_btn_icon_color",e.target.value)}/>
-            <span className="text-xs text-slate-500">Label</span><CircleColor value={data.booking_phone_btn_label_color||"rgba(255,255,255,0.5)"} onChange={e=>set("booking_phone_btn_label_color",e.target.value)}/>
+            <span className="text-xs text-slate-500">Label</span><CircleColor value={data.booking_phone_btn_label_color||"#808080"} onChange={e=>set("booking_phone_btn_label_color",e.target.value)}/>
             <span className="text-xs text-slate-500">Nummer</span><CircleColor value={data.booking_phone_btn_number_color||"#ffffff"} onChange={e=>set("booking_phone_btn_number_color",e.target.value)}/>
-            <span className="text-xs text-slate-500">BG</span><CircleColor value={data.booking_phone_btn_bg||"rgba(255,255,255,0.06)"} onChange={e=>set("booking_phone_btn_bg",e.target.value)}/>
+            <span className="text-xs text-slate-500">BG</span><CircleColor value={data.booking_phone_btn_bg||"#1f1f1f"} onChange={e=>set("booking_phone_btn_bg",e.target.value)}/>
           </div>
 
           <hr className="border-slate-100"/>
