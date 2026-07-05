@@ -4,6 +4,12 @@ import { Calendar, FileSpreadsheet, FileText, Hash, Mail, MapPin, Maximize, Phon
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
+const STATUS = {
+  new: { label: "Ny", cls: "bg-blue-50 text-blue-700" },
+  contacted: { label: "Kontaktad", cls: "bg-amber-50 text-amber-700" },
+  done: { label: "Klar", cls: "bg-green-50 text-green-700" },
+};
+
 export function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: setParentSelected }) {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBookingLocal] = React.useState(initialSelected || null);
