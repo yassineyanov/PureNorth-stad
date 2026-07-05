@@ -1,6 +1,6 @@
 import React from "react";
 import { Trash2, Plus, Upload } from "lucide-react";
-import { CircleColor, TextColorPicker, Toggle } from "@/shared/ui";
+import { CircleColor, TextColorPicker, Toggle, ColorPicker } from "@/shared/ui";
 
 export function KontaktsektionSection({ data, set, inp, lbl }) {
   return (
