@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Check, Clock, Star, X, RefreshCw } from "lucide-react";
+import { Check, Clock, Star, X, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { StarRating } from "@/components/StarRating";
 
