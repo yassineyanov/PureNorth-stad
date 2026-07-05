@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Logo } from "@/components/Logo";
 import { api } from "@/lib/api";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState("");
