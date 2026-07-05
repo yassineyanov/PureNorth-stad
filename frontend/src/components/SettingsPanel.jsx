@@ -9,7 +9,6 @@ import { VartArbeteSection } from "@/features/settings/sections/VartArbeteSectio
 import { ContactSection } from "@/features/settings/sections/ContactSection";
 import { AboutSection } from "@/features/settings/sections/AboutSection";
 import { MediaSection } from "@/features/settings/sections/MediaSection";
-import { BookingSection } from "@/features/settings/sections/BookingSection";
 import { KontaktsektionSection } from "@/features/settings/sections/KontaktsektionSection";
 import { WhyUsSection } from "@/features/settings/sections/WhyUsSection";
 import { ServicesSection } from "@/features/settings/sections/ServicesSection";
@@ -20,7 +19,6 @@ const SECTIONS = [
   { id: "admin", label: "Admin", icon: Menu },
   { id: "hero", label: "Hero", icon: Type },
   { id: "services", label: "Tjänster", icon: Globe },
-  { id: "booking", label: "Bokningsformulär", icon: ClipboardList },
   { id: "testimonials", label: "Omdömen", icon: Star },
   { id: "vartarbete", label: "Vårt arbete", icon: Image },
   { id: "about", label: "Om oss", icon: Info },
@@ -1264,9 +1262,6 @@ export default function SettingsPanel() {
         </>}
 
         {section === "vartarbete" && <VartArbeteSection data={data} set={set} inp={inp} lbl={lbl}/>}
-
-
-        {section === "booking" && <BookingSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
         {section === "admin" && <AdminSection data={data} set={set} inp={inp} lbl={lbl} logoRef={logoRef} uploadImage={uploadImage}/>}
 
