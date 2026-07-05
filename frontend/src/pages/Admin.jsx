@@ -26,6 +26,7 @@ import CostsPanel from "@/components/CostsPanel";
 import SettingsPanel from "@/components/SettingsPanel";
 import DashboardPanel from "@/components/DashboardPanel";
 import BookingCalculator from "@/components/BookingCalculator";
+import { ReviewsPanel } from "@/pages/admin/ReviewsPanel";
 
 const STATUS = {
   new: { label: "Ny", cls: "bg-blue-50 text-blue-700" },
@@ -701,19 +702,6 @@ function BookingsPanel({ selectedBooking: initialSelected, setSelectedBooking: s
   );
 }
 
-function ReviewsPanel() {
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      setReviews((await api.get("/reviews")).data);
-    } catch {
-      toast.error("Kunde inte hämta omdömen.");
-    } finally {
-      setLoading(false);
-    }
   };
   useEffect(() => { load(); }, []);
 
