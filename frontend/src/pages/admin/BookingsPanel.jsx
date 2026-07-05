@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Calendar, FileSpreadsheet, FileText, Hash, Mail, MapPin, Maximize, Phone, RefreshCw } from "lucide-react";
+import { Calendar, FileSpreadsheet, FileText, Hash, Mail, MapPin, Maximize, Phone, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
