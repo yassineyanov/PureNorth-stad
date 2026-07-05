@@ -112,7 +112,7 @@ export const BookingForm = () => {
             med oss direkt? Slå en signal.
           </p>
           {ws.show_booking_phone_btn !== false && (
-          
+          <a
             href={`tel:${(ws.phone||"070-624 04 03").replace(/[^0-9]/g,"")}`}
             data-testid="booking-call-btn"
             className="mt-7 inline-flex items-center gap-3 rounded-2xl border px-6 py-4 hover:opacity-80 transition-colors"
