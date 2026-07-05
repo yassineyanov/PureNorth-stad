@@ -2,7 +2,7 @@ import React from "react";
 import { Upload } from "lucide-react";
 import { CircleColor, TextColorPicker, ColorPicker } from "@/shared/ui";
 
-export function HeroSection({ data, set, inp, lbl, heroImgRef, uploadImage }) {
+export function HeroSection({ data, set, inp, lbl, heroImgRef, badgeImgRef, badge1ImgRef, badge2ImgRef, uploadImage }) {
   return (
     <>
           <h3 className="font-semibold text-slate-800">Hero-sektion</h3>
