@@ -31,16 +31,16 @@ export function FooterSection({ data, set, inp, lbl, setSection }) {
             {key:"malsattning", label:"Målsättning"},
             {key:"integritet", label:"Integritetspolicy"},
           ].map(({key, label}) => (
-            <div key={key} className="flex items-center justify-between border border-slate-200 rounded-xl px-4 py-3 hover:border-slate-400 transition-colors">
+            <div key={key} className="flex items-center justify-between border border-slate-200 rounded-xl px-4 py-3 hover:border-slate-400 transition-colors cursor-pointer" onClick={()=>setSection(`footer_${key}`)}>
               <div className="flex items-center gap-3">
-                <button type="button" onClick={()=>set(`show_footer_${key}`, data[`show_footer_${key}`] === false ? true : false)}
+                <button type="button" onClick={e=>{e.stopPropagation();set(`show_footer_${key}`, data[`show_footer_${key}`] === false ? true : false)}}
                   className={`w-10 h-5 rounded-full transition-colors shrink-0 ${data[`show_footer_${key}`] !== false ? "bg-blue-500" : "bg-slate-200"}`}>
                   <span className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-0.5 ${data[`show_footer_${key}`] !== false ? "translate-x-5" : "translate-x-0"}`}/>
                 </button>
-                <button onClick={()=>setSection(`footer_${key}`)} className="text-sm font-medium text-slate-700 hover:text-slate-900">
-                  {label}
-                </button>
-                <CircleColor value={data[`footer_${key}_color`]||"#475569"} onChange={e=>set(`footer_${key}_color`,e.target.value)}/>
+                <span className="text-sm font-medium text-slate-700">{label}</span>
+                <div onClick={e=>e.stopPropagation()}>
+                  <CircleColor value={data[`footer_${key}_color`]||"#475569"} onChange={e=>set(`footer_${key}_color`,e.target.value)}/>
+                </div>
               </div>
             </div>
           ))}
