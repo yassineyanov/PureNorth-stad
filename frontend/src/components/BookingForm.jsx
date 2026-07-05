@@ -112,18 +112,27 @@ export const BookingForm = () => {
             med oss direkt? Slå en signal.
           </p>
           <a
+          {ws.show_booking_phone_btn !== false && (
+          
             href={`tel:${(ws.phone||"070-624 04 03").replace(/[^0-9]/g,"")}`}
             data-testid="booking-call-btn"
-            className="mt-7 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.06] px-6 py-4 hover:border-white/40 transition-colors"
+            className="mt-7 inline-flex items-center gap-3 rounded-2xl border px-6 py-4 hover:opacity-80 transition-colors"
+            style={{backgroundColor: ws.booking_phone_btn_bg||"#1f1f1f", borderColor: "rgba(255,255,255,0.15)"}}
           >
-            <span className="h-11 w-11 rounded-full bg-white text-[#141414] flex items-center justify-center">
-              <Phone size={18} />
+            <span className="h-11 w-11 rounded-full flex items-center justify-center"
+              style={{backgroundColor: ws.booking_phone_btn_icon_bg||"#ffffff", color: ws.booking_phone_btn_icon_color||"#141414"}}>
+              <Phone size={18}/>
             </span>
             <span>
-              <span className="block text-xs text-white/50">Ring oss</span>
-              <span className="block font-semibold text-white">{ws.phone||"070-624 04 03"}</span>
+              <span className="block text-xs" style={{color: ws.booking_phone_btn_label_color||"#808080"}}>
+                {ws.booking_phone_btn_label||"Ring oss"}
+              </span>
+              <span className="block font-semibold" style={{color: ws.booking_phone_btn_number_color||"#ffffff"}}>
+                {ws.phone||"070-624 04 03"}
+              </span>
             </span>
           </a>
+          )}
         </div>
 
         {/* Form */}
