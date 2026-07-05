@@ -27,6 +27,7 @@ import SettingsPanel from "@/components/SettingsPanel";
 import DashboardPanel from "@/components/DashboardPanel";
 import BookingCalculator from "@/components/BookingCalculator";
 import { ReviewsPanel } from "@/pages/admin/ReviewsPanel";
+import { LoginScreen } from "@/pages/admin/LoginScreen";
 
 const STATUS = {
   new: { label: "Ny", cls: "bg-blue-50 text-blue-700" },
@@ -34,7 +35,7 @@ const STATUS = {
   done: { label: "Klar", cls: "bg-green-50 text-green-700" },
 };
 
-function LoginScreen({ onLogin }) {
+ {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
