@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Calendar, FileSpreadsheet, FileText, Hash, Mail, MapPin, Maximize, Phone, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import BookingCalculator from "@/components/BookingCalculator";
 
 const STATUS = {
   new: { label: "Ny", cls: "bg-blue-50 text-blue-700" },
