@@ -15,11 +15,10 @@ import Malsattning from "@/pages/Malsattning";
 import OmOss from "@/pages/OmOss";
 
 function App() {
-  React.useEffect(() => {
-    if ((window.location.hostname.includes("purenorth-admin") || window.location.hostname === "purenorth-admin.vercel.app") && window.location.pathname === "/") {
-      window.location.replace("/admin");
-    }
-  }, []);
+  if ((window.location.hostname.includes("purenorth-admin") || window.location.hostname === "purenorth-admin.vercel.app") && window.location.pathname === "/") {
+    window.location.replace("/admin");
+    return null;
+  }
   return (
     <div className="App">
       <AuthProvider>
