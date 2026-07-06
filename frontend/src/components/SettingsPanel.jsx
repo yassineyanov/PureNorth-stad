@@ -4,9 +4,9 @@ import { SocialSection } from "@/features/settings/sections/SocialSection";
 import { SeoSection } from "@/features/settings/sections/SeoSection";
 import { AdminSection } from "@/features/settings/sections/AdminSection";
 import { NavbarSection } from "@/features/settings/sections/NavbarSection";
+import { KontaktSection } from "@/features/settings/sections/KontaktSection";
 import { TestimonialsSection } from "@/features/settings/sections/TestimonialsSection";
 import { VartArbeteSection } from "@/features/settings/sections/VartArbeteSection";
-import { ContactSection } from "@/features/settings/sections/ContactSection";
 import { HeroSection } from "@/features/settings/sections/HeroSection";
 import { FooterSection } from "@/features/settings/sections/FooterSection";
 import { FooterFaqSection } from "@/features/settings/sections/FooterFaqSection";
@@ -17,7 +17,6 @@ import { FooterMalsattningSection } from "@/features/settings/sections/FooterMal
 import { FooterIntegritetSection } from "@/features/settings/sections/FooterIntegritetSection";
 import { AboutSection } from "@/features/settings/sections/AboutSection";
 import { MediaSection } from "@/features/settings/sections/MediaSection";
-import { KontaktsektionSection } from "@/features/settings/sections/KontaktsektionSection";
 import { WhyUsSection } from "@/features/settings/sections/WhyUsSection";
 import { ServicesSection } from "@/features/settings/sections/ServicesSection";
 import { toast } from "sonner";
@@ -31,9 +30,8 @@ const SECTIONS = [
   { id: "vartarbete", label: "Vårt arbete", icon: Image },
   { id: "about", label: "Om oss", icon: Info },
   { id: "whyus", label: "Varför oss", icon: Award },
-  { id: "contact", label: "Kontaktsektion", icon: Phone },
-  { id: "kontaktsektion", label: "Kontaktuppgifter", icon: MapPin },
   { id: "navbar", label: "Navbar", icon: Menu },
+  { id: "kontakt", label: "Kontakt", icon: Phone },
   { id: "booking", label: "Bokningsformulär", icon: ClipboardList },
   { id: "footer", label: "Footer", icon: Layers },
   { id: "media", label: "Bilder & Logo", icon: Image },
@@ -387,19 +385,20 @@ export default function SettingsPanel() {
 
         {section === "hero" && <HeroSection data={data} set={set} inp={inp} lbl={lbl} heroImgRef={heroImgRef} badgeImgRef={badgeImgRef} badge1ImgRef={badge1ImgRef} badge2ImgRef={badge2ImgRef} uploadImage={uploadImage}/>}
 
-        {section === "contact" && <ContactSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        
 
         {section === "media" && <MediaSection data={data} set={set} inp={inp} lbl={lbl} logoRef={logoRef} heroImgRef={heroImgRef} uploadImage={uploadImage}/>}
 
         {section === "social" && <SocialSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
-        {section === "kontaktsektion" && <KontaktsektionSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        
 
         {section === "whyus" && <WhyUsSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
         {section === "services" && <ServicesSection data={data} set={set} inp={inp} lbl={lbl} uploadImage={uploadImage}/>}
 
         {section === "navbar" && <NavbarSection data={data} set={set} inp={inp} lbl={lbl}/>}
+        {section === "kontakt" && <KontaktSection data={data} set={set} inp={inp} lbl={lbl}/>}
 
         {section === "booking" && <>
           <h3 className="font-semibold text-slate-800">Bokningsformulär</h3>
