@@ -1,6 +1,6 @@
 import React from "react";
 import { Trash2, Plus, Upload } from "lucide-react";
-import { CircleColor, TextColorPicker, ColorPicker } from "@/shared/ui";
+import { CircleColor, TextColorPicker } from "@/shared/ui";
 
 export function ContactSection({ data, set, inp, lbl }) {
   return (
@@ -77,4 +77,3 @@ export function ContactSection({ data, set, inp, lbl }) {
         </>
   );
 }
-// Sun Jul  5 20:47:44 UTC 2026
