@@ -21,6 +21,7 @@ import { WhyUsSection } from "@/features/settings/sections/WhyUsSection";
 import { ServicesSection } from "@/features/settings/sections/ServicesSection";
 import { toast } from "sonner";
 import { Save, Upload, Globe, Phone, Image, Type, Info, MapPin, Award, Layers, Plus, Trash2, Menu, Search, Palette, Star, ExternalLink, ClipboardList } from "lucide-react";
+import { CircleColor, TextColorPicker, ColorPicker } from "@/shared/ui";
 
 const SECTIONS = [
   { id: "admin", label: "Admin", icon: Menu },
@@ -38,49 +39,6 @@ const SECTIONS = [
   { id: "social", label: "Sociala medier", icon: Globe },
   { id: "seo", label: "SEO", icon: Search },
 ];
-
-function CircleColor({ value, onChange }) {
-  return (
-    <div className="relative h-6 w-6 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 cursor-pointer" style={{backgroundColor: value}}>
-      <input type="color" value={value} onChange={onChange} className="absolute opacity-0 inset-0 w-8 h-8 cursor-pointer" style={{margin: "-4px"}}/>
-    </div>
-  );
-}
-
-function TextColorPicker({ label, colorKey, defaultColor, data, set }) {
-  const hasChanged = data[colorKey] && data[colorKey] !== (defaultColor || "");
-  return (
-    <div className="flex items-center gap-3 mt-2">
-      <span className="text-xs text-slate-500">{label}</span>
-      <CircleColor value={data[colorKey] || defaultColor || "#141414"} onChange={e => set(colorKey, e.target.value)}/>
-      {hasChanged && <button onClick={() => set(colorKey, defaultColor || "")} className="text-xs text-red-400 hover:text-red-600">↺</button>}
-    </div>
-  );
-}
-
-function ColorPicker({ label, colorKey, bgKey, defaultColor, defaultBg, data, set }) {
-  const colorChanged = data[colorKey] && data[colorKey] !== defaultColor;
-  const bgChanged = data[bgKey] && data[bgKey] !== defaultBg;
-  return (
-    <div className="flex items-center gap-3 mt-2">
-      <span className="text-xs text-slate-500">{label}</span>
-      <div className="flex items-center gap-2">
-        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
-          Text
-          <CircleColor value={data[colorKey] || defaultColor || "#141414"} onChange={e => set(colorKey, e.target.value)}/>
-        </label>
-        <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
-          BG
-          <CircleColor value={data[bgKey] || defaultBg || "#ffffff"} onChange={e => set(bgKey, e.target.value)}/>
-        </label>
-        {(colorChanged || bgChanged) && (
-          <button onClick={() => { set(colorKey, defaultColor || ""); set(bgKey, defaultBg || ""); }}
-            className="text-xs text-red-400 hover:text-red-600">↺</button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function SettingsPanel() {
   const [data, setData] = useState({
