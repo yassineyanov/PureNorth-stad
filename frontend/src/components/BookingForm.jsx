@@ -3,7 +3,6 @@ import { useWebsite } from "@/context/WebsiteContext";
 import { motion } from "framer-motion";
 import { Phone, Send, CheckCircle2, ChevronDown, ChevronUp, Check, X } from "lucide-react";
 import { useBookingForm } from "@/features/booking/hooks/useBookingForm";
-};
 
 export const BookingForm = () => {
   const ws = useWebsite();
