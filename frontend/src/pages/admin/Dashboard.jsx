@@ -17,7 +17,7 @@ import StatsPanel from "@/components/StatsPanel";
 import UsersPanel from "@/components/UsersPanel";
 import CostsPanel from "@/components/CostsPanel";
 import { Logo } from "@/components/Logo";
-import { Banknote, BarChart2, Bell, Calendar, CalendarDays, CalendarRange, FileText, LayoutDashboard, LogOut, Receipt, Search, Settings, Star, Tag, Trash2, TrendingDown, TrendingUp, UserMinus, Users } from "lucide-react";
+import { Banknote, BarChart2, Bell, Calendar, CalendarDays, CalendarRange, FileText, LayoutDashboard, LogOut, Receipt, Search, Settings, Star, Tag, Trash2, TrendingDown, TrendingUp, UserMinus, Users, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import SettingsPanel from "@/components/SettingsPanel";
