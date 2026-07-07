@@ -975,7 +975,13 @@ class PriceListSettings(BaseModel):
 # ---------------------------------------------------------------------------
 # App / Router
 # ---------------------------------------------------------------------------
-limiter = Limiter(key_func=get_remote_address)
+def real_client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return get_remote_address(request)
+
+limiter = Limiter(key_func=real_client_ip)
 app = FastAPI()
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
