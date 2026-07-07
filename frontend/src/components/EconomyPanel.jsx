@@ -261,6 +261,8 @@ export default function EconomyPanel() {
             <div className="rounded-2xl bg-white border border-slate-100 p-5">
               <Row label="Intäkter (exkl. moms)" value={kr(data.result.revenue_excl_vat)} />
               <Row label="Personalkostnader" value={`-${kr(data.payroll.total_payroll_cost + data.payroll.utlagg)}`} />
+              <Row label="Materialkostnader (exkl. moms)" value={`-${kr(data.material_costs?.total_excl_moms || 0)}`} />
+              {(data.incidents?.total || 0) > 0 && <Row label={`Skador (${data.incidents?.count || 0} st)`} value={`-${kr(data.incidents?.total || 0)}`} />}
               <Row label="Rörelseresultat" value={kr(data.result.operating_profit)} highlight />
               <Row label="Vinstmarginal" value={`${(data.result.profit_margin || 0).toFixed(1)}%`} />
             </div>
