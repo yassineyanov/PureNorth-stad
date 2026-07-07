@@ -55,6 +55,22 @@ def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
+import re as _re
+def sanitize_text(value, max_len=2000):
+    """Strip HTML tags, angle brackets and control chars; cap length."""
+    if not isinstance(value, str):
+        return value
+    v = _re.sub(r"<[^>]*>", "", value)          # remove HTML tags
+    v = v.replace("<", "").replace(">", "")      # remove stray angle brackets
+    v = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", v)  # control chars
+    return v.strip()[:max_len]
+
+def sanitize_payload(d: dict, fields: list, max_len=2000) -> dict:
+    for f in fields:
+        if f in d and isinstance(d[f], str):
+            d[f] = sanitize_text(d[f], max_len)
+    return d
+
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
@@ -1018,6 +1034,8 @@ async def me(current=Depends(get_current_user)):
 @limiter.limit("10/minute")
 async def create_booking(request: Request, payload: BookingCreate):
     doc = payload.model_dump()
+    doc = sanitize_payload(doc, ["name", "phone", "address", "kvm", "preferred_date", "other_description"], max_len=1000)
+    doc["services"] = [sanitize_text(s, 100) for s in doc.get("services", [])][:10]
     doc["status"] = "new"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     result = await db.bookings.insert_one(doc)
@@ -1072,6 +1090,8 @@ async def delete_booking(booking_id: str, current=Depends(get_current_user)):
 @limiter.limit("5/minute")
 async def create_review(request: Request, payload: ReviewCreate):
     doc = payload.model_dump()
+    doc = sanitize_payload(doc, ["name"], max_len=100)
+    doc = sanitize_payload(doc, ["text"], max_len=2000)
     doc["approved"] = False
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     result = await db.reviews.insert_one(doc)
