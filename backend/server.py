@@ -3336,13 +3336,15 @@ async def export_incidents_xlsx(current=Depends(get_current_user)):
 async def export_incidents_pdf(current=Depends(get_current_user)):
     """Export incidents/skador to PDF"""
     incidents = await db.incidents.find().sort("date", -1).to_list(5000)
+    inv_settings = await get_invoice_settings_obj()
+    company = inv_settings.company_name or "PureNorth Städ"
     STATUS_SV = {"reported": "Rapporterad", "insurance": "Forsakring", "paid": "Betald", "closed": "Avslutad"}
     styles = getSampleStyleSheet()
     cell_style = ParagraphStyle("cell", parent=styles["Normal"], fontSize=8, leading=10)
     head_style = ParagraphStyle("head", parent=styles["Normal"], fontSize=8, leading=10, textColor=colors.white, fontName="Helvetica-Bold")
     title_style = ParagraphStyle("title", parent=styles["Title"], fontSize=16)
     elements = []
-    elements.append(Paragraph("Skador & Olyckor", title_style))
+    elements.append(Paragraph(f"{company} - Skador & Olyckor", title_style))
     elements.append(Spacer(1, 6*mm))
     data = [[Paragraph(h, head_style) for h in ["Datum", "Plats / Kund", "Anstalld", "Beskrivning", "Kostnad", "Status"]]]
     total = 0.0
@@ -3383,7 +3385,7 @@ async def export_incidents_pdf(current=Depends(get_current_user)):
     return Response(
         content=buf.getvalue(),
         media_type="application/pdf",
-        headers={"Content-Disposition": 'inline; filename="skador.pdf"'}
+        headers={"Content-Disposition": f'inline; filename="{company} - Skador.pdf"'}
     )
 
 @api_router.patch("/incidents/{incident_id}")
