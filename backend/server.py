@@ -3278,6 +3278,114 @@ async def list_incidents(current=Depends(get_current_user)):
                 d["employee_name"] = ""
     return docs
 
+@api_router.get("/incidents/export-xlsx")
+async def export_incidents_xlsx(current=Depends(get_current_user)):
+    """Export incidents/skador to Excel"""
+    incidents = await db.incidents.find().sort("date", -1).to_list(5000)
+    STATUS_SV = {"reported": "Rapporterad", "insurance": "Försäkring", "paid": "Betald", "closed": "Avslutad"}
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Skador"
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+    headers = ["Datum", "Plats / Kund", "Anställd", "Beskrivning", "Kostnad (kr)", "Status", "Rapporterad av"]
+    ws.append(headers)
+    header_fill = PatternFill(start_color="141414", end_color="141414", fill_type="solid")
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=9)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+    total = 0.0
+    for i in incidents:
+        emp_name = ""
+        if i.get("employee_id"):
+            try:
+                emp = await db.employees.find_one({"_id": to_object_id(i["employee_id"])})
+                emp_name = emp.get("name", "") if emp else ""
+            except Exception:
+                pass
+        cost = i.get("cost", 0)
+        if i.get("status") != "closed":
+            total += cost
+        ws.append([
+            i.get("date", ""),
+            i.get("location", ""),
+            emp_name,
+            i.get("description", ""),
+            round(cost, 2),
+            STATUS_SV.get(i.get("status", ""), i.get("status", "")),
+            i.get("submitted_by", ""),
+        ])
+        for cell in ws[ws.max_row]:
+            cell.font = Font(size=9)
+    ws.append(["", "", "", "SUMMA (öppna)", round(total, 2), "", ""])
+    for cell in ws[ws.max_row]:
+        cell.font = Font(bold=True, size=9)
+    col_widths = [12, 30, 18, 40, 14, 14, 22]
+    for idx, width in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    buf = BytesIO()
+    wb.save(buf)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="skador.xlsx"'}
+    )
+
+@api_router.get("/incidents/export-pdf")
+async def export_incidents_pdf(current=Depends(get_current_user)):
+    """Export incidents/skador to PDF"""
+    incidents = await db.incidents.find().sort("date", -1).to_list(5000)
+    STATUS_SV = {"reported": "Rapporterad", "insurance": "Forsakring", "paid": "Betald", "closed": "Avslutad"}
+    styles = getSampleStyleSheet()
+    cell_style = ParagraphStyle("cell", parent=styles["Normal"], fontSize=8, leading=10)
+    head_style = ParagraphStyle("head", parent=styles["Normal"], fontSize=8, leading=10, textColor=colors.white, fontName="Helvetica-Bold")
+    title_style = ParagraphStyle("title", parent=styles["Title"], fontSize=16)
+    elements = []
+    elements.append(Paragraph("Skador & Olyckor", title_style))
+    elements.append(Spacer(1, 6*mm))
+    data = [[Paragraph(h, head_style) for h in ["Datum", "Plats / Kund", "Anstalld", "Beskrivning", "Kostnad", "Status"]]]
+    total = 0.0
+    for i in incidents:
+        emp_name = ""
+        if i.get("employee_id"):
+            try:
+                emp = await db.employees.find_one({"_id": to_object_id(i["employee_id"])})
+                emp_name = emp.get("name", "") if emp else ""
+            except Exception:
+                pass
+        cost = i.get("cost", 0)
+        if i.get("status") != "closed":
+            total += cost
+        data.append([
+            Paragraph(str(i.get("date", "")), cell_style),
+            Paragraph(str(i.get("location", "")), cell_style),
+            Paragraph(str(emp_name), cell_style),
+            Paragraph(str(i.get("description", "")), cell_style),
+            Paragraph(f'{cost:,.2f} kr', cell_style),
+            Paragraph(STATUS_SV.get(i.get("status", ""), ""), cell_style),
+        ])
+    data.append([Paragraph("", cell_style), Paragraph("", cell_style), Paragraph("", cell_style),
+                 Paragraph("SUMMA (oppna)", head_style), Paragraph(f'{total:,.2f} kr', head_style), Paragraph("", cell_style)])
+    table = Table(data, colWidths=[20*mm, 40*mm, 28*mm, 55*mm, 22*mm, 22*mm], repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#141414")),
+        ("BACKGROUND", (0,-1), (-1,-1), colors.HexColor("#f1f5f9")),
+        ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("VALIGN", (0,0), (-1,-1), "TOP"),
+        ("TOPPADDING", (0,0), (-1,-1), 4),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+    ]))
+    elements.append(table)
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15*mm, bottomMargin=15*mm, leftMargin=12*mm, rightMargin=12*mm)
+    doc.build(elements)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="skador.pdf"'}
+    )
+
 @api_router.patch("/incidents/{incident_id}")
 async def update_incident(incident_id: str, payload: dict, current=Depends(get_current_user)):
     updates = {}
