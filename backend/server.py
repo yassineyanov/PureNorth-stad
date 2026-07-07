@@ -3380,7 +3380,7 @@ async def export_incidents_pdf(current=Depends(get_current_user)):
     ]))
     elements.append(table)
     buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15*mm, bottomMargin=15*mm, leftMargin=12*mm, rightMargin=12*mm)
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15*mm, bottomMargin=15*mm, leftMargin=12*mm, rightMargin=12*mm, title=f"{company} - Skador & Olyckor", author=company)
     doc.build(elements)
     return Response(
         content=buf.getvalue(),
