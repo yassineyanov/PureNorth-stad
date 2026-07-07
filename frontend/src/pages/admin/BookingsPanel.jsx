@@ -439,7 +439,7 @@ export function BookingsPanel({ selectedBooking: initialSelected, setSelectedBoo
                 const tim = Math.ceil((kvm / speed) * 2) / 2;
                 const price = tim * 478;
                 const moms = price * 0.25;
-                const rut = editBookingForm.rut_eligible ? price * 0.5 : 0;
+                const rut = editBookingForm.rut_eligible ? (price + moms) * 0.5 : 0;
                 const attBetala = price + moms - rut;
                 return (
                   <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-sm space-y-1">

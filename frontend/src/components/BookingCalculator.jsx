@@ -99,7 +99,7 @@ export default function BookingCalculator({ booking, onCreateInvoice }) {
 
   // ── Totals ─────────────────────────────────────────────────────────────────
   const subtotal      = rows.reduce((s, r) => s + r.lineTotal, 0);
-  const rutDeduction  = rows.filter(r => r.isRut).reduce((s, r) => s + r.lineTotal * 0.5, 0);
+  const rutDeduction  = rows.filter(r => r.isRut).reduce((s, r) => s + r.lineTotal * 1.25 * 0.5, 0);
   const moms          = subtotal * 0.25;
   const totalInclMoms = subtotal + moms;
   const attBetala     = totalInclMoms - rutDeduction;

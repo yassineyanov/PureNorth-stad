@@ -463,7 +463,9 @@ def calc_invoice_amounts(items: list, rut_eligible: bool, customer_type: str, va
     total_amount = subtotal + vat_amount
     rut_deduction = 0.0
     if rut_eligible and customer_type == "private":
-        rut_deduction = round(labor_total * 0.5, 2)
+        # RUT = 50% of labor cost INCLUDING vat (Skatteverket rule)
+        labor_incl_vat = labor_total * (1 + vat_rate / 100.0)
+        rut_deduction = round(labor_incl_vat * 0.5, 2)
     customer_pays = total_amount - rut_deduction
     return {
         "labor_total": round(labor_total, 2),
