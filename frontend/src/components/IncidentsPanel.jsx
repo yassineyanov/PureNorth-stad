@@ -88,8 +88,7 @@ export default function IncidentsPanel() {
             const token = localStorage.getItem("pn_token");
             const base = process.env.REACT_APP_BACKEND_URL || "";
             const a = document.createElement("a");
-            a.href = `${base}/api/incidents/export-pdf?token=${token}`;
-            a.download = "skador.pdf"; a.click();
+            window.open(`${base}/api/incidents/export-pdf?token=${token}`, "_blank");
           }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
             <FileText size={14}/> PDF
           </button>
