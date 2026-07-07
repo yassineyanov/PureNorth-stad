@@ -14,6 +14,7 @@ const fmtKr = (n) => (n || 0).toLocaleString("sv-SE", { minimumFractionDigits: 2
 export default function IncidentsPanel() {
   const [incidents, setIncidents] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -22,9 +23,10 @@ export default function IncidentsPanel() {
 
   const load = async () => {
     try {
-      const [inc, emp] = await Promise.all([api.get("/incidents"), api.get("/employees").catch(()=>({data:[]}))]);
+      const [inc, emp, bk] = await Promise.all([api.get("/incidents"), api.get("/employees").catch(()=>({data:[]})), api.get("/bookings").catch(()=>({data:[]}))]);
       setIncidents(inc.data || []);
       setEmployees(emp.data || []);
+      setBookings(bk.data || []);
     } catch { toast.error("Kunde inte ladda skador."); }
     finally { setLoading(false); }
   };
@@ -118,8 +120,15 @@ export default function IncidentsPanel() {
                 <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} className="w-full mt-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"/>
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-600">Plats / Kund</label>
-                <input value={form.location} onChange={e=>setForm(f=>({...f,location:e.target.value}))} placeholder="T.ex. kundens adress" className="w-full mt-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"/>
+                <label className="text-xs font-medium text-slate-600">Plats / Kund (från bokning)</label>
+                <select onChange={e=>{
+                  const b = bookings.find(x => (x._id||x.id) === e.target.value);
+                  if (b) setForm(f=>({...f, location: `${b.name}${b.address ? " - " + b.address : ""}`}));
+                }} className="w-full mt-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none">
+                  <option value="">— Välj bokning —</option>
+                  {bookings.map(b=><option key={b._id||b.id} value={b._id||b.id}>{b.name}{b.address ? " - " + b.address : ""}</option>)}
+                </select>
+                <input value={form.location} onChange={e=>setForm(f=>({...f,location:e.target.value}))} placeholder="Eller skriv manuellt" className="w-full mt-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none"/>
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Anställd</label>
