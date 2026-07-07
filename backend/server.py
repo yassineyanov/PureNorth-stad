@@ -1015,7 +1015,8 @@ async def me(current=Depends(get_current_user)):
 
 # ---- Bookings ----
 @api_router.post("/bookings", response_model=Booking, response_model_by_alias=False)
-async def create_booking(payload: BookingCreate):
+@limiter.limit("10/minute")
+async def create_booking(request: Request, payload: BookingCreate):
     doc = payload.model_dump()
     doc["status"] = "new"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
@@ -1068,7 +1069,8 @@ async def delete_booking(booking_id: str, current=Depends(get_current_user)):
 
 # ---- Reviews ----
 @api_router.post("/reviews", response_model=Review, response_model_by_alias=False)
-async def create_review(payload: ReviewCreate):
+@limiter.limit("5/minute")
+async def create_review(request: Request, payload: ReviewCreate):
     doc = payload.model_dump()
     doc["approved"] = False
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
