@@ -3383,7 +3383,7 @@ async def export_incidents_pdf(current=Depends(get_current_user)):
     return Response(
         content=buf.getvalue(),
         media_type="application/pdf",
-        headers={"Content-Disposition": 'attachment; filename="skador.pdf"'}
+        headers={"Content-Disposition": 'inline; filename="skador.pdf"'}
     )
 
 @api_router.patch("/incidents/{incident_id}")
