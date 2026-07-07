@@ -6,9 +6,6 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, Response, Form, File, UploadFile
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import logging
@@ -975,10 +972,7 @@ class PriceListSettings(BaseModel):
 # ---------------------------------------------------------------------------
 # App / Router
 # ---------------------------------------------------------------------------
-limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 api_router = APIRouter(prefix="/api")
 
 
@@ -989,8 +983,7 @@ async def root():
 
 # ---- Auth ----
 @api_router.post("/auth/login")
-@limiter.limit("5/minute")
-async def login(request: Request, payload: LoginRequest):
+async def login(payload: LoginRequest):
     email = payload.email.lower()
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(payload.password, user["password_hash"]):
