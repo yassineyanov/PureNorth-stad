@@ -3220,6 +3220,77 @@ async def submit_expense(
     doc["_id"] = str(result.inserted_id)
     return doc
 
+# ── Incidents / Skador (work accidents/damages) ───────────────────────────────
+@api_router.post("/incidents")
+async def create_incident(
+    date: str = Form(...),
+    location: str = Form(""),
+    employee_id: str = Form(""),
+    description: str = Form(...),
+    cost: float = Form(0.0),
+    status: str = Form("reported"),
+    photo: UploadFile = File(None),
+    current=Depends(get_current_user)
+):
+    """Employee or admin reports a work incident/damage with optional photo"""
+    doc = {
+        "date": sanitize_text(date, 40),
+        "location": sanitize_text(location, 300),
+        "employee_id": employee_id,
+        "description": sanitize_text(description, 2000),
+        "cost": cost,
+        "status": status if status in ["reported", "insurance", "paid", "closed"] else "reported",
+        "submitted_by": current.get("email", ""),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "photo": None,
+    }
+    if photo and photo.filename:
+        try:
+            contents = await photo.read()
+            import base64
+            ext = photo.filename.split(".")[-1].lower()
+            mime = "image/jpeg" if ext in ["jpg","jpeg"] else "image/png" if ext == "png" else "image/jpeg"
+            doc["photo"] = f"data:{mime};base64,{base64.b64encode(contents).decode()}"
+        except Exception as e:
+            logger.error(f"Incident photo error: {e}")
+    result = await db.incidents.insert_one(doc)
+    doc["_id"] = str(result.inserted_id)
+    return doc
+
+@api_router.get("/incidents")
+async def list_incidents(current=Depends(get_current_user)):
+    docs = await db.incidents.find().sort("created_at", -1).to_list(500)
+    for d in docs:
+        d["_id"] = str(d["_id"])
+        if d.get("employee_id"):
+            try:
+                emp = await db.employees.find_one({"_id": to_object_id(d["employee_id"])})
+                d["employee_name"] = emp.get("name", "") if emp else ""
+            except Exception:
+                d["employee_name"] = ""
+    return docs
+
+@api_router.patch("/incidents/{incident_id}")
+async def update_incident(incident_id: str, payload: dict, current=Depends(get_current_user)):
+    updates = {}
+    for k in ["status", "cost", "description", "location"]:
+        if k in payload and payload[k] is not None:
+            updates[k] = sanitize_text(str(payload[k]), 2000) if isinstance(payload[k], str) else payload[k]
+    if updates:
+        await db.incidents.update_one({"_id": to_object_id(incident_id)}, {"$set": updates})
+    doc = await db.incidents.find_one({"_id": to_object_id(incident_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Skada hittades inte")
+    doc["_id"] = str(doc["_id"])
+    return doc
+
+@api_router.delete("/incidents/{incident_id}")
+async def delete_incident(incident_id: str, current=Depends(get_current_user)):
+    result = await db.incidents.delete_one({"_id": to_object_id(incident_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Skada hittades inte")
+    return {"success": True}
+
 @api_router.get("/expenses/pending")
 async def get_pending_expenses(current=Depends(get_current_user)):
     """Get all pending expense submissions"""
