@@ -70,7 +70,7 @@ function CalcCard({ item }) {
   }
 
   const moms = price * 0.25;
-  const rutDeduction = isRut ? price * 0.5 : 0;
+  const rutDeduction = isRut ? (price + moms) * 0.5 : 0;
   const totalInclMoms = price + moms;
   const kundBetalar = totalInclMoms - rutDeduction;
 

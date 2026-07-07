@@ -45,7 +45,7 @@ function ServiceCalc({ item, onAddToInvoice, bookingKvm }) {
   const hoursRaw = isKvm && speed ? qty / speed : isTim ? qty : isSt ? qty * 0.2 : 1;
   const hours = Math.ceil(hoursRaw * 2) / 2; // Round up to nearest 0.5 tim
   const price = isFast ? rate : isKvm ? hours * rate : qty * rate;
-  const priceRut = price * 0.5;
+  const priceRut = price * 1.25 * 0.5;
   const isRut = item.is_rut_eligible;
 
   const maxQty = isKvm ? 9999 : isSt ? 9999 : isTim ? 9999 : 1;
@@ -145,7 +145,7 @@ export default function PriceCalculator({ bookingKvm, bookingServices, onCreateI
   };
 
   const totalPrice = invoiceItems.reduce((sum, i) => sum + i.price, 0);
-  const totalRut = invoiceItems.filter(i => i.isRut).reduce((sum, i) => sum + i.price * 0.5, 0);
+  const totalRut = invoiceItems.filter(i => i.isRut).reduce((sum, i) => sum + i.price * 1.25 * 0.5, 0);
 
   return (
     <div>
@@ -169,7 +169,7 @@ export default function PriceCalculator({ bookingKvm, bookingServices, onCreateI
                 <span className="text-slate-600">{i.service} {i.qty > 1 ? `× ${i.qty}` : ""}</span>
                 <div className="text-right">
                   <span className="font-medium">{kr(i.price)}</span>
-                  {i.isRut && <span className="text-green-600 text-xs ml-2">(RUT: {kr(i.price*0.5)})</span>}
+                  {i.isRut && <span className="text-green-600 text-xs ml-2">(RUT: {kr(i.price*1.25*0.5)})</span>}
                 </div>
               </div>
             ))}
