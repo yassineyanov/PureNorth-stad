@@ -1,10 +1,10 @@
 # PureNorth Backup v12 — 2026-07-07 — Security hardened
-## Rate limiting + input sanitization + secrets rotated
+## Rate limiting (login 5/min, bookings 10/min, reviews 5/min) + input sanitization + secrets rotated + .env removed from git
 
 ---
 
 ## backend/server.py
-```
+```py
 from dotenv import load_dotenv
 from pathlib import Path
 import os
@@ -6850,7 +6850,7 @@ async def reset_economy(current=Depends(get_current_user)):
 ---
 
 ## backend/requirements.txt
-```
+```txt
 fastapi==0.110.1
 uvicorn==0.25.0
 boto3>=1.34.129
