@@ -1840,6 +1840,10 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
         for e in expenses if e.get("moms_rate",0) > 0
     )
     ingaende_moms_total = round(ingaende_moms_mat + ingaende_moms_exp, 2)
+    # Incidents / Skador (open damages count as costs)
+    incidents = await db.incidents.find({"date": {"$gte": start[:10], "$lte": end[:10]}}).to_list(1000)
+    skador_total = round(sum(i.get("cost", 0) for i in incidents if i.get("status") != "closed"), 2)
+    skador_count = len(incidents)
 
     # ── Moms ─────────────────────────────────────────────────────
     moms_att_betala = round(utgaende_moms - ingaende_moms_total, 2)
@@ -1849,7 +1853,7 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
 
     # ── Profit ───────────────────────────────────────────────────
     total_intakter = forsaljning_excl_moms + paminnelse_avgifter
-    total_kostnader = total_payroll_cost + utlagg_total + material_excl_moms
+    total_kostnader = total_payroll_cost + utlagg_total + material_excl_moms + skador_total
     rorelseresultat = round(total_intakter - total_kostnader, 2)
     rorselsemarginal = round((rorelseresultat / total_intakter * 100) if total_intakter > 0 else 0, 1)
 
@@ -1897,6 +1901,10 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
             "ingaende_moms": round(ingaende_moms_mat, 2),
             "by_category": {k: round(v,2) for k,v in costs_by_category.items()},
             "count": len(real_costs),
+        },
+        "incidents": {
+            "total": skador_total,
+            "count": skador_count,
         },
         "vat": {
             "collected": round(utgaende_moms, 2),
