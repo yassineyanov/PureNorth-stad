@@ -1975,6 +1975,7 @@ async def create_customer(payload: CustomerCreate, current=Depends(get_current_u
             existing["_id"] = str(existing["_id"])
             return Customer(**existing)
     doc = payload.model_dump()
+    doc = sanitize_payload(doc, ["name", "phone", "address", "personnummer", "notes"], max_len=500)
     if doc.get("email"):
         doc["email"] = doc["email"].lower()
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
@@ -2233,6 +2234,7 @@ async def get_customer(customer_id: str, current=Depends(get_current_user)):
 @api_router.patch("/customers/{customer_id}", response_model=Customer, response_model_by_alias=False)
 async def update_customer(customer_id: str, payload: CustomerUpdate, current=Depends(get_current_user)):
     updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    updates = sanitize_payload(updates, ["name", "phone", "address", "personnummer", "notes"], max_len=500)
     if updates:
         await db.customers.update_one({"_id": to_object_id(customer_id)}, {"$set": updates})
     doc = await db.customers.find_one({"_id": to_object_id(customer_id)})
@@ -6216,6 +6218,10 @@ async def get_website_settings():
 @api_router.patch("/settings/website")
 async def update_website_settings(payload: WebsiteSettings, current=Depends(get_current_user)):
     data = {k: v for k, v in payload.dict().items() if v is not None}
+    # Sanitize text values only (skip colors #hex, URLs, booleans, and nested lists/dicts)
+    for k, v in list(data.items()):
+        if isinstance(v, str) and not v.startswith("#") and not v.startswith("http") and not v.startswith("data:"):
+            data[k] = sanitize_text(v, max_len=5000)
     await db.website_settings.update_one(
         {"_id": "main"},
         {"$set": data},
