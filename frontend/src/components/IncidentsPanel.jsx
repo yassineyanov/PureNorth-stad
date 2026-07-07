@@ -128,11 +128,11 @@ export default function IncidentsPanel() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
+    <>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2"><AlertTriangle size={20} className="text-amber-500"/> Skador & Olyckor</h2>
+          <h2 className="font-display font-bold text-xl text-slate-900">Skador & Olyckor</h2>
           <p className="text-xs text-slate-400 mt-0.5">{incidents.length} rapporterade skador</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -200,6 +200,6 @@ export default function IncidentsPanel() {
 
       {showModal && <IncidentModal onClose={()=>setShowModal(false)} onSave={()=>{setShowModal(false);load();}} employees={employees} bookings={bookings}/>}
       {preview && <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={()=>setPreview(null)}><img src={preview} alt="skada" className="max-w-full max-h-full rounded-lg"/></div>}
-    </div>
+    </>
   );
 }
