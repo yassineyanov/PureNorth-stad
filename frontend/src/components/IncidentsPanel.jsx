@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Trash2, Upload, AlertTriangle, X } from "lucide-react";
+import { Plus, Trash2, Upload, AlertTriangle, X, FileSpreadsheet, FileText } from "lucide-react";
 
 const STATUS = {
   reported: { label: "Rapporterad", cls: "bg-amber-50 text-amber-700" },
@@ -74,9 +74,29 @@ export default function IncidentsPanel() {
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2"><AlertTriangle size={20} className="text-amber-500"/> Skador & Olyckor</h2>
           <p className="text-sm text-slate-500 mt-0.5">Öppna skador: <span className="font-semibold text-red-600">{fmtKr(totalCost)}</span></p>
         </div>
-        <button onClick={()=>setShowForm(true)} className="flex items-center gap-2 rounded-full bg-[#141414] text-white px-4 py-2 text-sm font-semibold hover:bg-black transition-colors">
-          <Plus size={16}/> Rapportera skada
-        </button>
+        <div className="flex gap-2 flex-wrap items-center">
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/incidents/export-xlsx?token=${token}`;
+            a.download = "skador.xlsx"; a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileSpreadsheet size={14}/> Excel
+          </button>
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            const a = document.createElement("a");
+            a.href = `${base}/api/incidents/export-pdf?token=${token}`;
+            a.download = "skador.pdf"; a.click();
+          }} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-lg px-3 py-2 transition-all">
+            <FileText size={14}/> PDF
+          </button>
+          <button onClick={()=>setShowForm(true)} className="flex items-center gap-2 rounded-full bg-[#141414] text-white px-4 py-2 text-sm font-semibold hover:bg-black transition-colors">
+            <Plus size={16}/> Rapportera skada
+          </button>
+        </div>
       </div>
 
       {incidents.length === 0 ? (
