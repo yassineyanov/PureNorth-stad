@@ -741,12 +741,16 @@ export default function InvoicePanel() {
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <select value={inv.status} onChange={(e) => setStatus(inv.id, e.target.value)} className="rounded-full border border-slate-200 text-sm px-3.5 py-2 outline-none focus:border-[#141414]">
-                  <option value="draft">Utkast</option>
-                  <option value="sent">Skickad</option>
-                  <option value="paid">Betald</option>
-                  <option value="overdue">Förfallen</option>
-                </select>
+                {inv.status === "paid" ? (
+                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700">Betald ✓</span>
+                ) : (
+                  <select value={inv.status} onChange={(e) => setStatus(inv.id, e.target.value)} className="rounded-full border border-slate-200 text-sm px-3.5 py-2 outline-none focus:border-[#141414]">
+                    {inv.status === "draft" && <option value="draft">Utkast</option>}
+                    {inv.status === "sent" && <option value="sent">Skickad</option>}
+                    {inv.status === "overdue" && <option value="overdue">Förfallen</option>}
+                    <option value="paid">Betald</option>
+                  </select>
+                )}
                 <button onClick={() => openEdit(inv)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-[#141414] transition-colors" title="Redigera">
                   <Pencil size={16} />
                 </button>
