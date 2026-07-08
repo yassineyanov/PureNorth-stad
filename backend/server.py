@@ -444,11 +444,11 @@ class Invoice(BaseModel):
     status: str = "draft"
     labor_total: float = 0.0
     material_total: float = 0.0
-    subtotal: float
-    vat_amount: float
-    total_amount: float
-    rut_deduction: float
-    customer_pays: float
+    subtotal: float = 0.0
+    vat_amount: float = 0.0
+    total_amount: float = 0.0
+    rut_deduction: float = 0.0
+    customer_pays: float = 0.0
     created_at: str
     paid_at: Optional[str] = None
     reminder_count: Optional[int] = 0
