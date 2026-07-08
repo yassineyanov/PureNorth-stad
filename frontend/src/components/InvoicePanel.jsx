@@ -662,7 +662,9 @@ export default function InvoicePanel() {
   };
 
   const createKreditfaktura = async (inv) => {
-    if (!window.confirm(`Skapa kreditfaktura för faktura #${inv.invoice_number}?`)) return;
+    const reason = window.prompt(`Skapa kreditfaktura för faktura #${inv.invoice_number}.\n\nAnge anledning (t.ex. Fel belopp, Kunden avbokade, Dubbelfakturering):`);
+    if (reason === null) return;
+    if (!reason.trim()) { toast.error("Anledning krävs för kreditfaktura."); return; }
     try {
       const res = await api.post("/invoices", {
         booking_id: null,
@@ -673,15 +675,16 @@ export default function InvoicePanel() {
         customer_personnummer: null,
         customer_type: inv.customer_type || "private",
         rut_eligible: false,
-        items: [{ service: `Kreditfaktura #${inv.invoice_number}`, description: `Kreditfaktura för faktura #${inv.invoice_number}`, quantity: 1, unit_price: -(inv.subtotal || 0), is_material: false }],
+        items: [{ service: `Kreditfaktura #${inv.invoice_number}`, description: `Kreditfaktura för faktura #${inv.invoice_number} — Anledning: ${reason.trim()}`, quantity: 1, unit_price: -(inv.subtotal || 0), is_material: false }],
         subtotal: -(inv.subtotal || 0),
         vat_amount: -(inv.vat_amount || 0),
         total_amount: -(inv.total_amount || 0),
         rut_deduction: -(inv.rut_deduction || 0),
         customer_pays: -(inv.customer_pays || 0),
-        note: `Kreditfaktura för faktura #${inv.invoice_number}`,
+        note: `Kreditfaktura för faktura #${inv.invoice_number}. Anledning: ${reason.trim()}`,
         due_date: new Date().toISOString().split("T")[0],
         is_credit_note: true,
+        credit_reason: reason.trim(),
         credits_invoice_number: inv.invoice_number,
       });
       load();
@@ -771,7 +774,7 @@ export default function InvoicePanel() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {inv.is_credit_note ? (
-                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-orange-50 text-orange-700">Kreditfaktura</span>
+                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-orange-50 text-orange-700" title={inv.credit_reason ? `Anledning: ${inv.credit_reason}` : ""}>Kreditfaktura</span>
                 ) : inv.status === "paid" ? (
                   <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700">Betald ✓</span>
                 ) : (

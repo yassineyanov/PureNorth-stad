@@ -421,6 +421,7 @@ class InvoiceCreate(BaseModel):
     customer_pays: Optional[float] = None
     is_credit_note: Optional[bool] = False
     credits_invoice_number: Optional[int] = None
+    credit_reason: Optional[str] = None
 
 
 class InvoiceStatusUpdate(BaseModel):
@@ -458,6 +459,7 @@ class Invoice(BaseModel):
     is_credit_note: Optional[bool] = False
     credits_invoice_number: Optional[int] = None
     credited: Optional[bool] = False
+    credit_reason: Optional[str] = None
 
 
 def calc_invoice_amounts(items: list, rut_eligible: bool, customer_type: str, vat_rate: float):
@@ -1474,6 +1476,8 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     doc["items"] = items
     doc["invoice_number"] = number
     doc["due_date"] = due_date
+    if payload.credit_reason:
+        doc["credit_reason"] = sanitize_text(payload.credit_reason, 300)
     doc["status"] = "credit" if payload.is_credit_note else "draft"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["paid_at"] = None
