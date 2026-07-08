@@ -681,7 +681,10 @@ export default function InvoicePanel() {
         customer_pays: -(inv.customer_pays || 0),
         note: `Kreditfaktura för faktura #${inv.invoice_number}`,
         due_date: new Date().toISOString().split("T")[0],
+        is_credit_note: true,
+        credits_invoice_number: inv.invoice_number,
       });
+      load();
       setInvoices(prev => [res.data, ...prev]);
       toast.success(`Kreditfaktura #${res.data.invoice_number} skapad!`);
     } catch { toast.error("Kunde inte skapa kreditfaktura."); }
@@ -767,7 +770,9 @@ export default function InvoicePanel() {
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {inv.status === "paid" ? (
+                {inv.is_credit_note ? (
+                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-orange-50 text-orange-700">Kreditfaktura</span>
+                ) : inv.status === "paid" ? (
                   <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700">Betald ✓</span>
                 ) : (
                   <select value={inv.status} onChange={(e) => setStatus(inv.id, e.target.value)} className="rounded-full border border-slate-200 text-sm px-3.5 py-2 outline-none focus:border-[#141414]">
@@ -786,9 +791,11 @@ export default function InvoicePanel() {
                     <button title="Faktura låst" className="h-9 w-9 rounded-full flex items-center justify-center text-slate-200 cursor-not-allowed" disabled>
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     </button>
-                    <button onClick={() => createKreditfaktura(inv)} className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 border border-orange-200 hover:bg-orange-50 rounded-lg px-2 py-1 transition-colors" title="Skapa kreditfaktura">
-                      Kreditfaktura
-                    </button>
+                    {!inv.is_credit_note && !inv.credited && (
+                      <button onClick={() => createKreditfaktura(inv)} className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 border border-orange-200 hover:bg-orange-50 rounded-lg px-2 py-1 transition-colors" title="Skapa kreditfaktura">
+                        Kreditfaktura
+                      </button>
+                    )}
                   </>
                 )}
                 <button onClick={() => sendInvoice(inv)} title="Skicka till kund"
@@ -806,9 +813,11 @@ export default function InvoicePanel() {
                   <Eye size={16} />
                 </button>
 
-                <button onClick={() => remove(inv.id)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
-                  <Trash2 size={16} />
-                </button>
+                {!inv.is_credit_note && !inv.credited && (
+                  <button onClick={() => remove(inv.id)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}

@@ -419,6 +419,8 @@ class InvoiceCreate(BaseModel):
     vat_amount: Optional[float] = None
     total_amount: Optional[float] = None
     customer_pays: Optional[float] = None
+    is_credit_note: Optional[bool] = False
+    credits_invoice_number: Optional[int] = None
 
 
 class InvoiceStatusUpdate(BaseModel):
@@ -453,6 +455,9 @@ class Invoice(BaseModel):
     paid_at: Optional[str] = None
     reminder_count: Optional[int] = 0
     last_reminder_at: Optional[str] = None
+    is_credit_note: Optional[bool] = False
+    credits_invoice_number: Optional[int] = None
+    credited: Optional[bool] = False
 
 
 def calc_invoice_amounts(items: list, rut_eligible: bool, customer_type: str, vat_rate: float):
@@ -1469,9 +1474,14 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     doc["items"] = items
     doc["invoice_number"] = number
     doc["due_date"] = due_date
-    doc["status"] = "draft"
+    doc["status"] = "credit" if payload.is_credit_note else "draft"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["paid_at"] = None
+    if payload.is_credit_note and payload.credits_invoice_number:
+        await db.invoices.update_one(
+            {"invoice_number": payload.credits_invoice_number},
+            {"$set": {"credited": True}}
+        )
     # Use frontend amounts if provided, otherwise recalculate
     if payload.subtotal is None:
         doc.update(amounts)
@@ -1501,9 +1511,14 @@ async def auto_remind_overdue(request: Request):
 
 @api_router.delete("/invoices/{invoice_id}")
 async def delete_invoice(invoice_id: str, current=Depends(get_current_user)):
-    result = await db.invoices.delete_one({"_id": to_object_id(invoice_id)})
-    if result.deleted_count == 0:
+    inv = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if not inv:
         raise HTTPException(status_code=404, detail="Faktura hittades inte")
+    if inv.get("is_credit_note"):
+        raise HTTPException(status_code=403, detail="Kreditfakturor kan inte tas bort.")
+    if inv.get("credited"):
+        raise HTTPException(status_code=403, detail="Krediterad faktura kan inte tas bort.")
+    await db.invoices.delete_one({"_id": to_object_id(invoice_id)})
     return {"success": True}
 
 
@@ -1535,6 +1550,9 @@ async def update_invoice_status(invoice_id: str, payload: InvoiceStatusUpdate, c
     valid = ["draft", "sent", "paid", "overdue", "cancelled"]
     if payload.status not in valid:
         raise HTTPException(status_code=400, detail="Ogiltig status.")
+    inv = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if inv and inv.get("is_credit_note"):
+        raise HTTPException(status_code=403, detail="Kreditfakturans status kan inte ändras.")
     updates = {"status": payload.status}
     if payload.status == "paid":
         updates["paid_at"] = datetime.now(timezone.utc).isoformat()
