@@ -675,7 +675,7 @@ export default function InvoicePanel() {
         customer_type: "private",
         rut_eligible: false,
         items: [{ service: `Kreditfaktura #${inv.invoice_number}`, description: `Kreditfaktura för faktura #${inv.invoice_number}`, quantity: 1, unit_price: creditAmount, is_material: false }],
-        subtotal: creditAmount, vat_amount: 0, total_amount: creditAmount, customer_pays: creditAmount,
+        subtotal: creditAmount, vat_amount: 0, total_amount: creditAmount, customer_pays: creditAmount, rut_deduction: 0,
         note: `Kreditfaktura för faktura #${inv.invoice_number}`,
         due_date: new Date().toISOString().split("T")[0],
       });
