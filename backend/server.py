@@ -1522,6 +1522,19 @@ async def update_invoice(invoice_id: str, payload: InvoiceCreate, current=Depend
     return Invoice(**doc)
 
 
+@api_router.patch("/invoices/{invoice_id}/status")
+async def update_invoice_status(invoice_id: str, payload: InvoiceStatusUpdate, current=Depends(get_current_user)):
+    valid = ["draft", "sent", "paid", "overdue", "cancelled"]
+    if payload.status not in valid:
+        raise HTTPException(status_code=400, detail="Ogiltig status.")
+    updates = {"status": payload.status}
+    if payload.status == "paid":
+        updates["paid_at"] = datetime.now(timezone.utc).isoformat()
+    await db.invoices.update_one({"_id": to_object_id(invoice_id)}, {"$set": updates})
+    doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    doc["_id"] = str(doc["_id"])
+    return doc
+
 @api_router.get("/invoices/{invoice_id}/pdf")
 async def get_invoice_pdf(invoice_id: str, current=Depends(get_current_user)):
     doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
