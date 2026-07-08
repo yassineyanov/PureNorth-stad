@@ -775,6 +775,8 @@ export default function InvoicePanel() {
               <div className="flex items-center gap-2 shrink-0">
                 {inv.is_credit_note ? (
                   <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-orange-50 text-orange-700" title={inv.credit_reason ? `Anledning: ${inv.credit_reason}` : ""}>Kreditfaktura</span>
+                ) : inv.credited ? (
+                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">Krediterad</span>
                 ) : inv.status === "paid" ? (
                   <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700">Betald ✓</span>
                 ) : (

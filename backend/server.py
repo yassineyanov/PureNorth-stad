@@ -1557,6 +1557,8 @@ async def update_invoice_status(invoice_id: str, payload: InvoiceStatusUpdate, c
     inv = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
     if inv and inv.get("is_credit_note"):
         raise HTTPException(status_code=403, detail="Kreditfakturans status kan inte ändras.")
+    if inv and inv.get("credited"):
+        raise HTTPException(status_code=403, detail="Krediterad faktura kan inte ändra status.")
     updates = {"status": payload.status}
     if payload.status == "paid":
         updates["paid_at"] = datetime.now(timezone.utc).isoformat()
