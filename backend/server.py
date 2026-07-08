@@ -1809,7 +1809,7 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     rut_avdrag = sum(i.get("rut_deduction", 0) for i in invoices)
     kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
     betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled"])
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled", "credited", "credit"])
 
     # Påminnelseavgifter (no moms)
     paminnelse_avgifter = sum(
@@ -2779,7 +2779,7 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
     # Calculate reminder fees and correct totals
     kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
     betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid","cancelled"])
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid","cancelled","credited","credit"])
 
     # Revenue
     section("Intäkter")
