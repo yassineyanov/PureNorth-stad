@@ -444,11 +444,11 @@ class Invoice(BaseModel):
     status: str = "draft"
     labor_total: float = 0.0
     material_total: float = 0.0
-    subtotal: float = 0.0
-    vat_amount: float = 0.0
-    total_amount: float = 0.0
-    rut_deduction: float = 0.0
-    customer_pays: float = 0.0
+    subtotal: float
+    vat_amount: float
+    total_amount: float
+    rut_deduction: float
+    customer_pays: float
     created_at: str
     paid_at: Optional[str] = None
     reminder_count: Optional[int] = 0
@@ -1458,7 +1458,7 @@ async def set_invoice_logo(request: Request, current=Depends(get_current_user)):
 async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_user)):
     inv_settings = await get_invoice_settings_obj()
     items = [i.model_dump() for i in payload.items]
-    if payload.subtotal is None:
+    if not payload.subtotal:
         amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
     else:
         amounts = {}
@@ -1473,7 +1473,7 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["paid_at"] = None
     # Use frontend amounts if provided, otherwise recalculate
-    if payload.subtotal is None:
+    if not payload.subtotal:
         doc.update(amounts)
 
     result = await db.invoices.insert_one(doc)
@@ -1506,8 +1506,6 @@ async def update_invoice(invoice_id: str, payload: InvoiceCreate, current=Depend
     existing = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
     if not existing:
         raise HTTPException(status_code=404, detail="Faktura hittades inte")
-    if existing.get("status") not in ["draft", None]:
-        raise HTTPException(status_code=403, detail="Fakturan är låst och kan inte ändras.")
     inv_settings = await get_invoice_settings_obj()
     items = [i.model_dump() for i in payload.items]
     amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
@@ -1776,7 +1774,7 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     rut_avdrag = sum(i.get("rut_deduction", 0) for i in invoices)
     kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
     betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled", "credited", "credit"])
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled"])
 
     # Påminnelseavgifter (no moms)
     paminnelse_avgifter = sum(
@@ -2746,7 +2744,7 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
     # Calculate reminder fees and correct totals
     kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
     betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid","cancelled","credited","credit"])
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid","cancelled"])
 
     # Revenue
     section("Intäkter")
