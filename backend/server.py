@@ -1506,6 +1506,8 @@ async def update_invoice(invoice_id: str, payload: InvoiceCreate, current=Depend
     existing = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
     if not existing:
         raise HTTPException(status_code=404, detail="Faktura hittades inte")
+    if existing.get("status") not in ["draft", None]:
+        raise HTTPException(status_code=403, detail="Fakturan är låst och kan inte ändras.")
     inv_settings = await get_invoice_settings_obj()
     items = [i.model_dump() for i in payload.items]
     amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
