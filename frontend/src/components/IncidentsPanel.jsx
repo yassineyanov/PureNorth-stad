@@ -47,7 +47,7 @@ function IncidentModal({ onClose, onSave, employees, bookings }) {
           </div>
           <div>
             <label className="text-xs font-medium text-slate-500 mb-1 block">Plats / Kund (från bokning)</label>
-            <select onChange={e=>{const b=bookings.find(x=>(x._id||x.id)===e.target.value);if(b)setForm(f=>({...f,location:`${b.name}${b.address?" - "+b.address:""}`)});}} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#141414]">
+            <select onChange={e=>{const b=bookings.find(x=>(x._id||x.id)===e.target.value);if(b)setForm(f=>({...f,location:b.name+(b.address?" - "+b.address:"")}));}} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#141414]">
               <option value="">— Välj bokning —</option>
               {bookings.map(b=><option key={b._id||b.id} value={b._id||b.id}>{b.name}{b.address?" - "+b.address:""}</option>)}
             </select>
