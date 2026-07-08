@@ -1506,6 +1506,9 @@ async def update_invoice(invoice_id: str, payload: InvoiceCreate, current=Depend
     existing = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
     if not existing:
         raise HTTPException(status_code=404, detail="Faktura hittades inte")
+    # Lock: only draft invoices can be edited (sent/paid/credited are final)
+    if existing.get("status") != "draft":
+        raise HTTPException(status_code=403, detail="Fakturan är låst och kan inte ändras. Skapa en kreditfaktura istället.")
     inv_settings = await get_invoice_settings_obj()
     items = [i.model_dump() for i in payload.items]
     amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
@@ -1521,6 +1524,38 @@ async def update_invoice(invoice_id: str, payload: InvoiceCreate, current=Depend
     doc["_id"] = str(doc["_id"])
     return Invoice(**doc)
 
+
+@api_router.post("/invoices/{invoice_id}/credit")
+async def create_credit_invoice(invoice_id: str, current=Depends(get_current_user)):
+    """Create a credit invoice (kreditfaktura) that reverses the original."""
+    original = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if not original:
+        raise HTTPException(status_code=404, detail="Faktura hittades inte")
+    if original.get("status") == "credited":
+        raise HTTPException(status_code=400, detail="Denna faktura är redan krediterad.")
+    if original.get("is_credit_note"):
+        raise HTTPException(status_code=400, detail="Detta är en kreditfaktura och kan inte krediteras.")
+    next_num = await get_next_invoice_number()
+    now = datetime.now(timezone.utc).isoformat()
+    # Reversed (negative) copy
+    credit = {k: v for k, v in original.items() if k != "_id"}
+    credit["invoice_number"] = next_num
+    credit["items"] = [{**it, "unit_price": -abs(it.get("unit_price", 0))} for it in original.get("items", [])]
+    for f in ["labor_total", "material_total", "subtotal", "vat_amount", "total_amount", "rut_deduction", "customer_pays"]:
+        credit[f] = -abs(original.get(f, 0))
+    credit["status"] = "credit"
+    credit["is_credit_note"] = True
+    credit["credits_invoice_number"] = original.get("invoice_number")
+    credit["created_at"] = now
+    credit["due_date"] = now[:10]
+    credit["note"] = f"Kreditfaktura för faktura #{original.get('invoice_number')}"
+    credit["paid_at"] = None
+    credit["reminder_count"] = 0
+    result = await db.invoices.insert_one(credit)
+    # Mark original as credited (locks it)
+    await db.invoices.update_one({"_id": to_object_id(invoice_id)}, {"$set": {"status": "credited"}})
+    credit["_id"] = str(result.inserted_id)
+    return {"success": True, "credit_invoice_number": next_num, "credit_id": credit["_id"]}
 
 @api_router.get("/invoices/{invoice_id}/pdf")
 async def get_invoice_pdf(invoice_id: str, current=Depends(get_current_user)):
