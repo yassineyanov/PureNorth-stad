@@ -1826,6 +1826,14 @@ async def get_pricelist(current=Depends(get_current_user)):
 @api_router.put("/settings/pricelist")
 async def set_pricelist(payload: PriceListSettings, current=Depends(get_current_user)):
     doc = payload.model_dump()
+    # Clean: strip whitespace + sanitize text fields on every item
+    for it in doc.get("items", []):
+        if isinstance(it.get("service"), str):
+            it["service"] = sanitize_text(it["service"], 100).strip()
+        if isinstance(it.get("description"), str):
+            it["description"] = sanitize_text(it["description"], 300).strip()
+        if isinstance(it.get("unit"), str):
+            it["unit"] = it["unit"].strip()
     doc["_key"] = "pricelist"
     await db.settings.update_one({"_key": "pricelist"}, {"$set": doc}, upsert=True)
     return payload
