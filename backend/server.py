@@ -528,8 +528,11 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
             logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
     else:
         logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
+    _is_credit = inv.get("is_credit_note", False)
+    _title_txt = "KREDITFAKTURA" if _is_credit else "FAKTURA"
+    _title_col = "#c2410c" if _is_credit else "#141414"
     faktura_title = Paragraph(
-        f'<font size="22" color="#141414"><b>FAKTURA</b></font>  <font size="13" color="#888888">#{inv["invoice_number"]}</font>',
+        f'<font size="{18 if _is_credit else 22}" color="{_title_col}"><b>{_title_txt}</b></font>  <font size="13" color="#888888">#{inv["invoice_number"]}</font>',
         ps("ft", alignment=2)
     )
     hdr = Table([[logo_cell, faktura_title]], colWidths=[90*mm, None])
@@ -543,6 +546,20 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
         ("BOTTOMPADDING",(0,0),(-1,-1),0),
     ]))
     elements.append(hdr)
+    # Credit note banner with reason
+    if _is_credit:
+        _credits = inv.get("credits_invoice_number")
+        _reason = inv.get("credit_reason") or "-"
+        _banner_txt = f'<b>Krediterar faktura #{_credits}</b><br/>Anledning: {_reason}' if _credits else f'<b>Kreditfaktura</b><br/>Anledning: {_reason}'
+        _banner = Table([[Paragraph(_banner_txt, ps("cb", fontSize=9, textColor=colors.HexColor("#7c2d12")))]], colWidths=[None])
+        _banner.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#fff7ed")),
+            ("BOX",(0,0),(-1,-1),0.7,colors.HexColor("#fdba74")),
+            ("LEFTPADDING",(0,0),(-1,-1),8),("RIGHTPADDING",(0,0),(-1,-1),8),
+            ("TOPPADDING",(0,0),(-1,-1),6),("BOTTOMPADDING",(0,0),(-1,-1),6),
+        ]))
+        elements.append(Spacer(1, 4*mm))
+        elements.append(_banner)
     elements.append(Spacer(1, 4*mm))
 
     # ── DIVIDER ──────────────────────────────────────────────────────────────
