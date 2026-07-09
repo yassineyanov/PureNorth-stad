@@ -818,8 +818,8 @@ export default function InvoicePanel() {
                   <Eye size={16} />
                 </button>
 
-                {!inv.is_credit_note && !inv.credited && (
-                  <button onClick={() => remove(inv.id)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                {inv.status === "draft" && !inv.is_credit_note && !inv.credited && (
+                  <button onClick={() => remove(inv.id)} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Ta bort utkast">
                     <Trash2 size={16} />
                   </button>
                 )}

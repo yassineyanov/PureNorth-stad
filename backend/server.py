@@ -1522,6 +1522,8 @@ async def delete_invoice(invoice_id: str, current=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Kreditfakturor kan inte tas bort.")
     if inv.get("credited"):
         raise HTTPException(status_code=403, detail="Krediterad faktura kan inte tas bort.")
+    if inv.get("status") not in ["draft", None]:
+        raise HTTPException(status_code=403, detail="Skickad faktura kan inte tas bort. Skapa en kreditfaktura istället.")
     await db.invoices.delete_one({"_id": to_object_id(invoice_id)})
     return {"success": True}
 
