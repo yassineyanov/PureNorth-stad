@@ -258,7 +258,6 @@ export default function SettingsPanel() {
                 {"icon":"ShieldCheck","title":"Kvalitetssäkring","text":"Vår målsättning är att leverera tjänster av toppkvalité."},
                 {"icon":"Ear","title":"Respekt & lyhördhet","text":"Att respektera våra kunder, hem och medarbetare är grunden till en bra vardag."}
               ],
-              booking_services: ["Hemstädning","Flyttstädning","Kontorsstädning","Storstädning","Annat"],
               kundavtal_sections: [
                 {"heading":"Bokningsvillkor","items":["Bokningen behöver ske via mail.","Vi behöver ett fullständigt personnummer för RUT-ansökan.","Vår städgaranti innebär att ni inom 14 dagar efter utförd tjänst ska kontakta oss."]},
                 {"heading":"Betalningsvillkor","items":["Fakturering och betalning hanteras endast elektroniskt.","Betalningsvillkor är 10 dagar."]},
@@ -437,18 +436,6 @@ export default function SettingsPanel() {
             <input value={data.booking_success_text||""} onChange={e=>set("booking_success_text",e.target.value)} placeholder="Vi återkommer så snart vi kan." className={inp}/>
             <div className="flex items-center gap-2 mt-1"><span className="text-xs text-slate-500">Färg</span><CircleColor value={data.booking_success_color||"#ffffff"} onChange={e=>set("booking_success_color",e.target.value)}/></div>
           </div>
-          <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700 mb-2">Tjänster</h4>
-          {(data.booking_services||[]).map((s, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <input value={s||""} onChange={e=>{const arr=[...data.booking_services];arr[idx]=e.target.value;set("booking_services",arr);}} placeholder="Hemstädning" className={inp}/>
-              <button onClick={()=>set("booking_services",data.booking_services.filter((_,i)=>i!==idx))} className="text-slate-400 hover:text-red-500 shrink-0"><Trash2 size={14}/></button>
-            </div>
-          ))}
-          <button onClick={()=>set("booking_services",[...(data.booking_services||[]),""])}
-            className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
-            <Plus size={14}/> Lägg till tjänst
-          </button>
         </>}
 
         {section === "footer" && <FooterSection data={data} set={set} inp={inp} lbl={lbl} setSection={setSection}/>}

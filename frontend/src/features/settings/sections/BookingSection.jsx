@@ -97,18 +97,6 @@ export function BookingSection({ data, set, inp, lbl }) {
             <input value={data.booking_success_text||""} onChange={e=>set("booking_success_text",e.target.value)} placeholder="Vi återkommer inom 24 timmar." className={inp}/>
             <div className="flex items-center gap-2 mt-1"><span className="text-xs text-slate-500">Färg</span><CircleColor value={data.booking_success_color||"#ffffff"} onChange={e=>set("booking_success_color",e.target.value)}/></div>
           </div>
-          <hr className="border-slate-100"/>
-          <h4 className="font-medium text-slate-700 mb-2">Tjänster</h4>
-          {(data.booking_services||[]).map((s, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <input value={s||""} onChange={e=>{const arr=[...data.booking_services];arr[idx]=e.target.value;set("booking_services",arr);}} placeholder="Hemstädning" className={inp}/>
-              <button onClick={()=>set("booking_services",data.booking_services.filter((_,i)=>i!==idx))} className="text-slate-400 hover:text-red-500 shrink-0"><Trash2 size={14}/></button>
-            </div>
-          ))}
-          <button onClick={()=>set("booking_services",[...(data.booking_services||[]),""])}
-            className="inline-flex items-center gap-2 border border-dashed border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-500 hover:border-slate-500 w-full justify-center">
-            <Plus size={14}/> Lägg till tjänst
-          </button>
         </>
   );
 }

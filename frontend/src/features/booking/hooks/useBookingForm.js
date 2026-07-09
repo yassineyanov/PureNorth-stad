@@ -42,9 +42,6 @@ export function useBookingForm() {
     }).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (ws.booking_services?.length > 0) setServiceOptions(ws.booking_services);
-  }, [ws.booking_services]);
 
   const annatSelected = services.includes("Annat") || services.some((s) => !serviceOptions.slice(0, -1).includes(s));
 
