@@ -44,7 +44,7 @@ export function BookingsPanel({ selectedBooking: initialSelected, setSelectedBoo
       if (!silent) setLoading(false);
     }
   };
-  useEffect(() => { load(); const interval = setInterval(() => load(true), 1000); return () => clearInterval(interval); }, []);
+  useEffect(() => { load(); const interval = setInterval(() => { if (!document.hidden) load(true); }, 15000); return () => clearInterval(interval); }, []);
 
   const setStatus = async (id, status) => {
     try {
