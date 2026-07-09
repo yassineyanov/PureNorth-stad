@@ -4714,7 +4714,9 @@ async def rut_report_pdf(month: str, current=Depends(get_current_user)):
     # Get invoices with RUT
     invoices = await db.invoices.find({
         "created_at": {"$gte": start_dt, "$lte": end_dt},
-        "rut_deduction": {"$gt": 0}
+        "rut_deduction": {"$gt": 0},
+        "credited": {"$ne": True},
+        "is_credit_note": {"$ne": True}
     }).to_list(2000)
 
     total_rut = sum(i.get("rut_deduction", 0) for i in invoices)
