@@ -34,8 +34,8 @@ export function useBookingForm() {
   })();
 
   useEffect(() => {
-    api.get("/settings/pricelist").then((res) => {
-      const items = res.data.items?.filter((p) => p.is_active && !p.service.includes("(fast)")) || [];
+    api.get("/settings/pricelist/public").then((res) => {
+      const items = res.data.items || [];
       const active = items.map((p) => p.service);
       setPriceItems(items);
       if (active.length > 0) setServiceOptions([...active, "Annat"].filter((s, i, arr) => arr.indexOf(s) === i));

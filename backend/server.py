@@ -1803,6 +1803,18 @@ DEFAULT_PRICES = [
 ]
 
 
+@api_router.get("/settings/pricelist/public")
+@limiter.limit("30/minute")
+async def get_pricelist_public(request: Request):
+    """Public: active service names + units only (no prices) for the booking form."""
+    doc = await db.settings.find_one({"_key": "pricelist"})
+    items = doc["items"] if doc and doc.get("items") else DEFAULT_PRICES
+    return {"items": [
+        {"service": i.get("service"), "unit": i.get("unit"), "is_rut_eligible": i.get("is_rut_eligible", False)}
+        for i in items
+        if i.get("is_active") and "(fast)" not in (i.get("service") or "")
+    ]}
+
 @api_router.get("/settings/pricelist")
 async def get_pricelist(current=Depends(get_current_user)):
     doc = await db.settings.find_one({"_key": "pricelist"})
