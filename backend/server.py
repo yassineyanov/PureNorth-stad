@@ -1066,6 +1066,10 @@ async def create_booking(request: Request, payload: BookingCreate):
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     result = await db.bookings.insert_one(doc)
     doc["_id"] = str(result.inserted_id)
+    try:
+        await notify_admin_new_booking(doc)
+    except Exception as e:
+        logger.error(f"Booking notification error: {e}")
     return Booking(**doc)
 
 
@@ -3072,6 +3076,60 @@ async def global_search(q: str, current=Depends(get_current_user)):
 
 
 # ── Email Notifications ───────────────────────────────────────────────────────
+async def notify_admin_new_booking(booking: dict) -> bool:
+    """Send instant notification to admin when a new booking arrives."""
+    resend.api_key = os.environ.get("RESEND_API_KEY", "")
+    if not resend.api_key:
+        return False
+    admin_email = os.environ.get("ADMIN_EMAIL", "")
+    if not admin_email:
+        return False
+    name = booking.get("name", "-")
+    phone = booking.get("phone", "-")
+    email = booking.get("email", "-")
+    address = booking.get("address") or "-"
+    kvm = booking.get("kvm") or "-"
+    date = booking.get("preferred_date") or "-"
+    services = ", ".join(booking.get("services", [])) or "-"
+    other = booking.get("other_description") or ""
+    rows = [
+        ("Namn", name), ("Telefon", phone), ("E-post", email),
+        ("Tjanster", services), ("Adress", address),
+        ("Yta/Antal", kvm), ("Onskat datum", date),
+    ]
+    if other:
+        rows.append(("Ovrigt", other))
+    rows_html = "".join(
+        f'<tr><td style="padding:8px 12px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">{k}</td>'
+        f'<td style="padding:8px 12px;color:#141414;font-size:13px;font-weight:600;border-bottom:1px solid #f1f5f9;">{v}</td></tr>'
+        for k, v in rows
+    )
+    try:
+        resend.Emails.send({
+            "from": "PureNorth Stad <onboarding@resend.dev>",
+            "to": admin_email,
+            "subject": f"Ny bokning: {name} - {services}",
+            "html": f"""
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+              <div style="background:#141414;padding:24px 28px;">
+                <h1 style="color:#fff;font-size:20px;margin:0;font-weight:700;">Ny bokningsforfragan</h1>
+                <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:13px;">Inkom just nu</p>
+              </div>
+              <div style="padding:24px 28px;">
+                <table style="width:100%;border-collapse:collapse;">{rows_html}</table>
+                <a href="https://purenorth-admin.vercel.app/admin/bookings"
+                   style="display:inline-block;margin-top:20px;background:#141414;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:600;">
+                   Oppna adminpanelen
+                </a>
+              </div>
+            </div>
+            """,
+        })
+        return True
+    except Exception as e:
+        logger.error(f"Admin booking notification failed: {e}")
+        return False
+
 async def send_booking_confirmation(booking: dict, inv_settings=None):
     """Send booking confirmation email to customer"""
     email = booking.get("email", "")
