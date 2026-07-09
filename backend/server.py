@@ -3502,6 +3502,9 @@ async def get_my_expenses(current=Depends(get_current_user)):
 # ── Send Invoice by Email ─────────────────────────────────────────────────────
 @api_router.post("/invoices/{invoice_id}/send")
 async def send_invoice_email(invoice_id: str, current=Depends(get_current_user)):
+    _inv = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if _inv and _inv.get("credited"):
+        raise HTTPException(status_code=403, detail="Krediterad faktura kan inte skickas igen.")
     doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Faktura hittades inte")
@@ -4551,6 +4554,9 @@ async def export_bokforing_pdf(month: str, current=Depends(get_current_user)):
 # ── Invoice Reminder ──────────────────────────────────────────────────────────
 @api_router.post("/invoices/{invoice_id}/remind")
 async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_user)):
+    _inv = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
+    if _inv and (_inv.get("credited") or _inv.get("is_credit_note")):
+        raise HTTPException(status_code=403, detail="Påminnelse kan inte skickas för krediterad faktura.")
     """Send payment reminder to customer for overdue invoice"""
     doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
     if not doc:

@@ -803,11 +803,13 @@ export default function InvoicePanel() {
                     )}
                   </>
                 )}
+                {!inv.credited && (
                 <button onClick={() => sendInvoice(inv)} title="Skicka till kund"
                   className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
-                {(inv.status === "sent" || inv.status === "overdue") && (
+                )}
+                {(inv.status === "sent" || inv.status === "overdue") && !inv.credited && !inv.is_credit_note && (
                   <button onClick={() => sendReminder(inv)} title={`Skicka påminnelse ${(inv.reminder_count||0)+1}`}
                     className="h-9 w-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors relative">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
