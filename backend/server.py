@@ -1863,7 +1863,7 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     rut_avdrag = sum(i.get("rut_deduction") or 0 for i in invoices)
     kund_betalar = sum(i.get("customer_pays") or 0 for i in invoices)
     betalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") not in ["paid", "cancelled"])
+    obetalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") not in ["paid", "cancelled", "credit"] and not i.get("credited"))
 
     # Påminnelseavgifter (no moms)
     paminnelse_avgifter = sum(
@@ -2430,7 +2430,7 @@ async def dashboard(current=Depends(get_current_user)):
         b["_id"] = str(b["_id"])
 
     # ── Unpaid invoices ───────────────────────────────────────────────
-    unpaid = await db.invoices.find({"status": {"$in": ["draft","sent","overdue"]}}).sort("due_date", 1).to_list(20)
+    unpaid = await db.invoices.find({"status": {"$in": ["draft","sent","overdue"]}, "credited": {"$ne": True}}).sort("due_date", 1).to_list(20)
     for i in unpaid:
         i["_id"] = str(i["_id"])
     unpaid_total = sum(i.get("customer_pays", 0) for i in unpaid)
@@ -2444,7 +2444,7 @@ async def dashboard(current=Depends(get_current_user)):
     month_invoices = await db.invoices.find({
         "created_at": {"$gte": month_start}
     }).to_list(500)
-    month_revenue = sum(i.get("subtotal", 0) for i in month_invoices)
+    month_revenue = sum(i.get("subtotal") or 0 for i in month_invoices if i.get("status") != "credit" and not i.get("credited"))
     month_paid = sum(i.get("customer_pays", 0) for i in month_invoices if i.get("status") == "paid")
 
     # ── Sick employees today ──────────────────────────────────────────
