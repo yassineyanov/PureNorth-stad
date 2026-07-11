@@ -36,78 +36,6 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# ── Multi-tenant wrapper ──────────────────────────────────────────────────────
-class TenantCollection:
-    """Wraps a MongoDB collection and injects company_id into every query."""
-    def __init__(self, collection, company_id: str):
-        self._col = collection
-        self._cid = company_id
-
-    def _q(self, query: dict = None) -> dict:
-        q = dict(query or {})
-        q["company_id"] = self._cid
-        return q
-
-    async def find_one(self, query=None, *args, **kwargs):
-        return await self._col.find_one(self._q(query), *args, **kwargs)
-
-    def find(self, query=None, *args, **kwargs):
-        return self._col.find(self._q(query), *args, **kwargs)
-
-    async def insert_one(self, doc: dict, *args, **kwargs):
-        doc["company_id"] = self._cid
-        return await self._col.insert_one(doc, *args, **kwargs)
-
-    async def insert_many(self, docs: list, *args, **kwargs):
-        for d in docs:
-            d["company_id"] = self._cid
-        return await self._col.insert_many(docs, *args, **kwargs)
-
-    async def update_one(self, query, update, *args, **kwargs):
-        return await self._col.update_one(self._q(query), update, *args, **kwargs)
-
-    async def update_many(self, query, update, *args, **kwargs):
-        return await self._col.update_many(self._q(query), update, *args, **kwargs)
-
-    async def delete_one(self, query, *args, **kwargs):
-        return await self._col.delete_one(self._q(query), *args, **kwargs)
-
-    async def delete_many(self, query, *args, **kwargs):
-        return await self._col.delete_many(self._q(query), *args, **kwargs)
-
-    async def count_documents(self, query=None, *args, **kwargs):
-        return await self._col.count_documents(self._q(query), *args, **kwargs)
-
-    def __getattr__(self, name):
-        return getattr(self._col, name)
-
-
-class TenantDB:
-    """Returns TenantCollection for every attribute access."""
-    # Collections shared across all tenants (no company_id filter)
-    SHARED = {"users"}
-
-    def __init__(self, base_db, company_id: str):
-        self._db = base_db
-        self._cid = company_id
-
-    def __getitem__(self, name: str):
-        if name in self.SHARED:
-            return self._db[name]
-        return TenantCollection(self._db[name], self._cid)
-
-    def __getattr__(self, name: str):
-        if name.startswith("_"):
-            raise AttributeError(name)
-        if name in self.SHARED:
-            return self._db[name]
-        return TenantCollection(self._db[name], self._cid)
-
-
-def get_tenant_db(company_id: str) -> TenantDB:
-    return TenantDB(db, company_id)
-# ─────────────────────────────────────────────────────────────────────────────
-
 JWT_ALGORITHM = "HS256"
 
 # ---------------------------------------------------------------------------
@@ -151,11 +79,10 @@ def get_jwt_secret() -> str:
     return os.environ["JWT_SECRET"]
 
 
-def create_access_token(user_id: str, email: str, company_id: str = "purenorth") -> str:
+def create_access_token(user_id: str, email: str) -> str:
     payload = {
         "sub": user_id,
         "email": email,
-        "company_id": company_id,
         "exp": datetime.now(timezone.utc) + timedelta(hours=24),
         "type": "access",
     }
@@ -181,12 +108,6 @@ async def get_current_user(request: Request) -> dict:
             raise HTTPException(status_code=401, detail="User not found")
         user["_id"] = str(user["_id"])
         user.pop("password_hash", None)
-        # Multi-tenant: company_id from token (fallback: user doc, then "purenorth")
-        user["company_id"] = (
-            payload.get("company_id")
-            or user.get("company_id")
-            or "purenorth"
-        )
         return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
@@ -498,9 +419,6 @@ class InvoiceCreate(BaseModel):
     vat_amount: Optional[float] = None
     total_amount: Optional[float] = None
     customer_pays: Optional[float] = None
-    is_credit_note: Optional[bool] = False
-    credits_invoice_number: Optional[int] = None
-    credit_reason: Optional[str] = None
 
 
 class InvoiceStatusUpdate(BaseModel):
@@ -526,19 +444,15 @@ class Invoice(BaseModel):
     status: str = "draft"
     labor_total: float = 0.0
     material_total: float = 0.0
-    subtotal: float = 0.0
-    vat_amount: float = 0.0
-    total_amount: float = 0.0
-    rut_deduction: float = 0.0
-    customer_pays: float = 0.0
+    subtotal: float
+    vat_amount: float
+    total_amount: float
+    rut_deduction: float
+    customer_pays: float
     created_at: str
     paid_at: Optional[str] = None
     reminder_count: Optional[int] = 0
     last_reminder_at: Optional[str] = None
-    is_credit_note: Optional[bool] = False
-    credits_invoice_number: Optional[int] = None
-    credited: Optional[bool] = False
-    credit_reason: Optional[str] = None
 
 
 def calc_invoice_amounts(items: list, rut_eligible: bool, customer_type: str, vat_rate: float):
@@ -607,11 +521,8 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
             logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
     else:
         logo_cell = Paragraph(settings.company_name or "", ps("cn", fontSize=14, fontName="Helvetica-Bold"))
-    _is_credit = inv.get("is_credit_note", False)
-    _title_txt = "KREDITFAKTURA" if _is_credit else "FAKTURA"
-    _title_col = "#c2410c" if _is_credit else "#141414"
     faktura_title = Paragraph(
-        f'<font size="{18 if _is_credit else 22}" color="{_title_col}"><b>{_title_txt}</b></font>  <font size="13" color="#888888">#{inv["invoice_number"]}</font>',
+        f'<font size="22" color="#141414"><b>FAKTURA</b></font>  <font size="13" color="#888888">#{inv["invoice_number"]}</font>',
         ps("ft", alignment=2)
     )
     hdr = Table([[logo_cell, faktura_title]], colWidths=[90*mm, None])
@@ -625,20 +536,6 @@ def build_invoice_pdf(inv: dict, settings: InvoiceSettings) -> bytes:
         ("BOTTOMPADDING",(0,0),(-1,-1),0),
     ]))
     elements.append(hdr)
-    # Credit note banner with reason
-    if _is_credit:
-        _credits = inv.get("credits_invoice_number")
-        _reason = inv.get("credit_reason") or "-"
-        _banner_txt = f'<b>Krediterar faktura #{_credits}</b><br/>Anledning: {_reason}' if _credits else f'<b>Kreditfaktura</b><br/>Anledning: {_reason}'
-        _banner = Table([[Paragraph(_banner_txt, ps("cb", fontSize=9, textColor=colors.HexColor("#7c2d12")))]], colWidths=[None])
-        _banner.setStyle(TableStyle([
-            ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#fff7ed")),
-            ("BOX",(0,0),(-1,-1),0.7,colors.HexColor("#fdba74")),
-            ("LEFTPADDING",(0,0),(-1,-1),8),("RIGHTPADDING",(0,0),(-1,-1),8),
-            ("TOPPADDING",(0,0),(-1,-1),6),("BOTTOMPADDING",(0,0),(-1,-1),6),
-        ]))
-        elements.append(Spacer(1, 4*mm))
-        elements.append(_banner)
     elements.append(Spacer(1, 4*mm))
 
     # ── DIVIDER ──────────────────────────────────────────────────────────────
@@ -1145,10 +1042,6 @@ async def create_booking(request: Request, payload: BookingCreate):
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     result = await db.bookings.insert_one(doc)
     doc["_id"] = str(result.inserted_id)
-    try:
-        await notify_admin_new_booking(doc)
-    except Exception as e:
-        logger.error(f"Booking notification error: {e}")
     return Booking(**doc)
 
 
@@ -1565,7 +1458,7 @@ async def set_invoice_logo(request: Request, current=Depends(get_current_user)):
 async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_user)):
     inv_settings = await get_invoice_settings_obj()
     items = [i.model_dump() for i in payload.items]
-    if payload.subtotal is None:
+    if not payload.subtotal:
         amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
     else:
         amounts = {}
@@ -1576,18 +1469,11 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     doc["items"] = items
     doc["invoice_number"] = number
     doc["due_date"] = due_date
-    if payload.credit_reason:
-        doc["credit_reason"] = sanitize_text(payload.credit_reason, 300)
-    doc["status"] = "credit" if payload.is_credit_note else "draft"
+    doc["status"] = "draft"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["paid_at"] = None
-    if payload.is_credit_note and payload.credits_invoice_number:
-        await db.invoices.update_one(
-            {"invoice_number": payload.credits_invoice_number},
-            {"$set": {"credited": True}}
-        )
     # Use frontend amounts if provided, otherwise recalculate
-    if payload.subtotal is None:
+    if not payload.subtotal:
         doc.update(amounts)
 
     result = await db.invoices.insert_one(doc)
@@ -1598,72 +1484,20 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
 @api_router.get("/invoices", response_model=List[Invoice], response_model_by_alias=False)
 async def list_invoices(current=Depends(get_current_user)):
     docs = await db.invoices.find().sort("invoice_number", -1).to_list(2000)
-    result = []
-    for d in docs:
-        try:
-            result.append(Invoice(**{**d, "_id": str(d["_id"])}))
-        except Exception as e:
-            logger.error(f"Skipping invalid invoice {d.get('invoice_number')}: {e}")
-    return result
+    return [Invoice(**{**d, "_id": str(d["_id"])}) for d in docs]
 
 
 
 # ── Auto Reminder Cron ────────────────────────────────────────────────────────
 @api_router.post("/invoices/auto-remind")
 async def auto_remind_overdue(request: Request):
-    """Cron job: send reminders for overdue invoices. Protected by CRON_SECRET."""
-    cron_secret = os.environ.get("CRON_SECRET", "")
-    auth_header = request.headers.get("Authorization", "")
-    if not cron_secret or auth_header != f"Bearer {cron_secret}":
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    today = DateClass.today().isoformat()
-    # Find sent invoices past due date (not credited, not credit notes, max 1 reminder per day)
-    overdue_invoices = await db.invoices.find({
-        "status": {"$in": ["sent", "overdue"]},
-        "due_date": {"$lt": today},
-        "credited": {"$ne": True},
-        "is_credit_note": {"$ne": True},
-    }).to_list(500)
-    sent = 0
-    errors = 0
-    for inv in overdue_invoices:
-        inv_id = str(inv["_id"])
-        # Mark as overdue first
-        await db.invoices.update_one({"_id": inv["_id"]}, {"$set": {"status": "overdue"}})
-        # Only send reminder if customer has email
-        customer_email = inv.get("customer_email", "")
-        if not customer_email:
-            continue
-        # Check last reminder (don't spam — max 1 reminder per 7 days)
-        last_reminder = inv.get("last_reminder_at")
-        if last_reminder:
-            try:
-                last_dt = DateClass.fromisoformat(last_reminder[:10])
-                if (DateClass.today() - last_dt).days < 7:
-                    continue
-            except Exception:
-                pass
-        try:
-            inv["_id"] = inv_id
-            await send_invoice_reminder(inv_id, current={"email": "cron@purenorth.se", "role": "admin"})
-            sent += 1
-        except Exception as e:
-            logger.error(f"Auto-remind error for invoice {inv_id}: {e}")
-            errors += 1
-    return {"status": "ok", "sent": sent, "errors": errors, "checked": len(overdue_invoices)}
+    return {"status": "disabled"}
 
 @api_router.delete("/invoices/{invoice_id}")
 async def delete_invoice(invoice_id: str, current=Depends(get_current_user)):
-    inv = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
-    if not inv:
+    result = await db.invoices.delete_one({"_id": to_object_id(invoice_id)})
+    if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Faktura hittades inte")
-    if inv.get("is_credit_note"):
-        raise HTTPException(status_code=403, detail="Kreditfakturor kan inte tas bort.")
-    if inv.get("credited"):
-        raise HTTPException(status_code=403, detail="Krediterad faktura kan inte tas bort.")
-    if inv.get("status") not in ["draft", None]:
-        raise HTTPException(status_code=403, detail="Skickad faktura kan inte tas bort. Skapa en kreditfaktura istället.")
-    await db.invoices.delete_one({"_id": to_object_id(invoice_id)})
     return {"success": True}
 
 
@@ -1672,8 +1506,6 @@ async def update_invoice(invoice_id: str, payload: InvoiceCreate, current=Depend
     existing = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
     if not existing:
         raise HTTPException(status_code=404, detail="Faktura hittades inte")
-    if existing.get("status") not in ["draft", None]:
-        raise HTTPException(status_code=403, detail="Fakturan är låst och kan inte ändras.")
     inv_settings = await get_invoice_settings_obj()
     items = [i.model_dump() for i in payload.items]
     amounts = calc_invoice_amounts(items, payload.rut_eligible, payload.customer_type, inv_settings.vat_rate)
@@ -1689,80 +1521,6 @@ async def update_invoice(invoice_id: str, payload: InvoiceCreate, current=Depend
     doc["_id"] = str(doc["_id"])
     return Invoice(**doc)
 
-
-@api_router.patch("/invoices/{invoice_id}/status")
-async def update_invoice_status(invoice_id: str, payload: InvoiceStatusUpdate, current=Depends(get_current_user)):
-    valid = ["draft", "sent", "paid", "overdue", "cancelled"]
-    if payload.status not in valid:
-        raise HTTPException(status_code=400, detail="Ogiltig status.")
-    inv = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
-    if inv and inv.get("is_credit_note"):
-        raise HTTPException(status_code=403, detail="Kreditfakturans status kan inte ändras.")
-    if inv and inv.get("credited"):
-        raise HTTPException(status_code=403, detail="Krediterad faktura kan inte ändra status.")
-    updates = {"status": payload.status}
-    if payload.status == "paid":
-        updates["paid_at"] = datetime.now(timezone.utc).isoformat()
-    await db.invoices.update_one({"_id": to_object_id(invoice_id)}, {"$set": updates})
-    doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
-    doc["_id"] = str(doc["_id"])
-    return doc
-
-@api_router.get("/admin/export-db")
-async def export_full_database(current=Depends(get_current_user)):
-    """Export all database collections as JSON backup."""
-    import json as _json
-    collections = [
-        "absences","bookings","costs","customers","employees",
-        "expenses","incidents","invoices","reviews",
-        "settings","shifts","users","website_settings"
-    ]
-    backup = {}
-    for col in collections:
-        try:
-            docs = await db[col].find().to_list(100000)
-            for d in docs:
-                d["_id"] = str(d["_id"])
-            backup[col] = docs
-        except Exception as e:
-            backup[col] = []
-            logger.error(f"Export error for {col}: {e}")
-    backup["_meta"] = {
-        "exported_at": datetime.now(timezone.utc).isoformat(),
-        "exported_by": current.get("email",""),
-        "collections": len(collections),
-        "total_docs": sum(len(v) for v in backup.values() if isinstance(v, list)),
-    }
-    content = _json.dumps(backup, ensure_ascii=False, indent=2, default=str)
-    return Response(
-        content=content.encode("utf-8"),
-        media_type="application/json",
-        headers={"Content-Disposition": f'attachment; filename="purenorth_backup_{datetime.now().strftime("%Y%m%d_%H%M")}.json"'}
-    )
-
-@api_router.post("/admin/migrate-tenant")
-async def migrate_tenant(current=Depends(get_current_user)):
-    """ONE-TIME: tag all existing data with company_id='purenorth'"""
-    if current.get("company_id", "purenorth") != "purenorth":
-        raise HTTPException(status_code=403, detail="Not authorized")
-    collections = [
-        "bookings","invoices","customers","employees","shifts",
-        "absences","expenses","costs","reviews","incidents",
-        "settings","website_settings","price_lists",
-    ]
-    results = {}
-    for col in collections:
-        r = await db[col].update_many(
-            {"company_id": {"$exists": False}},
-            {"$set": {"company_id": "purenorth"}}
-        )
-        results[col] = r.modified_count
-    r = await db.users.update_many(
-        {"company_id": {"$exists": False}},
-        {"$set": {"company_id": "purenorth"}}
-    )
-    results["users"] = r.modified_count
-    return {"status": "ok", "migrated": results}
 
 @api_router.get("/invoices/{invoice_id}/pdf")
 async def get_invoice_pdf(invoice_id: str, current=Depends(get_current_user)):
@@ -1977,18 +1735,6 @@ DEFAULT_PRICES = [
 ]
 
 
-@api_router.get("/settings/pricelist/public")
-@limiter.limit("30/minute")
-async def get_pricelist_public(request: Request):
-    """Public: active service names + units only (no prices) for the booking form."""
-    doc = await db.settings.find_one({"_key": "pricelist"})
-    items = doc["items"] if doc and doc.get("items") else DEFAULT_PRICES
-    return {"items": [
-        {"service": i.get("service"), "unit": i.get("unit"), "is_rut_eligible": i.get("is_rut_eligible", False)}
-        for i in items
-        if i.get("is_active") and "(fast)" not in (i.get("service") or "")
-    ]}
-
 @api_router.get("/settings/pricelist")
 async def get_pricelist(current=Depends(get_current_user)):
     doc = await db.settings.find_one({"_key": "pricelist"})
@@ -2000,14 +1746,6 @@ async def get_pricelist(current=Depends(get_current_user)):
 @api_router.put("/settings/pricelist")
 async def set_pricelist(payload: PriceListSettings, current=Depends(get_current_user)):
     doc = payload.model_dump()
-    # Clean: strip whitespace + sanitize text fields on every item
-    for it in doc.get("items", []):
-        if isinstance(it.get("service"), str):
-            it["service"] = sanitize_text(it["service"], 100).strip()
-        if isinstance(it.get("description"), str):
-            it["description"] = sanitize_text(it["description"], 300).strip()
-        if isinstance(it.get("unit"), str):
-            it["unit"] = it["unit"].strip()
     doc["_key"] = "pricelist"
     await db.settings.update_one({"_key": "pricelist"}, {"$set": doc}, upsert=True)
     return payload
@@ -2031,13 +1769,12 @@ async def economy_overview(start: str, end: str, current=Depends(get_current_use
     }).to_list(2000)
 
     # Core revenue calculations
-    invoices = [i for i in invoices if i.get("invoice_number")]
-    forsaljning_excl_moms = sum(i.get("subtotal") or 0 for i in invoices)
-    utgaende_moms = sum(i.get("vat_amount") or 0 for i in invoices)
-    rut_avdrag = sum(i.get("rut_deduction") or 0 for i in invoices)
-    kund_betalar = sum(i.get("customer_pays") or 0 for i in invoices)
-    betalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays") or 0 for i in invoices if i.get("status") not in ["paid", "cancelled", "credit"] and not i.get("credited"))
+    forsaljning_excl_moms = sum(i.get("subtotal", 0) for i in invoices)
+    utgaende_moms = sum(i.get("vat_amount", 0) for i in invoices)
+    rut_avdrag = sum(i.get("rut_deduction", 0) for i in invoices)
+    kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
+    betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid", "cancelled"])
 
     # Påminnelseavgifter (no moms)
     paminnelse_avgifter = sum(
@@ -2604,7 +2341,7 @@ async def dashboard(current=Depends(get_current_user)):
         b["_id"] = str(b["_id"])
 
     # ── Unpaid invoices ───────────────────────────────────────────────
-    unpaid = await db.invoices.find({"status": {"$in": ["draft","sent","overdue"]}, "credited": {"$ne": True}}).sort("due_date", 1).to_list(20)
+    unpaid = await db.invoices.find({"status": {"$in": ["draft","sent","overdue"]}}).sort("due_date", 1).to_list(20)
     for i in unpaid:
         i["_id"] = str(i["_id"])
     unpaid_total = sum(i.get("customer_pays", 0) for i in unpaid)
@@ -2618,7 +2355,7 @@ async def dashboard(current=Depends(get_current_user)):
     month_invoices = await db.invoices.find({
         "created_at": {"$gte": month_start}
     }).to_list(500)
-    month_revenue = sum(i.get("subtotal") or 0 for i in month_invoices if i.get("status") != "credit" and not i.get("credited"))
+    month_revenue = sum(i.get("subtotal", 0) for i in month_invoices)
     month_paid = sum(i.get("customer_pays", 0) for i in month_invoices if i.get("status") == "paid")
 
     # ── Sick employees today ──────────────────────────────────────────
@@ -3270,60 +3007,6 @@ async def global_search(q: str, current=Depends(get_current_user)):
 
 
 # ── Email Notifications ───────────────────────────────────────────────────────
-async def notify_admin_new_booking(booking: dict) -> bool:
-    """Send instant notification to admin when a new booking arrives."""
-    resend.api_key = os.environ.get("RESEND_API_KEY", "")
-    if not resend.api_key:
-        return False
-    admin_email = os.environ.get("ADMIN_EMAIL", "")
-    if not admin_email:
-        return False
-    name = booking.get("name", "-")
-    phone = booking.get("phone", "-")
-    email = booking.get("email", "-")
-    address = booking.get("address") or "-"
-    kvm = booking.get("kvm") or "-"
-    date = booking.get("preferred_date") or "-"
-    services = ", ".join(booking.get("services", [])) or "-"
-    other = booking.get("other_description") or ""
-    rows = [
-        ("Namn", name), ("Telefon", phone), ("E-post", email),
-        ("Tjanster", services), ("Adress", address),
-        ("Yta/Antal", kvm), ("Onskat datum", date),
-    ]
-    if other:
-        rows.append(("Ovrigt", other))
-    rows_html = "".join(
-        f'<tr><td style="padding:8px 12px;color:#64748b;font-size:13px;border-bottom:1px solid #f1f5f9;">{k}</td>'
-        f'<td style="padding:8px 12px;color:#141414;font-size:13px;font-weight:600;border-bottom:1px solid #f1f5f9;">{v}</td></tr>'
-        for k, v in rows
-    )
-    try:
-        resend.Emails.send({
-            "from": "PureNorth Stad <onboarding@resend.dev>",
-            "to": admin_email,
-            "subject": f"Ny bokning: {name} - {services}",
-            "html": f"""
-            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
-              <div style="background:#141414;padding:24px 28px;">
-                <h1 style="color:#fff;font-size:20px;margin:0;font-weight:700;">Ny bokningsforfragan</h1>
-                <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:13px;">Inkom just nu</p>
-              </div>
-              <div style="padding:24px 28px;">
-                <table style="width:100%;border-collapse:collapse;">{rows_html}</table>
-                <a href="https://purenorth-admin.vercel.app/admin/bookings"
-                   style="display:inline-block;margin-top:20px;background:#141414;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:600;">
-                   Oppna adminpanelen
-                </a>
-              </div>
-            </div>
-            """,
-        })
-        return True
-    except Exception as e:
-        logger.error(f"Admin booking notification failed: {e}")
-        return False
-
 async def send_booking_confirmation(booking: dict, inv_settings=None):
     """Send booking confirmation email to customer"""
     email = booking.get("email", "")
@@ -3771,9 +3454,6 @@ async def get_my_expenses(current=Depends(get_current_user)):
 # ── Send Invoice by Email ─────────────────────────────────────────────────────
 @api_router.post("/invoices/{invoice_id}/send")
 async def send_invoice_email(invoice_id: str, current=Depends(get_current_user)):
-    _inv = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
-    if _inv and _inv.get("credited"):
-        raise HTTPException(status_code=403, detail="Krediterad faktura kan inte skickas igen.")
     doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Faktura hittades inte")
@@ -4823,9 +4503,6 @@ async def export_bokforing_pdf(month: str, current=Depends(get_current_user)):
 # ── Invoice Reminder ──────────────────────────────────────────────────────────
 @api_router.post("/invoices/{invoice_id}/remind")
 async def send_invoice_reminder(invoice_id: str, current=Depends(get_current_user)):
-    _inv = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
-    if _inv and (_inv.get("credited") or _inv.get("is_credit_note")):
-        raise HTTPException(status_code=403, detail="Påminnelse kan inte skickas för krediterad faktura.")
     """Send payment reminder to customer for overdue invoice"""
     doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
     if not doc:
@@ -4983,9 +4660,7 @@ async def rut_report_pdf(month: str, current=Depends(get_current_user)):
     # Get invoices with RUT
     invoices = await db.invoices.find({
         "created_at": {"$gte": start_dt, "$lte": end_dt},
-        "rut_deduction": {"$gt": 0},
-        "credited": {"$ne": True},
-        "is_credit_note": {"$ne": True}
+        "rut_deduction": {"$gt": 0}
     }).to_list(2000)
 
     total_rut = sum(i.get("rut_deduction", 0) for i in invoices)
