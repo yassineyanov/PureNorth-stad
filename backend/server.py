@@ -419,6 +419,10 @@ class InvoiceCreate(BaseModel):
     vat_amount: Optional[float] = None
     total_amount: Optional[float] = None
     customer_pays: Optional[float] = None
+    is_credit_note: Optional[bool] = False
+    credits_invoice_number: Optional[int] = None
+    credit_reason: Optional[str] = None
+    credited: Optional[bool] = False
 
 
 class InvoiceStatusUpdate(BaseModel):
@@ -453,6 +457,10 @@ class Invoice(BaseModel):
     paid_at: Optional[str] = None
     reminder_count: Optional[int] = 0
     last_reminder_at: Optional[str] = None
+    is_credit_note: Optional[bool] = False
+    credits_invoice_number: Optional[int] = None
+    credit_reason: Optional[str] = None
+    credited: Optional[bool] = False
 
 
 def calc_invoice_amounts(items: list, rut_eligible: bool, customer_type: str, vat_rate: float):
@@ -1469,9 +1477,14 @@ async def create_invoice(payload: InvoiceCreate, current=Depends(get_current_use
     doc["items"] = items
     doc["invoice_number"] = number
     doc["due_date"] = due_date
-    doc["status"] = "draft"
+    doc["status"] = "credit" if payload.is_credit_note else "draft"
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     doc["paid_at"] = None
+    if payload.is_credit_note and payload.credits_invoice_number:
+        await db.invoices.update_one(
+            {"invoice_number": payload.credits_invoice_number},
+            {"$set": {"credited": True}}
+        )
     # Use frontend amounts if provided, otherwise recalculate
     if not payload.subtotal:
         doc.update(amounts)
@@ -2341,7 +2354,7 @@ async def dashboard(current=Depends(get_current_user)):
         b["_id"] = str(b["_id"])
 
     # ── Unpaid invoices ───────────────────────────────────────────────
-    unpaid = await db.invoices.find({"status": {"$in": ["draft","sent","overdue"]}}).sort("due_date", 1).to_list(20)
+    unpaid = await db.invoices.find({"status": {"$in": ["draft","sent","overdue"]}, "credited": {"$ne": True}, "is_credit_note": {"$ne": True}}).sort("due_date", 1).to_list(20)
     for i in unpaid:
         i["_id"] = str(i["_id"])
     unpaid_total = sum(i.get("customer_pays", 0) for i in unpaid)
@@ -2672,7 +2685,7 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
     rut_deductions = sum(i.get("rut_deduction", 0) for i in invoices)
     total_invoiced = sum(i.get("total_amount", 0) for i in invoices)
     paid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
-    unpaid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") != "paid")
+    unpaid_invoices = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid","credit"] and not i.get("credited"))
 
     payroll_summary, payroll_settings = await build_payroll_summary(start, end)
     gross_salary = sum(
@@ -2744,7 +2757,7 @@ async def economy_report_pdf(start: str, end: str, current=Depends(get_current_u
     # Calculate reminder fees and correct totals
     kund_betalar = sum(i.get("customer_pays", 0) for i in invoices)
     betalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") == "paid")
-    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid","cancelled"])
+    obetalda = sum(i.get("customer_pays", 0) for i in invoices if i.get("status") not in ["paid","cancelled","credit"] and not i.get("credited"))
 
     # Revenue
     section("Intäkter")

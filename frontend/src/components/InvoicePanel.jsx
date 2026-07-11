@@ -694,8 +694,7 @@ export default function InvoicePanel() {
         credit_reason: reason.trim(),
         credits_invoice_number: inv.invoice_number,
       });
-      load();
-      setInvoices(prev => [res.data, ...prev]);
+      await load();
       toast.success(`Kreditfaktura #${res.data.invoice_number} skapad!`);
     } catch { toast.error("Kunde inte skapa kreditfaktura."); }
   };
