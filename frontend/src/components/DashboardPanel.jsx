@@ -104,6 +104,13 @@ export default function DashboardPanel({ onNavigate, onRefresh }) {
           }} className="h-9 px-3 rounded-full border-2 border-red-300 bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition-colors" title="Återställ ekonomi">
             🗑️ Reset
           </button>
+          <button onClick={()=>{
+            const token = localStorage.getItem("pn_token");
+            const base = process.env.REACT_APP_BACKEND_URL || "";
+            window.open(`${base}/api/admin/export-db?token=${token}`, "_blank");
+          }} className="h-9 px-3 rounded-full border-2 border-green-300 bg-green-50 text-green-700 text-xs font-semibold hover:bg-green-100 transition-colors" title="Exportera hela databasen">
+            💾 Exportera DB
+          </button>
         </div>
       </div>
 
