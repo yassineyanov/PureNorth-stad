@@ -36,6 +36,78 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# ── Multi-tenant wrapper ──────────────────────────────────────────────────────
+class TenantCollection:
+    """Wraps a MongoDB collection and injects company_id into every query."""
+    def __init__(self, collection, company_id: str):
+        self._col = collection
+        self._cid = company_id
+
+    def _q(self, query: dict = None) -> dict:
+        q = dict(query or {})
+        q["company_id"] = self._cid
+        return q
+
+    async def find_one(self, query=None, *args, **kwargs):
+        return await self._col.find_one(self._q(query), *args, **kwargs)
+
+    def find(self, query=None, *args, **kwargs):
+        return self._col.find(self._q(query), *args, **kwargs)
+
+    async def insert_one(self, doc: dict, *args, **kwargs):
+        doc["company_id"] = self._cid
+        return await self._col.insert_one(doc, *args, **kwargs)
+
+    async def insert_many(self, docs: list, *args, **kwargs):
+        for d in docs:
+            d["company_id"] = self._cid
+        return await self._col.insert_many(docs, *args, **kwargs)
+
+    async def update_one(self, query, update, *args, **kwargs):
+        return await self._col.update_one(self._q(query), update, *args, **kwargs)
+
+    async def update_many(self, query, update, *args, **kwargs):
+        return await self._col.update_many(self._q(query), update, *args, **kwargs)
+
+    async def delete_one(self, query, *args, **kwargs):
+        return await self._col.delete_one(self._q(query), *args, **kwargs)
+
+    async def delete_many(self, query, *args, **kwargs):
+        return await self._col.delete_many(self._q(query), *args, **kwargs)
+
+    async def count_documents(self, query=None, *args, **kwargs):
+        return await self._col.count_documents(self._q(query), *args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._col, name)
+
+
+class TenantDB:
+    """Returns TenantCollection for every attribute access."""
+    # Collections shared across all tenants (no company_id filter)
+    SHARED = {"users"}
+
+    def __init__(self, base_db, company_id: str):
+        self._db = base_db
+        self._cid = company_id
+
+    def __getitem__(self, name: str):
+        if name in self.SHARED:
+            return self._db[name]
+        return TenantCollection(self._db[name], self._cid)
+
+    def __getattr__(self, name: str):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        if name in self.SHARED:
+            return self._db[name]
+        return TenantCollection(self._db[name], self._cid)
+
+
+def get_tenant_db(company_id: str) -> TenantDB:
+    return TenantDB(db, company_id)
+# ─────────────────────────────────────────────────────────────────────────────
+
 JWT_ALGORITHM = "HS256"
 
 # ---------------------------------------------------------------------------
@@ -79,10 +151,11 @@ def get_jwt_secret() -> str:
     return os.environ["JWT_SECRET"]
 
 
-def create_access_token(user_id: str, email: str) -> str:
+def create_access_token(user_id: str, email: str, company_id: str = "purenorth") -> str:
     payload = {
         "sub": user_id,
         "email": email,
+        "company_id": company_id,
         "exp": datetime.now(timezone.utc) + timedelta(hours=24),
         "type": "access",
     }
@@ -108,6 +181,12 @@ async def get_current_user(request: Request) -> dict:
             raise HTTPException(status_code=401, detail="User not found")
         user["_id"] = str(user["_id"])
         user.pop("password_hash", None)
+        # Multi-tenant: company_id from token (fallback: user doc, then "purenorth")
+        user["company_id"] = (
+            payload.get("company_id")
+            or user.get("company_id")
+            or "purenorth"
+        )
         return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
