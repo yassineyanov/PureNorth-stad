@@ -13,3 +13,4 @@ python-dotenv==1.0.1
 motor==3.6.0
 pymongo==4.9.2
 # force rebuild Sat Jul 11 11:35:42 UTC 2026
+PyJWT==2.9.0
