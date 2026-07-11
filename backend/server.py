@@ -1740,6 +1740,30 @@ async def export_full_database(current=Depends(get_current_user)):
         headers={"Content-Disposition": f'attachment; filename="purenorth_backup_{datetime.now().strftime("%Y%m%d_%H%M")}.json"'}
     )
 
+@api_router.post("/admin/migrate-tenant")
+async def migrate_tenant(current=Depends(get_current_user)):
+    """ONE-TIME: tag all existing data with company_id='purenorth'"""
+    if current.get("company_id", "purenorth") != "purenorth":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    collections = [
+        "bookings","invoices","customers","employees","shifts",
+        "absences","expenses","costs","reviews","incidents",
+        "settings","website_settings","price_lists",
+    ]
+    results = {}
+    for col in collections:
+        r = await db[col].update_many(
+            {"company_id": {"$exists": False}},
+            {"$set": {"company_id": "purenorth"}}
+        )
+        results[col] = r.modified_count
+    r = await db.users.update_many(
+        {"company_id": {"$exists": False}},
+        {"$set": {"company_id": "purenorth"}}
+    )
+    results["users"] = r.modified_count
+    return {"status": "ok", "migrated": results}
+
 @api_router.get("/invoices/{invoice_id}/pdf")
 async def get_invoice_pdf(invoice_id: str, current=Depends(get_current_user)):
     doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
