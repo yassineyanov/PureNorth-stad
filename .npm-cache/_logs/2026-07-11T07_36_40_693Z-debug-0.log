@@ -1,0 +1,39 @@
+0 verbose cli /usr/bin/node /usr/bin/npm
+1 info using npm@10.8.2
+2 info using node@v20.20.2
+3 silly config load:file:/usr/lib/node_modules/npm/npmrc
+4 silly config load:file:/platform/.npmrc
+5 silly config load:file:/root/.npmrc
+6 silly config load:file:/usr/etc/npmrc
+7 verbose title npm create vite@latest frontend --template react
+8 verbose argv "create" "vite@latest" "frontend" "--" "--template" "react"
+9 verbose logfile logs-max:10 dir:/app/.npm-cache/_logs/2026-07-11T07_36_40_693Z-
+10 verbose logfile /app/.npm-cache/_logs/2026-07-11T07_36_40_693Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+13 http fetch GET 200 https://registry.npmjs.org/create-vite 126ms (cache miss)
+14 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+15 http fetch GET 200 https://registry.npmjs.org/npm 285ms
+16 silly idealTree buildDeps
+17 silly fetch manifest create-vite@9.1.1
+18 silly packumentCache full:https://registry.npmjs.org/create-vite cache-miss
+19 http fetch GET 200 https://registry.npmjs.org/create-vite 50ms (cache miss)
+20 silly packumentCache full:https://registry.npmjs.org/create-vite set size:undefined disposed:false
+21 silly placeDep ROOT create-vite@9.1.1 OK for:  want: 9.1.1
+22 silly reify moves {}
+23 silly audit bulk request { 'create-vite': [ '9.1.1' ] }
+24 silly tarball no local data for create-vite@https://registry.npmjs.org/create-vite/-/create-vite-9.1.1.tgz. Extracting by manifest.
+25 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 89ms
+26 silly audit report {}
+27 http fetch GET 200 https://registry.npmjs.org/create-vite/-/create-vite-9.1.1.tgz 199ms (cache miss)
+28 verbose cwd /platform
+29 verbose os Linux 6.12.68+
+30 verbose node v20.20.2
+31 verbose npm  v10.8.2
+32 notice
+32 notice New [31mmajor[39m version of npm available! [31m10.8.2[39m -> [34m12.0.1[39m
+32 notice Changelog: [34mhttps://github.com/npm/cli/releases/tag/v12.0.1[39m
+32 notice To update run: [4mnpm install -g npm@12.0.1[24m
+32 notice  { force: true, [Symbol(proc-log.meta)]: true }
+33 verbose exit 0
+34 info ok
