@@ -1590,6 +1590,38 @@ async def update_invoice_status(invoice_id: str, payload: InvoiceStatusUpdate, c
     doc["_id"] = str(doc["_id"])
     return doc
 
+@api_router.get("/admin/export-db")
+async def export_full_database(current=Depends(get_current_user)):
+    """Export all database collections as JSON backup."""
+    import json as _json
+    collections = [
+        "absences","bookings","costs","customers","employees",
+        "expenses","incidents","invoices","reviews",
+        "settings","shifts","users","website_settings"
+    ]
+    backup = {}
+    for col in collections:
+        try:
+            docs = await db[col].find().to_list(100000)
+            for d in docs:
+                d["_id"] = str(d["_id"])
+            backup[col] = docs
+        except Exception as e:
+            backup[col] = []
+            logger.error(f"Export error for {col}: {e}")
+    backup["_meta"] = {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "exported_by": current.get("email",""),
+        "collections": len(collections),
+        "total_docs": sum(len(v) for v in backup.values() if isinstance(v, list)),
+    }
+    content = _json.dumps(backup, ensure_ascii=False, indent=2, default=str)
+    return Response(
+        content=content.encode("utf-8"),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="purenorth_backup_{datetime.now().strftime("%Y%m%d_%H%M")}.json"'}
+    )
+
 @api_router.get("/invoices/{invoice_id}/pdf")
 async def get_invoice_pdf(invoice_id: str, current=Depends(get_current_user)):
     doc = await db.invoices.find_one({"_id": to_object_id(invoice_id)})
