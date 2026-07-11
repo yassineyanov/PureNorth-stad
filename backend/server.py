@@ -1532,7 +1532,46 @@ async def list_invoices(current=Depends(get_current_user)):
 # ── Auto Reminder Cron ────────────────────────────────────────────────────────
 @api_router.post("/invoices/auto-remind")
 async def auto_remind_overdue(request: Request):
-    return {"status": "disabled"}
+    """Cron job: send reminders for overdue invoices. Protected by CRON_SECRET."""
+    cron_secret = os.environ.get("CRON_SECRET", "")
+    auth_header = request.headers.get("Authorization", "")
+    if not cron_secret or auth_header != f"Bearer {cron_secret}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    today = DateClass.today().isoformat()
+    # Find sent invoices past due date (not credited, not credit notes, max 1 reminder per day)
+    overdue_invoices = await db.invoices.find({
+        "status": {"$in": ["sent", "overdue"]},
+        "due_date": {"$lt": today},
+        "credited": {"$ne": True},
+        "is_credit_note": {"$ne": True},
+    }).to_list(500)
+    sent = 0
+    errors = 0
+    for inv in overdue_invoices:
+        inv_id = str(inv["_id"])
+        # Mark as overdue first
+        await db.invoices.update_one({"_id": inv["_id"]}, {"$set": {"status": "overdue"}})
+        # Only send reminder if customer has email
+        customer_email = inv.get("customer_email", "")
+        if not customer_email:
+            continue
+        # Check last reminder (don't spam — max 1 reminder per 7 days)
+        last_reminder = inv.get("last_reminder_at")
+        if last_reminder:
+            try:
+                last_dt = DateClass.fromisoformat(last_reminder[:10])
+                if (DateClass.today() - last_dt).days < 7:
+                    continue
+            except Exception:
+                pass
+        try:
+            inv["_id"] = inv_id
+            await send_invoice_reminder(inv_id, current={"email": "cron@purenorth.se", "role": "admin"})
+            sent += 1
+        except Exception as e:
+            logger.error(f"Auto-remind error for invoice {inv_id}: {e}")
+            errors += 1
+    return {"status": "ok", "sent": sent, "errors": errors, "checked": len(overdue_invoices)}
 
 @api_router.delete("/invoices/{invoice_id}")
 async def delete_invoice(invoice_id: str, current=Depends(get_current_user)):
