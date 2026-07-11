@@ -1,0 +1,89 @@
+{
+  "tabs": {
+    "dashboard": "Overview",
+    "bookings": "Bookings",
+    "invoices": "Invoices",
+    "customers": "Customers",
+    "schema": "Schedule",
+    "payroll": "Payroll",
+    "absences": "Absences",
+    "expenses": "Expenses",
+    "costs": "Costs",
+    "economy": "Economy",
+    "pricelist": "Price List",
+    "calendar": "Calendar",
+    "stats": "Statistics",
+    "reviews": "Reviews",
+    "users": "Users",
+    "settings": "Settings"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading...",
+    "logout": "Log out",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "back": "Back",
+    "new": "New",
+    "export": "Export",
+    "print": "Print",
+    "send": "Send",
+    "approve": "Approve",
+    "reject": "Reject",
+    "status": "Status",
+    "date": "Date",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "amount": "Amount",
+    "total": "Total",
+    "notes": "Notes"
+  },
+  "bookings": {
+    "title": "Bookings",
+    "new": "New booking",
+    "recurring": "Recurring",
+    "status_new": "New",
+    "status_contacted": "Contacted",
+    "status_quoted": "Quoted",
+    "status_done": "Done",
+    "status_cancelled": "Cancelled"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "new": "New invoice",
+    "status_paid": "Paid",
+    "status_sent": "Sent",
+    "status_draft": "Draft",
+    "status_overdue": "Overdue"
+  },
+  "payroll": {
+    "title": "Payroll",
+    "gross": "Gross salary",
+    "net": "Net salary",
+    "tax": "Preliminary tax",
+    "employer_fee": "Employer fee",
+    "vacation": "Vacation pay"
+  },
+  "expenses": {
+    "title": "Expenses",
+    "new": "New expense",
+    "status_pending": "Pending",
+    "status_approved": "Approved",
+    "status_rejected": "Rejected",
+    "status_paid": "Paid"
+  },
+  "schema": {
+    "title": "Schedule",
+    "manage_staff": "Manage staff",
+    "add_employee": "Add employee",
+    "today": "Today"
+  }
+}
