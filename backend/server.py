@@ -103,7 +103,14 @@ async def get_current_user(request: Request) -> dict:
         payload = jwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "access":
             raise HTTPException(status_code=401, detail="Invalid token type")
-        user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
+        sub = payload["sub"]
+        company_id = payload.get("company_id", "purenorth")
+        try:
+            user = await db.users.find_one({"_id": ObjectId(sub)})
+        except Exception:
+            user = await db.users.find_one({"id": sub})
+        if user and "company_id" not in user:
+            user["company_id"] = company_id
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
         user["_id"] = str(user["_id"])

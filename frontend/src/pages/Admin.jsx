@@ -50,8 +50,14 @@ export default function Admin() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("reset_token");
-    if (token) setResetToken(token);
+    const reset = params.get("reset_token");
+    if (reset) setResetToken(reset);
+    const sso = params.get("sso");
+    if (sso) {
+      localStorage.setItem("pn_token", sso);
+      window.history.replaceState({}, "", "/admin");
+      window.location.reload();
+    }
   }, []);
 
   const doReset = async (e) => {
