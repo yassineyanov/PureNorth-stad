@@ -260,9 +260,7 @@ export function Dashboard() {
             )}
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={toggleLang} className="h-9 px-2.5 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors text-sm font-semibold" title="Byt språk">
-              {lang === "sv" ? "🇸🇪" : "🇬🇧"}
-            </button>
+
             <button onClick={()=>setTab("settings")} className="h-9 w-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
               <Settings size={16}/>
             </button>
