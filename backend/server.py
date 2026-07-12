@@ -1742,7 +1742,7 @@ DEFAULT_PRICES = [
     {"id": "fonster", "service": "Fönsterputs", "description": "Per fönster (in- och utsida)", "unit": "st", "price": 80, "is_rut_eligible": True, "is_active": True},
     {"id": "ugn", "service": "Ugnstvätt", "description": "Djuprengöring av ugn", "unit": "st", "price": 400, "is_rut_eligible": True, "is_active": True},
     {"id": "kyl", "service": "Kyl/frys rengöring", "description": "Rengöring av kyl och frys", "unit": "st", "price": 300, "is_rut_eligible": True, "is_active": True},
-    {"id": "bygg", "service": "Byggstädning", "description": "Byggstädning per timme (ex. moms)", "unit": "tim", "price": 450, "is_rut_eligible": False, "is_active": True},
+    {"id": "bygg", "service": "Byggstädning", "description": "Byggstädning per timme (ex. moms)", "unit": "tim", "price": 450, "is_rut_eligible": False, "is_active": False},
     {"id": "trappa", "service": "Trappstädning", "description": "Per trapphus och tillfälle", "unit": "st", "price": 350, "is_rut_eligible": False, "is_active": True},
 ]
 
