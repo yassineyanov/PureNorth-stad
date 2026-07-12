@@ -102,13 +102,7 @@ export default function Admin() {
     </div>
   );
   if (!user) {
-    const params = new URLSearchParams(window.location.search);
-    const sso = params.get("sso");
-    if (!sso) {
-      window.location.href = "https://purenorth-platform.vercel.app/login";
-      return <div className="min-h-screen flex items-center justify-center text-slate-500">Omdirigerar till inloggning...</div>;
-    }
-    return <div className="min-h-screen flex items-center justify-center text-slate-500">Laddar...</div>;
+    return <LoginScreen onLogin={login} />;
   }
   return <Dashboard />;
 }
