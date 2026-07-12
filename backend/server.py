@@ -1738,7 +1738,6 @@ DEFAULT_PRICES = [
     {"id": "hem", "service": "Hemstädning", "description": "Löpande hemstädning per timme", "unit": "tim", "price": 478, "is_rut_eligible": True, "is_active": True},
     {"id": "stor", "service": "Storstädning", "description": "Grundlig storstädning per timme", "unit": "tim", "price": 520, "is_rut_eligible": True, "is_active": True},
     {"id": "flytt", "service": "Flyttstädning", "description": "Komplett flyttstädning per kvm", "unit": "kvm", "price": 45, "is_rut_eligible": True, "is_active": True},
-    {"id": "flytt_fast_lgh", "service": "Flyttstädning lägenhet (fast)", "description": "Fast pris 1-2 rok", "unit": "fast", "price": 2500, "is_rut_eligible": True, "is_active": True},
     {"id": "kontor", "service": "Kontorsstädning", "description": "Kontorsstädning per timme (ex. moms)", "unit": "tim", "price": 350, "is_rut_eligible": False, "is_active": True},
     {"id": "fonster", "service": "Fönsterputs", "description": "Per fönster (in- och utsida)", "unit": "st", "price": 80, "is_rut_eligible": True, "is_active": True},
     {"id": "ugn", "service": "Ugnstvätt", "description": "Djuprengöring av ugn", "unit": "st", "price": 400, "is_rut_eligible": True, "is_active": True},
