@@ -1756,6 +1756,13 @@ async def get_pricelist(current=Depends(get_current_user)):
     return {"items": doc["items"]}
 
 
+@api_router.get("/settings/pricelist/public")
+async def get_pricelist_public():
+    doc = await db.settings.find_one({"_key": "pricelist"})
+    if not doc or not doc.get("items"):
+        return {"items": [{"service": p["service"], "unit": p.get("unit", "")} for p in DEFAULT_PRICES]}
+    return {"items": [{"service": p["service"], "unit": p.get("unit", "")} for p in doc["items"]]}
+
 @api_router.put("/settings/pricelist")
 async def set_pricelist(payload: PriceListSettings, current=Depends(get_current_user)):
     doc = payload.model_dump()
